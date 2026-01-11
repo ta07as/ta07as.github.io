@@ -2,218 +2,99 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AKIM.PRO — Смета</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AKIM.PRO — Smart Calc</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    
-    <!-- ИСПРАВЛЕННЫЙ ПУТЬ: Теперь он видит твой файл data.js, который ты создал -->
-    <script src="data.js"></script>
-
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background: #000; color: #fff; -webkit-font-smoothing: antialiased; }
-        .card { background: #111; border: 1px solid #222; border-radius: 20px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        input[type="number"] { background: #1a1a1a; border: 1px solid #333; color: #3b82f6; width: 80px; height: 50px; border-radius: 12px; text-align: center; font-weight: 900; outline: none; font-size: 18px; }
-        input[type="text"] { background: #111; border: 1px solid #222; padding: 18px; border-radius: 15px; width: 100%; color: white; outline: none; font-weight: 700; }
-        .sticky-result { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(15px); border-top: 1px solid #222; padding: 20px 20px 30px 20px; z-index: 50; }
-        #photo-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 100; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-        #invoice-paper { background: white; color: #000; padding: 30px; width: 100%; max-width: 400px; border-radius: 2px; }
-        .pdf-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        .pdf-table th { text-align: left; font-size: 10px; border-bottom: 2px solid #000; padding: 5px; text-transform: uppercase; }
-        .pdf-table td { font-size: 12px; padding: 10px 5px; border-bottom: 1px solid #eee; }
+        body { font-family: sans-serif; background: #050505; color: white; padding-bottom: 120px; }
+        .category-btn { background: #111; border: 1px solid #222; }
+        .hidden-content { display: none; }
+        .active-content { display: block; }
+        input[type="number"] { background: #1a1a1a; border: 1px solid #333; color: #3b82f6; width: 60px; text-align: center; border-radius: 8px; }
     </style>
 </head>
-<body class="p-4 pb-56">
-
+<body class="p-4">
     <div class="max-w-md mx-auto">
-        <!-- Header -->
-        <div class="flex justify-between items-center mb-10 mt-4">
-            <div>
-                <h1 class="text-3xl font-black italic text-blue-500 uppercase leading-none">AKIM.PRO</h1>
-                <p class="text-[10px] font-bold text-gray-500 tracking-[3px] mt-1 uppercase">Electric Specialist</p>
-            </div>
-            <div class="text-right">
-                <p class="text-sm font-black text-blue-400">+996 755 000 228</p>
-            </div>
-        </div>
+        <h1 class="text-xl font-black text-blue-500 mb-6 uppercase italic">Системный расчет</h1>
+        
+        <div id="calculator-container"></div>
 
-        <!-- Поле имени -->
-        <div class="mb-10">
-            <label class="text-[10px] font-black text-gray-600 uppercase mb-2 block ml-1 tracking-widest">Объект / Заказчик</label>
-            <input type="text" id="client_name" placeholder="Напр: ул. Ленина 45">
-        </div>
-
-        <!-- Сюда подгрузятся работы из data.js -->
-        <div id="items_list"></div>
+        <button onclick="sendToWhatsApp()" class="w-full bg-green-600 p-4 rounded-2xl font-bold uppercase mt-6">
+            <i class="fab fa-whatsapp mr-2"></i> Отправить смету
+        </button>
     </div>
 
-    <!-- Итоговая панель -->
-    <div class="sticky-result">
-        <div class="max-w-md mx-auto flex justify-between items-center">
-            <div>
-                <p class="text-[10px] font-black text-gray-500 uppercase mb-1">Итого к оплате:</p>
-                <div class="text-4xl font-black italic text-blue-500 leading-none">
-                    <span id="total_sum">0</span> <small class="text-xs not-italic text-white uppercase ml-1">сом</small>
-                </div>
-            </div>
-            <div class="flex gap-2">
-                <button onclick="copyWhatsApp()" class="bg-green-600 w-14 h-14 rounded-2xl flex items-center justify-center active:scale-90 transition shadow-lg shadow-green-900/30">
-                    <i class="fab fa-whatsapp text-2xl"></i>
-                </button>
-                <button onclick="generatePhoto()" class="bg-blue-600 px-6 h-14 rounded-2xl font-black text-[12px] uppercase active:scale-95 transition shadow-lg shadow-blue-900/30 tracking-wider">
-                    Смета (Фото)
-                </button>
-            </div>
+    <div class="fixed bottom-0 left-0 right-0 p-6 bg-blue-600 flex justify-between items-center rounded-t-3xl">
+        <div>
+            <p class="text-xs uppercase opacity-80">Итого:</p>
+            <div class="text-3xl font-black"><span id="total">0</span> сом</div>
         </div>
     </div>
 
-    <!-- Оверлей просмотра картинки -->
-    <div id="photo-overlay">
-        <div id="image-result" class="mb-6 shadow-2xl border-4 border-white rounded-lg overflow-hidden max-h-[75vh]"></div>
-        <p class="text-white text-[10px] font-black uppercase mb-8 text-center opacity-70 tracking-[2px]">Зажми пальцем на фото,<br>чтобы сохранить в галерею</p>
-        <button onclick="document.getElementById('photo-overlay').style.display='none'" class="bg-red-600 text-white px-12 py-4 rounded-full font-black text-xs uppercase tracking-widest shadow-xl">Закрыть</button>
-    </div>
-
-    <!-- Скрытый макет для создания фото -->
-    <div style="position: absolute; left: -9999px;">
-        <div id="invoice-paper">
-            <div style="border-bottom: 5px solid #3b82f6; padding-bottom: 15px; margin-bottom: 25px;">
-                <h2 style="margin: 0; font-size: 28px; font-weight: 900; color: #1e40af; font-style: italic; text-transform: uppercase;">AKIM.PRO</h2>
-                <p style="margin: 5px 0 0 0; font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 2px; font-weight: bold;">Электромонтажные работы • Талас</p>
-            </div>
-            <div style="font-size: 12px; margin-bottom: 25px; line-height: 1.6;">
-                <p style="margin: 0;"><strong>Заказчик:</strong> <span id="res_client"></span></p>
-                <p style="margin: 0;"><strong>Мастер:</strong> +996 755 000 228</p>
-                <p style="margin: 0;"><strong>Дата:</strong> <span id="res_date"></span></p>
-            </div>
-            <table class="pdf-table">
-                <thead>
-                    <tr>
-                        <th style="width: 60%">Наименование работ</th>
-                        <th style="text-align: center; width: 15%">Кол</th>
-                        <th style="text-align: right; width: 25%">Сумма</th>
-                    </tr>
-                </thead>
-                <tbody id="res_rows"></tbody>
-            </table>
-            <div style="margin-top: 40px; text-align: right;">
-                <div style="display: inline-block; background: #3b82f6; color: white; padding: 20px 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(59,130,246,0.3);">
-                    <p style="margin: 0; font-size: 10px; text-transform: uppercase; font-weight: 900; opacity: 0.9;">Итого к оплате:</p>
-                    <h3 style="margin: 5px 0 0 0; font-size: 28px; font-weight: 900; font-style: italic;"><span id="res_total">0</span> СОМ</h3>
-                </div>
-            </div>
-            <div style="margin-top: 30px; text-align: center; font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 1px;">
-                Благодарим за сотрудничество!
-            </div>
-        </div>
-    </div>
+    <script src="data/prices.js"></script>
 
     <script>
-        const itemsList = document.getElementById('items_list');
-        const totalDisplay = document.getElementById('total_sum');
-
-        // Запуск загрузки
-        function init() {
-            if (typeof ESTIMATE_LIBRARY === 'undefined') {
-                itemsList.innerHTML = `
-                    <div class="p-8 border-2 border-dashed border-red-900 rounded-3xl text-center">
-                        <p class="text-red-500 font-black uppercase text-xs">Ошибка загрузки базы!</p>
-                        <p class="text-gray-500 text-[10px] mt-2">Убедитесь, что файл data.js лежит в папке calc</p>
-                    </div>
-                `;
+        // Функция для отрисовки калькулятора из файла prices.js
+        function renderCalc() {
+            const container = document.getElementById('calculator-container');
+            if (typeof serviceCategories === 'undefined') {
+                container.innerHTML = "<p class='text-red-500 text-center'>Ошибка: Библиотека prices.js не найдена или содержит ошибку!</p>";
                 return;
             }
 
-            ESTIMATE_LIBRARY.forEach(cat => {
-                let html = `<h3 class="text-[11px] font-black text-blue-500 uppercase mt-10 mb-4 ml-2 tracking-[3px]">${cat.category}</h3>`;
-                cat.items.forEach(item => {
+            serviceCategories.forEach((cat, catIdx) => {
+                let html = `
+                    <div class="mb-4">
+                        <button onclick="toggle('cat-${catIdx}')" class="category-btn w-full p-4 rounded-2xl flex justify-between items-center font-bold text-sm uppercase">
+                            <span>${cat.name}</span>
+                            <i class="fas fa-chevron-down text-xs"></i>
+                        </button>
+                        <div id="cat-${catIdx}" class="hidden-content px-2 py-4 space-y-4">
+                `;
+
+                cat.items.forEach((item) => {
                     html += `
-                        <div class="card shadow-md">
-                            <div class="pr-3">
-                                <p class="text-[14px] font-black uppercase leading-tight tracking-tight">${item.name}</p>
-                                <p class="text-[11px] text-gray-500 font-bold mt-2 tracking-wide">${item.price} сом / ед.</p>
-                            </div>
-                            <input type="number" data-price="${item.price}" data-name="${item.name}" value="0" min="0" 
-                                   class="qty-input" inputmode="numeric" oninput="updateTotal()">
+                        <div class="flex justify-between items-center border-b border-white/5 pb-2">
+                            <span class="text-[11px] uppercase">${item.name} <br><small class="text-gray-500">${item.price} сом / ${item.unit}</small></span>
+                            <input type="number" class="calc-val" data-price="${item.price}" data-name="${item.name}" value="0" oninput="calculate()">
                         </div>
                     `;
                 });
-                itemsList.innerHTML += html;
+
+                html += `</div></div>`;
+                container.innerHTML += html;
             });
         }
 
-        function updateTotal() {
+        function toggle(id) {
+            document.getElementById(id).classList.toggle('active-content');
+        }
+
+        function calculate() {
             let total = 0;
-            document.querySelectorAll('.qty-input').forEach(input => {
+            document.querySelectorAll('.calc-val').forEach(input => {
                 total += (parseInt(input.value) || 0) * parseInt(input.dataset.price);
             });
-            totalDisplay.innerText = total.toLocaleString();
+            document.getElementById('total').innerText = total;
         }
 
-        async function generatePhoto() {
-            const client = document.getElementById('client_name').value || "Не указан";
-            document.getElementById('res_client').innerText = client;
-            document.getElementById('res_date').innerText = new Date().toLocaleDateString('ru-RU');
+        function sendToWhatsApp() {
+            const total = document.getElementById('total').innerText;
+            let text = "🏠 *Смета на электромонтаж (AKIM.PRO)*\n\n";
             
-            let rows = '';
-            let total = 0;
-            document.querySelectorAll('.qty-input').forEach(input => {
-                const val = parseInt(input.value) || 0;
-                if(val > 0) {
-                    const price = parseInt(input.dataset.price);
-                    const sub = val * price;
-                    total += sub;
-                    rows += `<tr>
-                        <td style="font-weight: 700; text-transform: uppercase; font-size: 11px;">${input.dataset.name}</td>
-                        <td style="text-align:center; font-weight: bold;">${val}</td>
-                        <td style="text-align:right; font-weight: 900;">${sub.toLocaleString()}</td>
-                    </tr>`;
+            document.querySelectorAll('.calc-val').forEach(input => {
+                if (parseInt(input.value) > 0) {
+                    text += `▪️ ${input.dataset.name}: ${input.value} ед. — ${parseInt(input.value) * parseInt(input.dataset.price)} сом\n`;
                 }
             });
 
-            if(!rows) { alert('Пожалуйста, введите количество работ!'); return; }
-
-            document.getElementById('res_rows').innerHTML = rows;
-            document.getElementById('res_total').innerText = total.toLocaleString();
-
-            const canvas = await html2canvas(document.getElementById('invoice-paper'), { scale: 3 });
-            const img = document.createElement('img');
-            img.src = canvas.toDataURL("image/png");
-            img.style.width = "100%";
-            
-            document.getElementById('image-result').innerHTML = '';
-            document.getElementById('image-result').appendChild(img);
-            document.getElementById('photo-overlay').style.display = 'flex';
+            text += `\n*ИТОГО: ${total} сом*\n\nКонтакт: +996755000228`;
+            window.location.href = `https://wa.me/996755000228?text=${encodeURIComponent(text)}`;
         }
 
-        function copyWhatsApp() {
-            const client = document.getElementById('client_name').value || "Объект";
-            let msg = `⚡ *СМЕТА AKIM.PRO*\n👤 Объект: ${client}\n--------------------------\n`;
-            
-            document.querySelectorAll('.qty-input').forEach(input => {
-                const val = parseInt(input.value) || 0;
-                if(val > 0) {
-                    msg += `• ${input.dataset.name}: ${val} — ${val * input.dataset.price} сом\n`;
-                }
-            });
-
-            msg += `--------------------------\n💰 *ИТОГО: ${totalDisplay.innerText} СОМ*\n\n📞 Мастер: +996 755 000 228`;
-            
-            const area = document.createElement('textarea');
-            area.value = msg;
-            document.body.appendChild(area);
-            area.select();
-            document.execCommand('copy');
-            document.body.removeChild(area);
-            alert('Смета скопирована! Отправьте её в WhatsApp.');
-        }
-
-        window.onload = init;
+        // Запускаем отрисовку при загрузке
+        window.onload = renderCalc;
     </script>
-    <script src="data/prices.js"></script>
-    
 </body>
 </html>
-
