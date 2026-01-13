@@ -19,9 +19,17 @@
             transform: translateY(-2px);
             background: #141414;
         }
+        .lang-switch { position: absolute; top: 20px; right: 20px; display: flex; gap: 8px; z-index: 100; }
+        .lang-btn { background: rgba(255,255,255,0.05); border: 1px solid #3b82f6; color: white; padding: 8px 12px; border-radius: 12px; font-size: 11px; font-weight: 900; cursor: pointer; }
+        .lang-btn.active { background: #3b82f6; }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-6 text-italic">
+<body class="min-h-screen flex items-center justify-center p-6">
+
+    <div class="lang-switch">
+        <button onclick="setLang('ru')" id="btn-ru" class="lang-btn active">РУС</button>
+        <button onclick="setLang('kg')" id="btn-kg" class="lang-btn">КЫР</button>
+    </div>
 
     <div class="w-full max-w-md">
         <div class="text-center mb-10">
@@ -29,7 +37,7 @@
                 <i class="fas fa-bolt text-3xl text-white"></i>
             </div>
             <h1 class="text-2xl font-black uppercase italic tracking-tighter">AKIM.PRO</h1>
-            <p class="text-blue-500 text-[10px] font-black uppercase tracking-[0.4em] mt-2">Админ-панель</p>
+            <p id="sub-title" class="text-blue-500 text-[10px] font-black uppercase tracking-[0.4em] mt-2">Админ-панель</p>
         </div>
 
         <div class="space-y-3">
@@ -40,8 +48,8 @@
                         <i class="fas fa-bolt-lightning text-sm"></i>
                     </div>
                     <div>
-                        <h4 class="font-bold text-sm uppercase italic">Аварийный выезд</h4>
-                        <p class="text-[9px] text-gray-600 uppercase italic font-bold">Ремонт 24/7</p>
+                        <h4 id="t1" class="font-bold text-sm uppercase italic">Аварийный выезд</h4>
+                        <p id="d1" class="text-[9px] text-gray-600 uppercase italic font-bold">Ремонт 24/7</p>
                     </div>
                 </div>
                 <i class="fas fa-arrow-right text-gray-800 group-hover:text-blue-500 transition-colors"></i>
@@ -53,7 +61,8 @@
                         <i class="fas fa-shield-halved text-sm"></i>
                     </div>
                     <div>
-                        <h4 class="font-bold text-sm uppercase italic text-blue-500">Безопасность дома</h4>
+                        <h4 id="t2" class="font-bold text-sm uppercase italic text-blue-500">Безопасность дома</h4>
+                        <p id="d2" class="text-[9px] text-gray-600 uppercase italic font-bold tracking-tight">Үй коопсуздугу / Село</p>
                     </div>
                 </div>
                 <i class="fas fa-arrow-right text-gray-800 group-hover:text-blue-500 transition-colors"></i>
@@ -65,7 +74,21 @@
                         <i class="fas fa-hard-hat text-sm"></i>
                     </div>
                     <div>
-                        <h4 class="font-bold text-sm uppercase italic">Для прорабов</h4>
+                        <h4 id="t3" class="font-bold text-sm uppercase italic">Для прорабов</h4>
+                        <p id="d3" class="text-[9px] text-gray-600 uppercase italic font-bold">Сотрудничество B2B</p>
+                    </div>
+                </div>
+                <i class="fas fa-arrow-right text-gray-800 group-hover:text-blue-500 transition-colors"></i>
+            </a>
+
+            <a href="/hire/index.html" class="nav-card block p-5 rounded-3xl flex items-center justify-between group">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-green-600/10 rounded-xl flex items-center justify-center text-green-500 group-hover:bg-green-600 group-hover:text-white transition-all">
+                        <i class="fas fa-user-plus text-sm"></i>
+                    </div>
+                    <div>
+                        <h4 id="t4" class="font-bold text-sm uppercase italic">Вакансии</h4>
+                        <p id="d4" class="text-[9px] text-gray-600 uppercase italic font-bold">Набор в команду</p>
                     </div>
                 </div>
                 <i class="fas fa-arrow-right text-gray-800 group-hover:text-blue-500 transition-colors"></i>
@@ -79,5 +102,34 @@
             <a href="https://instagram.com/ta07as.a" class="text-gray-700 hover:text-white transition-colors text-xl"><i class="fab fa-instagram"></i></a>
         </div>
     </div>
+
+    <script>
+        function setLang(lang) {
+            const sub = document.getElementById('sub-title');
+            const t1 = document.getElementById('t1'); const d1 = document.getElementById('d1');
+            const t2 = document.getElementById('t2'); const d2 = document.getElementById('d2');
+            const t3 = document.getElementById('t3'); const d3 = document.getElementById('d3');
+            const t4 = document.getElementById('t4'); const d4 = document.getElementById('d4');
+            const btnRu = document.getElementById('btn-ru');
+            const btnKg = document.getElementById('btn-kg');
+
+            if (lang === 'kg') {
+                sub.innerText = "БАШКАРУУ ПАНЕЛИ";
+                t1.innerText = "Авариялык чакыруу"; d1.innerText = "Оңдоо 24/7";
+                t2.innerText = "Үй коопсуздугу"; d2.innerText = "Айыл / Шаар";
+                t3.innerText = "Прорабтар үчүн"; d3.innerText = "B2B кызматташуу";
+                t4.innerText = "Бош орундар"; d4.innerText = "Командага кошулуу";
+                btnKg.classList.add('active'); btnRu.classList.remove('active');
+            } else {
+                sub.innerText = "Админ-панель";
+                t1.innerText = "Аварийный выезд"; d1.innerText = "Ремонт 24/7";
+                t2.innerText = "Безопасность дома"; d2.innerText = "Үй коопсуздугу / Село";
+                t3.innerText = "Для прорабов"; d3.innerText = "Сотрудничество B2B";
+                t4.innerText = "Вакансии"; d4.innerText = "Набор в команду";
+                btnRu.classList.add('active'); btnKg.classList.remove('active');
+            }
+        }
+    </script>
 </body>
-</html>
+    </html>
+    
