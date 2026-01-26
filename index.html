@@ -4,301 +4,276 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
-    <!-- 1. ГЛАВНЫЙ ЗАГОЛОВОК (SEO) -->
-    <title>Услуги электрика в Таласе | Вызов мастера 24/7 | Электромонтаж под ключ</title>
+    <!-- SEO & Google Ads Optimization -->
+    <title>Профессиональный Электрик в Таласе | Вызов мастера 24/7</title>
+    <meta name="description" content="Услуги электрика в Таласе: от ремонта розетки до полной замены проводки. Срочный выезд за 30 минут. Гарантия качества. Звоните: +996 755 000 228">
     
-    <!-- 2. SEO & ADS META -->
-    <meta name="description" content="Частный электрик в Таласе. Срочный выезд во все районы города. Профессиональный электромонтаж, ремонт проводки, установка щитов. Гарантия качества, опыт 10 лет. Звоните: +996 755 000 228">
-    <meta name="keywords" content="электрик талас, услуги электрика талас, вызвать электрика, электромонтаж талас, ремонт проводки талас">
-    <link rel="canonical" href="https://tashmatov.kg"> <!-- Замените на свой домен, когда купите -->
-
-    <!-- 4. OPEN GRAPH (Для WhatsApp, Telegram, FB) -->
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="Профессиональный электрик в г. Талас">
-    <meta property="og:description" content="Срочный выезд, монтаж и ремонт любой сложности. Работаю 24/7.">
-    <meta property="og:url" content="https://tashmatov.kg">
-    <meta property="og:image" content="https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=2069&auto=format&fit=crop"> <!-- Ссылка на качественное фото инструментов/мастера -->
-    <meta property="og:site_name" content="Электрик Талас">
-
-    <!-- 3. СТРУКТУРИРОВАННЫЕ ДАННЫЕ (SCHEMA.ORG) ДЛЯ GOOGLE -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Electrician",
-      "name": "Электрик в Таласе - Профессиональные услуги",
-      "image": "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=2069&auto=format&fit=crop",
-      "@id": "https://tashmatov.kg",
-      "url": "https://tashmatov.kg",
-      "telephone": "+996755000228",
-      "priceRange": "$$",
-      "address": {
-        "@type": "PostalAddress",
-        "streetAddress": "Центр города",
-        "addressLocality": "Талас",
-        "addressCountry": "KG"
-      },
-      "geo": {
-        "@type": "GeoCoordinates",
-        "latitude": 42.5228,
-        "longitude": 72.2427
-      },
-      "openingHoursSpecification": {
-        "@type": "OpeningHoursSpecification",
-        "dayOfWeek": [
-          "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
-        ],
-        "opens": "00:00",
-        "closes": "23:59"
-      },
-      "sameAs": [
-        "https://www.instagram.com/ta07as.a"
-      ]
-    }
-    </script>
-    
-    <!-- Tailwind CSS -->
+    <!-- Стили -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap');
         :root { --brand-yellow: #fbbf24; --brand-dark: #0f172a; }
-        body { font-family: 'Manrope', sans-serif; scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+        body { font-family: 'Manrope', sans-serif; scroll-behavior: smooth; }
         .bg-dark-custom { background-color: var(--brand-dark); }
-        .btn-pulse { position: relative; z-index: 1; }
+        .text-yellow-brand { color: var(--brand-yellow); }
+        .btn-pulse { position: relative; }
         .btn-pulse::after {
             content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: inherit;
-            box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.6); animation: pulse-ring 2s cubic-bezier(0.24, 0, 0.38, 1) infinite; z-index: -1;
+            box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.6); animation: pulse-ring 2s infinite; z-index: -1;
         }
         @keyframes pulse-ring {
             0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.6); }
-            70% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(251, 191, 36, 0); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(251, 191, 36, 0); }
             100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
         }
         .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s ease-out; }
         .reveal.active { opacity: 1; transform: translateY(0); }
-        .faq-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
-        .faq-item.active .faq-content { max-height: 200px; }
-        .faq-item.active svg { transform: rotate(180deg); }
-        * { -webkit-tap-highlight-color: transparent; }
     </style>
 </head>
-<body class="bg-white text-slate-900 overflow-x-hidden">
+<body class="bg-white text-slate-900">
 
-    <!-- Header -->
-    <header id="header" class="fixed top-0 w-full z-[1000] bg-white/90 backdrop-blur-md transition-all duration-300">
-        <div class="container mx-auto px-4 h-16 md:h-24 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="bg-yellow-400 p-2 rounded-xl shadow-lg">
-                    <svg class="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+    <!-- Навигация -->
+    <nav class="fixed top-0 w-full z-[1000] bg-white/95 backdrop-blur-md border-b border-slate-100 h-16 flex items-center">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="bg-yellow-400 p-1 rounded-lg shadow-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                 </div>
-                <div>
-                    <span class="block font-extrabold text-lg leading-none uppercase tracking-tighter italic">Электрик Талас</span>
-                    <span class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Профессиональный сервис</span>
-                </div>
+                <span class="font-extrabold uppercase italic tracking-tighter text-sm">Мастер Талас</span>
             </div>
-            
-            <nav class="hidden lg:flex items-center gap-8 font-bold text-sm uppercase tracking-wider">
-                <a href="#services" class="hover:text-yellow-500 transition-colors">Услуги</a>
-                <a href="#advantages" class="hover:text-yellow-500 transition-colors">Почему я?</a>
-                <a href="#steps" class="hover:text-yellow-500 transition-colors">Этапы</a>
-                <a href="#faq" class="hover:text-yellow-500 transition-colors">Вопросы</a>
-            </nav>
-
-            <a href="tel:+996755000228" class="bg-slate-900 text-white px-5 py-3 rounded-xl text-sm font-black flex items-center gap-2 hover:bg-slate-800 transition-all active:scale-95">
-                <span class="hidden md:inline">+996 755 000 228</span>
-                <span class="md:hidden uppercase italic">Вызов</span>
+            <div class="hidden md:flex gap-6 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                <a href="#services" class="hover:text-yellow-500">Услуги</a>
+                <a href="#why-me" class="hover:text-yellow-500">Преимущества</a>
+                <a href="#steps" class="hover:text-yellow-500">Как я работаю</a>
+            </div>
+            <a href="tel:+996755000228" class="bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-black uppercase">
+                Позвонить
             </a>
         </div>
+    </nav>
+
+    <!-- Главный блок -->
+    <header class="pt-32 pb-24 bg-dark-custom text-white relative overflow-hidden">
+        <div class="container mx-auto px-4 relative z-10">
+            <div class="inline-flex items-center gap-2 bg-yellow-400/10 text-yellow-400 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest mb-8 border border-yellow-400/20">
+                <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-yellow-500"></span></span>
+                На связи • Приеду за 30 мин
+            </div>
+            <h1 class="text-4xl md:text-7xl font-black mb-6 uppercase italic leading-[1.1] tracking-tighter">
+                Надежный <span class="text-yellow-400">Электрик</span> <br>в городе Талас
+            </h1>
+            <p class="text-slate-400 text-lg mb-10 max-w-xl font-medium leading-relaxed">
+                Частный мастер. Выполняю работы любой сложности: от замены розеток до полной электрификации частных домов. Без посредников и лишних переплат.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4">
+                <a href="tel:+996755000228" class="btn-pulse bg-yellow-400 text-slate-900 h-16 sm:w-64 rounded-2xl flex items-center justify-center gap-3 font-black text-lg uppercase shadow-xl shadow-yellow-400/20 active:scale-95 transition-all">
+                    Вызвать сейчас
+                </a>
+                <a href="https://wa.me/996755000228" class="bg-white/5 border border-white/10 h-16 sm:w-64 rounded-2xl flex items-center justify-center gap-3 font-black text-lg uppercase active:scale-95 transition-all hover:bg-white/10">
+                    WhatsApp
+                </a>
+            </div>
+        </div>
+        <div class="absolute -bottom-20 -right-20 w-80 h-80 bg-yellow-400/5 blur-[100px] rounded-full"></div>
     </header>
 
-    <!-- Hero Section -->
-    <section class="relative pt-32 pb-20 md:pt-48 md:pb-40 bg-dark-custom text-white overflow-hidden">
-        <div class="container mx-auto px-4 relative z-10 grid lg:grid-cols-2 gap-16 items-center">
-            <div class="reveal active">
-                <div class="inline-flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full mb-8 border border-white/10">
-                    <span class="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></span>
-                    <span class="text-xs font-bold uppercase tracking-widest">Мастер готов к выезду сегодня</span>
-                </div>
-                
-                <!-- 1. ГЛАВНЫЙ ЗАГОЛОВОК H1 (ОБЯЗАТЕЛЬНО ОДИН НА СТРАНИЦУ) -->
-                <h1 class="text-5xl md:text-7xl font-black mb-8 leading-[1.1] uppercase italic tracking-tighter">
-                    Электрик в Таласе: <br><span class="text-yellow-400">Срочный вызов!</span>
-                </h1>
-                
-                <p class="text-lg md:text-xl text-slate-300 mb-12 max-w-xl font-medium">
-                    Срочный ремонт и качественный электромонтаж по всей территории г. Талас и области. Частный мастер — работаю без посредников, поэтому цены ниже!
-                </p>
-                <div class="flex flex-col sm:flex-row gap-5">
-                    <a href="tel:+996755000228" class="btn-pulse bg-yellow-400 text-slate-900 px-10 py-6 rounded-2xl font-black text-xl flex items-center justify-center gap-3 shadow-2xl hover:bg-yellow-300 transition-all active:scale-95">
-                        ВЫЗВАТЬ МАСТЕРА
-                    </a>
-                    <a href="https://wa.me/996755000228" class="bg-white/5 border border-white/20 px-10 py-6 rounded-2xl font-black text-xl flex items-center justify-center gap-3 hover:bg-white/10 transition-all active:scale-95">
-                        WHATSAPP
-                    </a>
-                </div>
-            </div>
-            
-            <div class="hidden lg:grid grid-cols-2 gap-4 reveal active">
-                <div class="bg-white/5 p-8 rounded-3xl border border-white/10">
-                    <span class="text-4xl font-black text-yellow-400 block mb-2">30</span>
-                    <span class="text-sm font-bold uppercase text-slate-400 leading-tight">Минут среднее время прибытия</span>
-                </div>
-                <div class="bg-white/5 p-8 rounded-3xl border border-white/10 mt-8">
-                    <span class="text-4xl font-black text-yellow-400 block mb-2">10+</span>
-                    <span class="text-sm font-bold uppercase text-slate-400 leading-tight">Лет опыта в электромонтаже</span>
-                </div>
-            </div>
-        </div>
-        <div class="absolute top-0 right-0 w-1/3 h-full bg-yellow-400/5 blur-[120px] rounded-full -mr-20"></div>
-    </section>
-
-    <!-- Rest of the sections (Advantages, Services, Steps, FAQ) remain here... -->
-    <!-- (Вставлен тот же качественный контент, что и в предыдущем шаге) -->
-    
-    <!-- Advantages Section -->
-    <section id="advantages" class="py-24 bg-white">
-        <div class="container mx-auto px-4 text-center">
-            <h3 class="text-3xl md:text-5xl font-black mb-16 uppercase italic tracking-tighter">Почему в Таласе звонят мне</h3>
-            <div class="grid md:grid-cols-4 gap-8">
+    <!-- Цифры -->
+    <section class="py-12 bg-yellow-400 border-y border-yellow-500">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center text-slate-900">
                 <div class="reveal">
-                    <div class="mb-6 inline-block p-5 bg-slate-50 rounded-2xl text-yellow-500 shadow-sm">
-                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                    </div>
-                    <h4 class="font-black mb-2 uppercase tracking-tight">Гарантия качества</h4>
-                    <p class="text-sm text-slate-500 font-medium leading-relaxed">Даю гарантию на все выполненные работы до 12 месяцев.</p>
-                </div>
-                <!-- ... другие преимущества ... -->
-                <div class="reveal">
-                    <div class="mb-6 inline-block p-5 bg-slate-50 rounded-2xl text-blue-500 shadow-sm">
-                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    </div>
-                    <h4 class="font-black mb-2 uppercase tracking-tight">Соблюдение сроков</h4>
-                    <p class="text-sm text-slate-500 font-medium leading-relaxed">Приезжаю вовремя и сдаю работу строго в оговоренный срок.</p>
+                    <div class="text-4xl font-black mb-1">10+</div>
+                    <div class="text-[10px] font-black uppercase tracking-widest">Лет опыта</div>
                 </div>
                 <div class="reveal">
-                    <div class="mb-6 inline-block p-5 bg-slate-50 rounded-2xl text-green-500 shadow-sm">
-                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                    </div>
-                    <h4 class="font-black mb-2 uppercase tracking-tight">Честная цена</h4>
-                    <p class="text-sm text-slate-500 font-medium leading-relaxed">Никаких скрытых платежей. Стоимость озвучиваю до начала работ.</p>
+                    <div class="text-4xl font-black mb-1">1500+</div>
+                    <div class="text-[10px] font-black uppercase tracking-widest">Выездов</div>
                 </div>
                 <div class="reveal">
-                    <div class="mb-6 inline-block p-5 bg-slate-50 rounded-2xl text-purple-500 shadow-sm">
-                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                    </div>
-                    <h4 class="font-black mb-2 uppercase tracking-tight">Любая сложность</h4>
-                    <p class="text-sm text-slate-500 font-medium leading-relaxed">От замены розетки до полного электромонтажа целого здания.</p>
+                    <div class="text-4xl font-black mb-1">100%</div>
+                    <div class="text-[10px] font-black uppercase tracking-widest">Гарантия</div>
+                </div>
+                <div class="reveal">
+                    <div class="text-4xl font-black mb-1">24/7</div>
+                    <div class="text-[10px] font-black uppercase tracking-widest">Работаю</div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Services Section -->
+    <!-- Услуги -->
     <section id="services" class="py-24 bg-slate-50">
         <div class="container mx-auto px-4 text-center">
-            <h3 class="text-3xl md:text-5xl font-black mb-16 uppercase italic tracking-tighter">Услуги электрика</h3>
-            <div class="grid md:grid-cols-3 gap-8 text-left">
-                <div class="reveal group bg-white p-10 rounded-[2.5rem] shadow-sm hover:shadow-xl transition-all border border-slate-100">
-                    <div class="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mb-8">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            <h2 class="text-3xl md:text-5xl font-black uppercase italic mb-16 tracking-tighter">Все виды работ</h2>
+            <div class="grid gap-6 md:grid-cols-3">
+                <div class="reveal bg-white p-10 rounded-3xl border border-slate-100 shadow-sm text-left">
+                    <div class="w-12 h-12 bg-yellow-100 text-yellow-600 rounded-2xl flex items-center justify-center mb-6">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                     </div>
-                    <h4 class="text-2xl font-black mb-4 uppercase italic tracking-tighter italic leading-none">Срочный вызов</h4>
-                    <p class="text-slate-600 mb-6 font-medium">Если нет света, искрит щит или пахнет гарью — выезжаю мгновенно в любую точку Таласа.</p>
+                    <h3 class="font-black uppercase italic text-lg mb-4">Аварийный выезд</h3>
+                    <ul class="text-slate-500 text-sm space-y-2 font-medium">
+                        <li>• Поиск обрыва проводки</li>
+                        <li>• Устранение замыкания</li>
+                        <li>• Ремонт электрощита</li>
+                    </ul>
                 </div>
-                <div class="reveal group bg-white p-10 rounded-[2.5rem] shadow-sm hover:shadow-xl transition-all border border-slate-100">
-                    <div class="w-16 h-16 bg-yellow-50 text-yellow-600 rounded-2xl flex items-center justify-center mb-8">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                <div class="reveal bg-white p-10 rounded-3xl border border-slate-100 shadow-sm text-left">
+                    <div class="w-12 h-12 bg-yellow-100 text-yellow-600 rounded-2xl flex items-center justify-center mb-6">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                     </div>
-                    <h4 class="text-2xl font-black mb-4 uppercase italic tracking-tighter italic leading-none">Монтаж под ключ</h4>
-                    <p class="text-slate-600 mb-6 font-medium">Новая проводка в домах, коттеджах и квартирах. Планирование и расчет нагрузки.</p>
+                    <h3 class="font-black uppercase italic text-lg mb-4">Электромонтаж</h3>
+                    <ul class="text-slate-500 text-sm space-y-2 font-medium">
+                        <li>• Проводка в новостройках</li>
+                        <li>• Электрика в частных домах</li>
+                        <li>• Штробление стен без пыли</li>
+                    </ul>
                 </div>
-                <div class="reveal group bg-white p-10 rounded-[2.5rem] shadow-sm hover:shadow-xl transition-all border border-slate-100">
-                    <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-8">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2-2v10a2 2 0 002 2zM9 9h6v6H9V9z"/></svg>
+                <div class="reveal bg-white p-10 rounded-3xl border border-slate-100 shadow-sm text-left">
+                    <div class="w-12 h-12 bg-yellow-100 text-yellow-600 rounded-2xl flex items-center justify-center mb-6">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
                     </div>
-                    <h4 class="text-2xl font-black mb-4 uppercase italic tracking-tighter italic leading-none">Щиты и автоматы</h4>
-                    <p class="text-slate-600 mb-6 font-medium">Установка и замена автоматов, УЗО, реле напряжения, счетчиков и стабилизаторов.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- FAQ Section (С ответами на локальные вопросы) -->
-    <section id="faq" class="py-24 bg-white">
-        <div class="container mx-auto px-4 max-w-3xl">
-            <h3 class="text-3xl md:text-4xl font-black text-center mb-16 uppercase italic tracking-tighter">Вопросы и ответы</h3>
-            <div class="space-y-4">
-                <div class="faq-item bg-slate-50 rounded-2xl p-6 cursor-pointer active">
-                    <div class="flex justify-between items-center">
-                        <h5 class="font-black uppercase italic text-sm md:text-base tracking-tight">Выезжаете ли вы за пределы Таласа?</h5>
-                        <svg class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                    </div>
-                    <div class="faq-content">
-                        <p class="pt-4 text-slate-500 text-sm font-medium">Да, я работаю по всему городу Талас и выезжаю в ближайшие районы области по договоренности.</p>
-                    </div>
-                </div>
-                <div class="faq-item bg-slate-50 rounded-2xl p-6 cursor-pointer">
-                    <div class="flex justify-between items-center">
-                        <h5 class="font-black uppercase italic text-sm md:text-base tracking-tight">Нужно ли мне самому покупать провода?</h5>
-                        <svg class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                    </div>
-                    <div class="faq-content">
-                        <p class="pt-4 text-slate-500 text-sm font-medium">Как вам удобно. Могу приехать со своим материалом (использую только ГОСТ) или помочь с выбором в магазине.</p>
-                    </div>
+                    <h3 class="font-black uppercase italic text-lg mb-4">Установка</h3>
+                    <ul class="text-slate-500 text-sm space-y-2 font-medium">
+                        <li>• Монтаж люстр и бра</li>
+                        <li>• Подключение плит и вытяжек</li>
+                        <li>• Замена розеток/выключателей</li>
+                    </ul>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="bg-dark-custom text-white py-20">
-        <div class="container mx-auto px-4 text-center">
-            <div class="mb-12">
-                <div class="inline-block bg-yellow-400 p-3 rounded-2xl mb-6">
-                   <svg class="w-8 h-8 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+    <!-- Почему я? -->
+    <section id="why-me" class="py-24 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row gap-16 items-center">
+                <div class="md:w-1/2 reveal">
+                    <h2 class="text-3xl md:text-5xl font-black uppercase italic mb-8 tracking-tighter">Почему мне доверяют</h2>
+                    <div class="space-y-8">
+                        <div class="flex gap-4">
+                            <div class="text-yellow-500 font-black italic text-2xl">01</div>
+                            <div>
+                                <h4 class="font-black uppercase italic text-sm mb-1">Справедливая цена</h4>
+                                <p class="text-slate-500 text-sm">Работаю напрямую без посредников и фирм, поэтому мои услуги стоят на 30% дешевле.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="text-yellow-500 font-black italic text-2xl">02</div>
+                            <div>
+                                <h4 class="font-black uppercase italic text-sm mb-1">Проф. оборудование</h4>
+                                <p class="text-slate-500 text-sm">Использую только качественные тестеры и инструменты для безопасности вашего дома.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="text-yellow-500 font-black italic text-2xl">03</div>
+                            <div>
+                                <h4 class="font-black uppercase italic text-sm mb-1">Чистота на объекте</h4>
+                                <p class="text-slate-500 text-sm">Всегда убираю за собой строительный мусор после завершения монтажа.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <h3 class="text-3xl font-black uppercase italic italic tracking-tighter">Частный Электрик Талас</h3>
-                <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mt-2">Личный мастер: +996 755 000 228</p>
-            </div>
-            
-            <div class="flex flex-col items-center gap-6">
-                <a href="tel:+996755000228" class="text-3xl md:text-5xl font-black text-yellow-400 hover:scale-105 transition-transform tracking-tighter">+996 755 000 228</a>
-                <div class="flex gap-4">
-                    <a href="https://wa.me/996755000228" class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center hover:bg-green-600 transition-all">
-                        <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .004 5.408 0 12.044c0 2.12.554 4.189 1.605 6.056L0 24l6.107-1.602a11.834 11.834 0 005.937 1.57h.005c6.632 0 12.042-5.41 12.046-12.046a11.804 11.804 0 00-3.486-8.508"/></svg>
-                    </a>
-                    <a href="https://instagram.com/ta07as.a" class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center hover:bg-pink-600 transition-all">
-                        <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12s.014 3.667.072 4.947c.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072s3.667-.014 4.947-.072c4.351-.2 6.77-2.618 6.97-6.98.058-1.28.072-1.689.072-4.948s-.014-3.667-.072-4.947c-.2-4.347-2.617-6.78-6.979-6.98C15.667.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4.162 4.162 0 110-8.324 4.162 4.162 0 010 8.324zM18.406 5.594a1.44 1.44 0 110-2.88 1.44 1.44 0 010 2.88z"/></svg>
-                    </a>
+                <div class="md:w-1/2 bg-slate-50 p-10 rounded-[40px] border border-slate-100 reveal">
+                    <div class="text-center">
+                        <h4 class="text-xl font-black mb-4 italic uppercase">Нужна консультация?</h4>
+                        <p class="text-slate-500 text-sm mb-8 font-medium">Позвоните мне, и я сориентирую вас по стоимости работ прямо по телефону.</p>
+                        <a href="tel:+996755000228" class="inline-flex items-center gap-2 text-2xl font-black text-slate-900 border-b-4 border-yellow-400 pb-2">
+                            +996 755 000 228
+                        </a>
+                    </div>
                 </div>
             </div>
+        </div>
+    </section>
+
+    <!-- Шаги работы -->
+    <section id="steps" class="py-24 bg-dark-custom text-white">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl md:text-5xl font-black uppercase italic mb-16 text-center tracking-tighter">Как я работаю</h2>
+            <div class="grid md:grid-cols-4 gap-8">
+                <div class="reveal">
+                    <div class="text-yellow-400 font-black text-5xl opacity-20 mb-[-25px]">1</div>
+                    <h5 class="text-lg font-black uppercase italic mb-3">Звонок</h5>
+                    <p class="text-slate-500 text-xs">Обсуждаем вашу проблему по телефону.</p>
+                </div>
+                <div class="reveal">
+                    <div class="text-yellow-400 font-black text-5xl opacity-20 mb-[-25px]">2</div>
+                    <h5 class="text-lg font-black uppercase italic mb-3">Выезд</h5>
+                    <p class="text-slate-500 text-xs">Приезжаю на объект для осмотра и замера.</p>
+                </div>
+                <div class="reveal">
+                    <div class="text-yellow-400 font-black text-5xl opacity-20 mb-[-25px]">3</div>
+                    <h5 class="text-lg font-black uppercase italic mb-3">Работа</h5>
+                    <p class="text-slate-500 text-xs">Выполняю монтаж согласно стандартам безопасности.</p>
+                </div>
+                <div class="reveal">
+                    <div class="text-yellow-400 font-black text-5xl opacity-20 mb-[-25px]">4</div>
+                    <h5 class="text-lg font-black uppercase italic mb-3">Оплата</h5>
+                    <p class="text-slate-500 text-xs">Принимаете работу и производите оплату.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Контакты и Карта (имитация) -->
+    <section class="py-24 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="bg-slate-900 rounded-[50px] p-12 text-white relative overflow-hidden text-center">
+                <h2 class="text-3xl md:text-5xl font-black uppercase italic mb-6">Работаю по всему Таласу</h2>
+                <p class="text-slate-400 mb-10 max-w-lg mx-auto uppercase text-xs font-black tracking-widest">Выезд в любой район города и ближайшие села</p>
+                <div class="flex flex-wrap justify-center gap-4">
+                    <a href="tel:+996755000228" class="bg-yellow-400 text-slate-900 px-10 py-5 rounded-2xl font-black uppercase shadow-xl shadow-yellow-400/10">Вызвать мастера</a>
+                    <a href="https://t.me/ta07as" class="bg-white/10 px-10 py-5 rounded-2xl font-black uppercase">Telegram</a>
+                </div>
+                <div class="mt-16 pt-16 border-t border-white/5 grid md:grid-cols-3 gap-8 text-[10px] font-bold uppercase tracking-widest opacity-40">
+                    <div>Индивидуальный подход</div>
+                    <div>Соблюдение сроков</div>
+                    <div>Только ГОСТ материалы</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Подвал -->
+    <footer class="bg-white py-12 text-center border-t border-slate-100">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-center gap-2 mb-8">
+                <div class="bg-yellow-400 p-1 rounded-lg">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                </div>
+                <span class="font-extrabold uppercase italic tracking-tighter text-sm">Электрик Талас</span>
+            </div>
+            <div class="flex justify-center gap-8 mb-10">
+                <a href="https://instagram.com/ta07as.a" class="opacity-50 hover:opacity-100 transition-opacity">
+                    <span class="text-[10px] font-black uppercase tracking-widest">Instagram</span>
+                </a>
+                <a href="https://wa.me/996755000228" class="opacity-50 hover:opacity-100 transition-opacity">
+                    <span class="text-[10px] font-black uppercase tracking-widest">WhatsApp</span>
+                </a>
+            </div>
+            <p class="text-[8px] text-slate-400 font-bold uppercase tracking-[0.4em]">© 2026 ТАЛАС ЭЛЕКТРОСЕРВИС • ВСЕ ПРАВА ЗАЩИЩЕНЫ</p>
         </div>
     </footer>
 
-    <!-- Mobile Action Bar -->
-    <div class="lg:hidden fixed bottom-6 left-4 right-4 z-[9999] grid grid-cols-2 gap-3">
-        <a href="https://wa.me/996755000228" class="bg-green-600 text-white h-16 rounded-2xl shadow-2xl flex items-center justify-center gap-2 font-black text-sm uppercase active:scale-95 transition-all">
-            Написать
-        </a>
-        <a href="tel:+996755000228" class="bg-yellow-400 text-slate-900 h-16 rounded-2xl shadow-2xl flex items-center justify-center gap-2 font-black text-sm uppercase active:scale-95 transition-all">
-            Звонок
+    <!-- Плавающая кнопка (Мобильная) -->
+    <div class="lg:hidden fixed bottom-6 left-4 right-4 z-[9999]">
+        <a href="tel:+996755000228" class="bg-yellow-400 text-slate-900 h-16 rounded-3xl flex items-center justify-center gap-3 font-black uppercase text-sm shadow-2xl shadow-yellow-400/40 active:scale-95 transition-all">
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path></svg>
+            Вызвать мастера на дом
         </a>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('active'); });
-            }, { threshold: 0.1 });
-            document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
-
-            document.querySelectorAll('.faq-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    const isActive = item.classList.contains('active');
-                    document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('active'));
-                    if (!isActive) item.classList.add('active');
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('active');
+                    }
                 });
-            });
+            }, { threshold: 0.1 });
+
+            document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
         });
     </script>
 </body>
