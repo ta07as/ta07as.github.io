@@ -1,293 +1,547 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17905151400">
-</script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Talas_profi — CNC TAP & G-Code Converter</title>
+  
+  <!-- Иконка сервиса -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚙️</text></svg>">
 
-  gtag('config', 'AW-17905151400');
-</script>
-    <script>
-function gtag_report_conversion(url) {
-  var callback = function () {
-    if (typeof(url) != 'undefined') {
-      window.location = url;
+  <!-- Встроенный Tailwind CSS Engine (Автономный) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              black: '#000000',
+              dark: '#0a0a0a',
+              card: '#121212',
+              border: '#262626',
+              gold: '#FBBF24',
+              goldHover: '#F59E0B'
+            }
+          }
+        }
+      }
     }
-  };
-  gtag('event', 'conversion', {
-      'send_to': 'AW-17905151400/22Y3CN_u8e4bEKjb69lC',
-      'event_callback': callback
-  });
-  return false;
-}
-</script>
+  </script>
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <!-- Встроенные Стили ишрифты -->
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap');
     
-    <title>Профессиональный Электрик в Таласе | Вызов мастера 24/7</title>
-    <meta name="description" content="Услуги электрика в Таласе: от ремонта розетки до полной замены проводки. Срочный выезд за 30 минут. Гарантия качества. Звоните: +996 755 000 228">
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: #000000;
+      color: #FFFFFF;
+    }
     
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap');
-        :root { --brand-yellow: #fbbf24; --brand-dark: #0f172a; }
-        body { font-family: 'Manrope', sans-serif; scroll-behavior: smooth; }
-        .bg-dark-custom { background-color: var(--brand-dark); }
-        .text-yellow-brand { color: var(--brand-yellow); }
-        .btn-pulse { position: relative; }
-        .btn-pulse::after {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: inherit;
-            box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.6); animation: pulse-ring 2s infinite; z-index: -1;
-        }
-        @keyframes pulse-ring {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.6); }
-            70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(251, 191, 36, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
-        }
-        .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s ease-out; }
-        .reveal.active { opacity: 1; transform: translateY(0); }
-    </style>
+    .code-font {
+      font-family: 'Fira Code', monospace;
+    }
+
+    /* Кастомный скроллбар */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #0a0a0a; }
+    ::-webkit-scrollbar-thumb { background: #262626; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #FBBF24; }
+
+    canvas {
+      background-color: #050505;
+      background-image: radial-gradient(#1e1e1e 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+  </style>
 </head>
-<body class="bg-white text-slate-900">
+<body class="min-h-screen flex flex-col justify-between selection:bg-brand-gold selection:text-black">
 
-    <nav class="fixed top-0 w-full z-[1000] bg-white/95 backdrop-blur-md border-b border-slate-100 h-16 flex items-center">
-        <div class="container mx-auto px-4 flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <div class="bg-yellow-400 p-1 rounded-lg shadow-sm">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                </div>
-                <span class="font-extrabold uppercase italic tracking-tighter text-sm">Мастер Талас</span>
-            </div>
-            <div class="hidden md:flex gap-6 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                <a href="#services" class="hover:text-yellow-500">Услуги</a>
-                <a href="#why-me" class="hover:text-yellow-500">Преимущества</a>
-                <a href="#steps" class="hover:text-yellow-500">Как я работаю</a>
-            </div>
-            <a href="tel:+996755000228" onclick="return gtag_report_conversion('tel:+996755000228');" class="bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-black uppercase">
-                Позвонить
-            </a>
-        </div>
-    </nav>
-
-    <header class="pt-32 pb-24 bg-dark-custom text-white relative overflow-hidden">
-        <div class="container mx-auto px-4 relative z-10">
-            <div class="inline-flex items-center gap-2 bg-yellow-400/10 text-yellow-400 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest mb-8 border border-yellow-400/20">
-                <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-yellow-500"></span></span>
-                На связи • Приеду за 30 мин
-            </div>
-            <h1 class="text-4xl md:text-7xl font-black mb-6 uppercase italic leading-[1.1] tracking-tighter">
-                Надежный <span class="text-yellow-400">Электрик</span> <br>в городе Талас
-            </h1>
-            <p class="text-slate-400 text-lg mb-10 max-w-xl font-medium leading-relaxed">
-                Частный мастер. Выполняю работы любой сложности: от замены розеток до полной электрификации частных домов. Без посредников и лишних переплат.
-            </p>
-            <div class="flex flex-col sm:flex-row gap-4">
-                <a href="tel:+996755000228" onclick="return gtag_report_conversion('tel:+996755000228');" class="btn-pulse bg-yellow-400 text-slate-900 h-16 sm:w-64 rounded-2xl flex items-center justify-center gap-3 font-black text-lg uppercase shadow-xl shadow-yellow-400/20 active:scale-95 transition-all">
-                    Вызвать сейчас
-                </a>
-                <a href="https://wa.me/996755000228" onclick="return gtag_report_conversion('https://wa.me/996755000228');" class="bg-white/5 border border-white/10 h-16 sm:w-64 rounded-2xl flex items-center justify-center gap-3 font-black text-lg uppercase active:scale-95 transition-all hover:bg-white/10">
-                    WhatsApp
-                </a>
-            </div>
-        </div>
-        <div class="absolute -bottom-20 -right-20 w-80 h-80 bg-yellow-400/5 blur-[100px] rounded-full"></div>
-    </header>
-
-    <section class="py-12 bg-yellow-400 border-y border-yellow-500">
-        <div class="container mx-auto px-4">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center text-slate-900">
-                <div class="reveal">
-                    <div class="text-4xl font-black mb-1">10+</div>
-                    <div class="text-[10px] font-black uppercase tracking-widest">Лет опыта</div>
-                </div>
-                <div class="reveal">
-                    <div class="text-4xl font-black mb-1">1500+</div>
-                    <div class="text-[10px] font-black uppercase tracking-widest">Выездов</div>
-                </div>
-                <div class="reveal">
-                    <div class="text-4xl font-black mb-1">100%</div>
-                    <div class="text-[10px] font-black uppercase tracking-widest">Гарантия</div>
-                </div>
-                <div class="reveal">
-                    <div class="text-4xl font-black mb-1">24/7</div>
-                    <div class="text-[10px] font-black uppercase tracking-widest">Работаю</div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="services" class="py-24 bg-slate-50">
-        <div class="container mx-auto px-4 text-center">
-            <h2 class="text-3xl md:text-5xl font-black uppercase italic mb-16 tracking-tighter">Все виды работ</h2>
-            <div class="grid gap-6 md:grid-cols-3">
-                <div class="reveal bg-white p-10 rounded-3xl border border-slate-100 shadow-sm text-left">
-                    <div class="w-12 h-12 bg-yellow-100 text-yellow-600 rounded-2xl flex items-center justify-center mb-6">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                    </div>
-                    <h3 class="font-black uppercase italic text-lg mb-4">Аварийный выезд</h3>
-                    <ul class="text-slate-500 text-sm space-y-2 font-medium">
-                        <li>• Поиск обрыва проводки</li>
-                        <li>• Устранение замыкания</li>
-                        <li>• Ремонт электрощита</li>
-                    </ul>
-                </div>
-                <div class="reveal bg-white p-10 rounded-3xl border border-slate-100 shadow-sm text-left">
-                    <div class="w-12 h-12 bg-yellow-100 text-yellow-600 rounded-2xl flex items-center justify-center mb-6">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                    </div>
-                    <h3 class="font-black uppercase italic text-lg mb-4">Электромонтаж</h3>
-                    <ul class="text-slate-500 text-sm space-y-2 font-medium">
-                        <li>• Проводка в новостройках</li>
-                        <li>• Электрика в частных домах</li>
-                        <li>• Штробление стен без пыли</li>
-                    </ul>
-                </div>
-                <div class="reveal bg-white p-10 rounded-3xl border border-slate-100 shadow-sm text-left">
-                    <div class="w-12 h-12 bg-yellow-100 text-yellow-600 rounded-2xl flex items-center justify-center mb-6">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
-                    </div>
-                    <h3 class="font-black uppercase italic text-lg mb-4">Установка</h3>
-                    <ul class="text-slate-500 text-sm space-y-2 font-medium">
-                        <li>• Монтаж люстр и бра</li>
-                        <li>• Подключение плит и вытяжек</li>
-                        <li>• Замена розеток/выключателей</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="why-me" class="py-24 bg-white">
-        <div class="container mx-auto px-4">
-            <div class="flex flex-col md:flex-row gap-16 items-center">
-                <div class="md:w-1/2 reveal">
-                    <h2 class="text-3xl md:text-5xl font-black uppercase italic mb-8 tracking-tighter">Почему мне доверяют</h2>
-                    <div class="space-y-8">
-                        <div class="flex gap-4">
-                            <div class="text-yellow-500 font-black italic text-2xl">01</div>
-                            <div>
-                                <h4 class="font-black uppercase italic text-sm mb-1">Справедливая цена</h4>
-                                <p class="text-slate-500 text-sm">Работаю напрямую без посредников и фирм, поэтому мои услуги стоят на 30% дешевле.</p>
-                            </div>
-                        </div>
-                        <div class="flex gap-4">
-                            <div class="text-yellow-500 font-black italic text-2xl">02</div>
-                            <div>
-                                <h4 class="font-black uppercase italic text-sm mb-1">Проф. оборудование</h4>
-                                <p class="text-slate-500 text-sm">Использую только качественные тестеры и инструменты для безопасности вашего дома.</p>
-                            </div>
-                        </div>
-                        <div class="flex gap-4">
-                            <div class="text-yellow-500 font-black italic text-2xl">03</div>
-                            <div>
-                                <h4 class="font-black uppercase italic text-sm mb-1">Чистота на объекте</h4>
-                                <p class="text-slate-500 text-sm">Всегда убираю за собой строительный мусор после завершения монтажа.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="md:w-1/2 bg-slate-50 p-10 rounded-[40px] border border-slate-100 reveal">
-                    <div class="text-center">
-                        <h4 class="text-xl font-black mb-4 italic uppercase">Нужна консультация?</h4>
-                        <p class="text-slate-500 text-sm mb-8 font-medium">Позвоните мне, и я сориентирую вас по стоимости работ прямо по телефону.</p>
-                        <a href="tel:+996755000228" onclick="return gtag_report_conversion('tel:+996755000228');" class="inline-flex items-center gap-2 text-2xl font-black text-slate-900 border-b-4 border-yellow-400 pb-2">
-                            +996 755 000 228
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="steps" class="py-24 bg-dark-custom text-white">
-        <div class="container mx-auto px-4">
-            <h2 class="text-3xl md:text-5xl font-black uppercase italic mb-16 text-center tracking-tighter">Как я работаю</h2>
-            <div class="grid md:grid-cols-4 gap-8">
-                <div class="reveal">
-                    <div class="text-yellow-400 font-black text-5xl opacity-20 mb-[-25px]">1</div>
-                    <h5 class="text-lg font-black uppercase italic mb-3">Звонок</h5>
-                    <p class="text-slate-500 text-xs">Обсуждаем вашу проблему по телефону.</p>
-                </div>
-                <div class="reveal">
-                    <div class="text-yellow-400 font-black text-5xl opacity-20 mb-[-25px]">2</div>
-                    <h5 class="text-lg font-black uppercase italic mb-3">Выезд</h5>
-                    <p class="text-slate-500 text-xs">Приезжаю на объект для осмотра и замера.</p>
-                </div>
-                <div class="reveal">
-                    <div class="text-yellow-400 font-black text-5xl opacity-20 mb-[-25px]">3</div>
-                    <h5 class="text-lg font-black uppercase italic mb-3">Работа</h5>
-                    <p class="text-slate-500 text-xs">Выполняю монтаж согласно стандартам безопасности.</p>
-                </div>
-                <div class="reveal">
-                    <div class="text-yellow-400 font-black text-5xl opacity-20 mb-[-25px]">4</div>
-                    <h5 class="text-lg font-black uppercase italic mb-3">Оплата</h5>
-                    <p class="text-slate-500 text-xs">Принимаете работу и производите оплату.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="py-24 bg-white">
-        <div class="container mx-auto px-4">
-            <div class="bg-slate-900 rounded-[50px] p-12 text-white relative overflow-hidden text-center">
-                <h2 class="text-3xl md:text-5xl font-black uppercase italic mb-6">Работаю по всему Таласу</h2>
-                <p class="text-slate-400 mb-10 max-w-lg mx-auto uppercase text-xs font-black tracking-widest">Выезд в любой район города и ближайшие села</p>
-                <div class="flex flex-wrap justify-center gap-4">
-                    <a href="tel:+996755000228" onclick="return gtag_report_conversion('tel:+996755000228');" class="bg-yellow-400 text-slate-900 px-10 py-5 rounded-2xl font-black uppercase shadow-xl shadow-yellow-400/10">Вызвать мастера</a>
-                    <a href="https://t.me/ta07as" onclick="return gtag_report_conversion('https://t.me/ta07as');" class="bg-white/10 px-10 py-5 rounded-2xl font-black uppercase">Telegram</a>
-                </div>
-                <div class="mt-16 pt-16 border-t border-white/5 grid md:grid-cols-3 gap-8 text-[10px] font-bold uppercase tracking-widest opacity-40">
-                    <div>Индивидуальный подход</div>
-                    <div>Соблюдение сроков</div>
-                    <div>Только ГОСТ материалы</div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <footer class="bg-white py-12 text-center border-t border-slate-100">
-        <div class="container mx-auto px-4">
-            <div class="flex items-center justify-center gap-2 mb-8">
-                <div class="bg-yellow-400 p-1 rounded-lg">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                </div>
-                <span class="font-extrabold uppercase italic tracking-tighter text-sm">Электрик Талас</span>
-            </div>
-            <div class="flex justify-center gap-8 mb-10">
-                <a href="https://instagram.com/ta07as.a" class="opacity-50 hover:opacity-100 transition-opacity">
-                    <span class="text-[10px] font-black uppercase tracking-widest">Instagram</span>
-                </a>
-                <a href="https://wa.me/996755000228" onclick="return gtag_report_conversion('https://wa.me/996755000228');" class="opacity-50 hover:opacity-100 transition-opacity">
-                    <span class="text-[10px] font-black uppercase tracking-widest">WhatsApp</span>
-                </a>
-            </div>
-            <p class="text-[8px] text-slate-400 font-bold uppercase tracking-[0.4em]">© 2026 ТАЛАС ЭЛЕКТРОСЕРВИС • ВСЕ ПРАВА ЗАЩИЩЕНЫ</p>
-        </div>
-    </footer>
-
-    <div class="lg:hidden fixed bottom-6 left-4 right-4 z-[9999]">
-        <a href="tel:+996755000228" onclick="return gtag_report_conversion('tel:+996755000228');" class="bg-yellow-400 text-slate-900 h-16 rounded-3xl flex items-center justify-center gap-3 font-black uppercase text-sm shadow-2xl shadow-yellow-400/40 active:scale-95 transition-all">
-            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path></svg>
-            Вызвать мастера на дом
-        </a>
+  <!-- Шапка сайта -->
+  <header class="border-b border-brand-border bg-brand-dark/95 backdrop-blur sticky top-0 z-50 px-4 md:px-8 py-3.5 flex items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <div class="bg-brand-gold text-black p-2 rounded-xl font-black text-xl shadow-lg shadow-brand-gold/20 flex items-center justify-center w-10 h-10">
+        ⚙️
+      </div>
+      <div>
+        <h1 class="text-lg md:text-xl font-bold tracking-tight text-white flex items-center gap-2">
+          Talas_profi <span class="text-brand-gold">G-Code Converter</span>
+        </h1>
+        <p class="text-[11px] text-neutral-400 font-mono">Промышленная безотказная конвертация УП в TAB/CRLF</p>
+      </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('active');
-                    }
-                });
-            }, { threshold: 0.1 });
+    <div class="flex items-center gap-3">
+      <button id="btn-top-convert" class="bg-brand-gold hover:bg-brand-goldHover text-black font-bold px-5 py-2 rounded-lg text-xs md:text-sm transition-all shadow-lg shadow-brand-gold/20 flex items-center gap-2 active:scale-95">
+        ⚡ Конвертировать
+      </button>
+      <button id="btn-top-download" class="bg-neutral-900 hover:bg-neutral-800 text-brand-gold border border-brand-gold/40 font-semibold px-4 py-2 rounded-lg text-xs md:text-sm transition flex items-center gap-2 active:scale-95">
+        💾 Скачать .TAP
+      </button>
+    </div>
+  </header>
 
-            document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
-        });
-    </script>
+  <!-- Главный Контент -->
+  <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 p-4 md:p-6 max-w-[1920px] mx-auto w-full">
+    
+    <!-- Настройки (4 Колонки) -->
+    <div class="lg:col-span-4 flex flex-col gap-5">
+      
+      <!-- Загрузка Файла -->
+      <div class="bg-brand-card border border-brand-border rounded-2xl p-4 md:p-5 shadow-2xl">
+        <h2 class="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+          📁 Загрузка управляющей программы
+        </h2>
+        <div id="drop-zone" class="border-2 border-dashed border-neutral-700 hover:border-brand-gold bg-neutral-950 rounded-xl p-6 text-center cursor-pointer transition flex flex-col items-center justify-center gap-2 group">
+          <div class="text-3xl text-neutral-500 group-hover:text-brand-gold transition-colors">📂</div>
+          <p class="text-xs md:text-sm text-neutral-200 font-medium">Перетащите файл <code class="text-brand-gold">.tap</code>, <code class="text-brand-gold">.nc</code>, <code class="text-brand-gold">.gcode</code></p>
+          <p class="text-[11px] text-neutral-500">или нажмите для выбора с компьютера</p>
+          <input type="file" id="file-input" class="hidden" accept=".tap,.nc,.gcode,.txt,.cnc,.dat">
+        </div>
+      </div>
+
+      <!-- Панель Опций -->
+      <div class="bg-brand-card border border-brand-border rounded-2xl p-4 md:p-5 shadow-2xl flex flex-col gap-4">
+        <h2 class="text-xs font-bold text-neutral-400 uppercase tracking-widest flex items-center justify-between">
+          🛠️ Параметры Стойки ЧПУ
+        </h2>
+
+        <!-- Профиль -->
+        <div>
+          <label class="block text-[11px] text-neutral-400 mb-1 font-medium">Быстрый пресет:</label>
+          <select id="preset-select" class="w-full bg-black border border-neutral-700 text-neutral-200 text-xs md:text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-brand-gold font-mono">
+            <option value="ncstudio" selected>NCStudio / DSP / RichAuto (TAB + CRLF Strict)</option>
+            <option value="space">Mach3 / LinuxCNC (Пробелы + CRLF)</option>
+            <option value="compact">Плотный код без пробелов (G1X10Y10)</option>
+          </select>
+        </div>
+
+        <hr class="border-brand-border">
+
+        <!-- Разделители -->
+        <div class="space-y-2">
+          <span class="block text-[11px] font-bold text-brand-gold uppercase tracking-wider">1. Формат разделителей</span>
+          <div class="space-y-1.5">
+            <label class="flex items-center gap-2 text-xs md:text-sm text-neutral-300 cursor-pointer">
+              <input type="radio" name="delimiter" value="tab" id="delim-tab" checked class="accent-brand-gold">
+              Заменять все пробелы на <b>Табуляцию (\t)</b>
+            </label>
+            <label class="flex items-center gap-2 text-xs md:text-sm text-neutral-300 cursor-pointer">
+              <input type="radio" name="delimiter" value="space" id="delim-space" class="accent-brand-gold">
+              Вставлять одиночные пробелы между адресами
+            </label>
+            <label class="flex items-center gap-2 text-xs md:text-sm text-neutral-300 cursor-pointer">
+              <input type="radio" name="delimiter" value="remove" id="delim-remove" class="accent-brand-gold">
+              Удалить все разделители
+            </label>
+          </div>
+        </div>
+
+        <hr class="border-brand-border">
+
+        <!-- Очистка -->
+        <div class="space-y-2">
+          <span class="block text-[11px] font-bold text-brand-gold uppercase tracking-wider">2. Символы и очистка</span>
+
+          <div>
+            <label class="block text-[11px] text-neutral-400 mb-1">Перенос строки (EOL):</label>
+            <select id="eol-select" class="w-full bg-black border border-neutral-700 text-neutral-200 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none font-mono">
+              <option value="crlf" selected>Windows (CRLF \r\n) — Обязательно для ЧПУ</option>
+              <option value="lf">Linux / Mac (LF \n)</option>
+            </select>
+          </div>
+
+          <div class="grid grid-cols-1 gap-1.5 pt-1">
+            <label class="flex items-center gap-2 text-xs text-neutral-300 cursor-pointer">
+              <input type="checkbox" id="chk-remove-comments" checked class="accent-brand-gold rounded">
+              Удалять комментарии `(...)` и `;`
+            </label>
+            <label class="flex items-center gap-2 text-xs text-neutral-300 cursor-pointer">
+              <input type="checkbox" id="chk-remove-line-numbers" checked class="accent-brand-gold rounded">
+              Удалять номера строк (`N10`, `N20`)
+            </label>
+            <label class="flex items-center gap-2 text-xs text-neutral-300 cursor-pointer">
+              <input type="checkbox" id="chk-uppercase" checked class="accent-brand-gold rounded">
+              Переводить всё в ВЕРХНИЙ РЕГИСТР
+            </label>
+            <label class="flex items-center gap-2 text-xs text-neutral-300 cursor-pointer">
+              <input type="checkbox" id="chk-add-m30" checked class="accent-brand-gold rounded">
+              Гарантировать `M30` в конце файла
+            </label>
+            <label class="flex items-center gap-2 text-xs text-neutral-300 cursor-pointer">
+              <input type="checkbox" id="chk-clean-ascii" checked class="accent-brand-gold rounded">
+              Удалять спецсимволы, BOM и кракозябры
+            </label>
+          </div>
+        </div>
+
+        <button id="btn-apply" class="w-full bg-neutral-900 hover:bg-neutral-800 text-brand-gold font-bold py-2.5 rounded-xl border border-brand-gold/30 transition text-xs md:text-sm flex items-center justify-center gap-2 active:scale-98">
+          🔄 Применить настройки
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Редакторы и Визуализация (8 Колонок) -->
+    <div class="lg:col-span-8 flex flex-col gap-6">
+
+      <div class="bg-brand-card border border-brand-border rounded-2xl p-4 md:p-5 shadow-2xl flex flex-col flex-1">
+        
+        <!-- Табы -->
+        <div class="flex flex-wrap items-center justify-between border-b border-brand-border pb-3 gap-3">
+          <div class="flex items-center gap-2">
+            <button id="tab-editor" class="px-4 py-1.5 rounded-lg text-xs font-bold transition border border-brand-gold/50 bg-brand-gold/10 text-brand-gold">
+              📝 Код УП
+            </button>
+            <button id="tab-vis" class="px-4 py-1.5 rounded-lg text-xs font-bold transition border border-transparent text-neutral-400 hover:text-neutral-200">
+              📐 2D Траектория
+            </button>
+          </div>
+
+          <div class="flex items-center gap-3 text-xs font-mono text-neutral-400">
+            <span id="stat-lines">Строк: 0</span>
+            <span>|</span>
+            <span id="stat-size">Размер: 0 KB</span>
+          </div>
+        </div>
+
+        <!-- Редактор Кода -->
+        <div id="view-editor" class="mt-4 flex-1 flex flex-col gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-h-[480px]">
+            
+            <!-- Исходник -->
+            <div class="flex flex-col gap-1.5">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-neutral-400 uppercase">Исходная УП:</span>
+                <button id="btn-clear" class="text-[11px] text-neutral-500 hover:text-red-400 transition">Очистить</button>
+              </div>
+              <textarea id="code-input" class="code-font flex-1 w-full bg-black border border-brand-border rounded-xl p-3 text-xs text-neutral-300 resize-none focus:outline-none focus:border-brand-gold/50" placeholder="Вставьте G-код или закиньте файл сюда..."></textarea>
+            </div>
+
+            <!-- Результат -->
+            <div class="flex flex-col gap-1.5">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-brand-gold uppercase">Обработанный код (TAB):</span>
+                <button id="btn-copy" class="text-[11px] text-brand-gold hover:underline transition">📋 Копировать</button>
+              </div>
+              <textarea id="code-output" readonly class="code-font flex-1 w-full bg-black border border-brand-border rounded-xl p-3 text-xs text-amber-400 resize-none focus:outline-none" placeholder="Готовый код появится здесь..."></textarea>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Визуализатор -->
+        <div id="view-vis" class="mt-4 hidden flex-1 flex-col gap-3">
+          <div class="relative w-full h-[520px] border border-brand-border rounded-xl overflow-hidden">
+            <canvas id="cnc-canvas" class="w-full h-full block"></canvas>
+            
+            <div class="absolute bottom-3 left-3 bg-black/80 backdrop-blur border border-brand-border p-3 rounded-lg text-xs font-mono space-y-1">
+              <div class="flex items-center gap-2 text-amber-400">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span> Рабочая подача (G1)
+              </div>
+              <div class="flex items-center gap-2 text-neutral-500">
+                <span class="w-2.5 h-2.5 rounded-full bg-neutral-600"></span> Холостой ход (G0)
+              </div>
+              <div id="canvas-bounds" class="text-neutral-400 pt-1 text-[11px]">Габариты X/Y: --</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Нижняя панель действий -->
+        <div class="mt-4 pt-4 border-t border-brand-border flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-neutral-400">Расширение файла:</span>
+            <select id="export-ext" class="bg-black border border-neutral-700 text-neutral-200 text-xs rounded px-2.5 py-1.5 focus:outline-none font-mono">
+              <option value=".tap" selected>.TAP (Стандарт ЧПУ)</option>
+              <option value=".nc">.NC</option>
+              <option value=".gcode">.GCODE</option>
+              <option value=".txt">.TXT</option>
+            </select>
+          </div>
+
+          <button id="btn-download-bottom" class="bg-brand-gold hover:bg-brand-goldHover text-black font-bold px-6 py-2.5 rounded-xl transition shadow-lg shadow-brand-gold/20 flex items-center gap-2 text-sm active:scale-95">
+            💾 Скачать обработанный .TAP
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Подвал -->
+  <footer class="border-t border-brand-border bg-brand-dark px-6 py-3 text-center text-xs text-neutral-500 font-mono">
+    <p>Talas_profi &bull; Профессиональный инструмент адаптации УП под фрезерные станки ЧПУ</p>
+  </footer>
+
+  <!-- СКРИПТ КОНВЕРТЕРА ДВИЖКА -->
+  <script>
+    const inputArea = document.getElementById('code-input');
+    const outputArea = document.getElementById('code-output');
+    const fileInput = document.getElementById('file-input');
+    const dropZone = document.getElementById('drop-zone');
+    
+    const presetSelect = document.getElementById('preset-select');
+    const eolSelect = document.getElementById('eol-select');
+    const exportExt = document.getElementById('export-ext');
+    
+    const chkRemoveComments = document.getElementById('chk-remove-comments');
+    const chkRemoveLineNumbers = document.getElementById('chk-remove-line-numbers');
+    const chkUppercase = document.getElementById('chk-uppercase');
+    const chkAddM30 = document.getElementById('chk-add-m30');
+    const chkCleanAscii = document.getElementById('chk-clean-ascii');
+    
+    const statLines = document.getElementById('stat-lines');
+    const statSize = document.getElementById('stat-size');
+    const canvasBounds = document.getElementById('canvas-bounds');
+    
+    const canvas = document.getElementById('cnc-canvas');
+    const ctx = canvas.getContext('2d');
+
+    // Главная функция конвертации
+    function convertGCode() {
+      let code = inputArea.value || '';
+      
+      if (!code.trim()) {
+        outputArea.value = '';
+        updateStats('');
+        return;
+      }
+
+      // 1. Очистка невидимых спецсимволов и BOM
+      if (chkCleanAscii.checked) {
+        code = code.replace(/[\uFEFF\uFFFE]/g, '');
+        code = code.replace(/[^\x00-\x7F]/g, '');
+      }
+
+      // 2. Разбиение на строки
+      let lines = code.split(/\r\n|\r|\n/);
+      const delimiterChoice = document.querySelector('input[name="delimiter"]:checked')?.value || 'tab';
+      let processedLines = [];
+
+      lines.forEach(line => {
+        let trimmed = line.trim();
+        if (!trimmed) return;
+
+        // Вверхний регистр
+        if (chkUppercase.checked) {
+          trimmed = trimmed.toUpperCase();
+        }
+
+        // Удаление комментариев
+        if (chkRemoveComments.checked) {
+          trimmed = trimmed.replace(/\(.*?\)/g, '');
+          trimmed = trimmed.replace(/;.*/g, '');
+          trimmed = trimmed.trim();
+          if (!trimmed) return;
+        }
+
+        // Удаление номеров строк N10
+        if (chkRemoveLineNumbers.checked) {
+          trimmed = trimmed.replace(/^N\d+\s*/i, '');
+          trimmed = trimmed.trim();
+          if (!trimmed) return;
+        }
+
+        // Обработка табуляций и пробелов
+        let formattedLine = trimmed;
+        if (delimiterChoice === 'tab') {
+          // Разделение команд и координат табуляцией
+          formattedLine = formattedLine.replace(/\s+/g, '\t').replace(/([0-9.])(?=[A-Z])/g, '$1\t');
+        } else if (delimiterChoice === 'space') {
+          formattedLine = formattedLine.replace(/\s+/g, ' ').replace(/([0-9.])(?=[A-Z])/g, '$1 ');
+        } else if (delimiterChoice === 'remove') {
+          formattedLine = formattedLine.replace(/\s+/g, '');
+        }
+
+        processedLines.push(formattedLine);
+      });
+
+      // 3. Добавление M30
+      if (chkAddM30.checked) {
+        const lastLine = processedLines[processedLines.length - 1] || '';
+        if (!lastLine.includes('M30') && !lastLine.includes('M2')) {
+          processedLines.push('M30');
+        }
+      }
+
+      // 4. Форматирование EOL (CRLF для Windows/Стоек)
+      let eolChar = eolSelect.value === 'lf' ? '\n' : '\r\n';
+      const finalResult = processedLines.join(eolChar);
+      outputArea.value = finalResult;
+
+      updateStats(finalResult);
+      drawToolpath(processedLines);
+    }
+
+    function updateStats(text) {
+      const linesCount = text ? text.split(/\r\n|\r|\n/).length : 0;
+      const bytes = new Blob([text]).size;
+      statLines.textContent = `Строк: ${linesCount}`;
+      statSize.textContent = `Размер: ${(bytes / 1024).toFixed(1)} KB`;
+    }
+
+    // 2D Визуализатор траектории
+    function drawToolpath(lines) {
+      const width = canvas.width = canvas.parentElement.clientWidth;
+      const height = canvas.height = canvas.parentElement.clientHeight;
+      ctx.clearRect(0, 0, width, height);
+
+      let currentX = 0, currentY = 0;
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      let points = [];
+      let isG0 = false;
+
+      lines.forEach(line => {
+        const clean = line.replace(/\t/g, ' ');
+        if (clean.includes('G0') || clean.includes('G00')) isG0 = true;
+        if (clean.includes('G1') || clean.includes('G01')) isG0 = false;
+
+        const matchX = clean.match(/X\s*([-+]?\d*\.?\d+)/);
+        const matchY = clean.match(/Y\s*([-+]?\d*\.?\d+)/);
+
+        if (matchX) currentX = parseFloat(matchX[1]);
+        if (matchY) currentY = parseFloat(matchY[1]);
+
+        if (matchX || matchY) {
+          points.push({ x: currentX, y: currentY, g0: isG0 });
+          if (currentX < minX) minX = currentX;
+          if (currentX > maxX) maxX = currentX;
+          if (currentY < minY) minY = currentY;
+          if (currentY > maxY) maxY = currentY;
+        }
+      });
+
+      if (points.length === 0) {
+        canvasBounds.textContent = `Габариты X/Y: Координаты не обнаружены`;
+        return;
+      }
+
+      canvasBounds.textContent = `Габариты: X [${minX.toFixed(1)} : ${maxX.toFixed(1)}] Y [${minY.toFixed(1)} : ${maxY.toFixed(1)}]`;
+
+      const margin = 40;
+      const scaleX = (width - margin * 2) / ((maxX - minX) || 1);
+      const scaleY = (height - margin * 2) / ((maxY - minY) || 1);
+      const scale = Math.min(scaleX, scaleY);
+
+      const toScreenX = (x) => margin + (x - minX) * scale;
+      const toScreenY = (y) => height - (margin + (y - minY) * scale);
+
+      for (let i = 1; i < points.length; i++) {
+        const p1 = points[i - 1];
+        const p2 = points[i];
+
+        ctx.beginPath();
+        ctx.moveTo(toScreenX(p1.x), toScreenY(p1.y));
+        ctx.lineTo(toScreenX(p2.x), toScreenY(p2.y));
+
+        if (p2.g0) {
+          ctx.strokeStyle = '#525252';
+          ctx.lineWidth = 1;
+          ctx.setLineDash([2, 4]);
+        } else {
+          ctx.strokeStyle = '#FBBF24';
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([]);
+        }
+        ctx.stroke();
+      }
+    }
+
+    // Обработчики пресетов
+    presetSelect.addEventListener('change', (e) => {
+      const val = e.target.value;
+      if (val === 'ncstudio') {
+        document.getElementById('delim-tab').checked = true;
+        eolSelect.value = 'crlf';
+      } else if (val === 'space') {
+        document.getElementById('delim-space').checked = true;
+        eolSelect.value = 'crlf';
+      } else if (val === 'compact') {
+        document.getElementById('delim-remove').checked = true;
+      }
+      convertGCode();
+    });
+
+    // Перетаскивание файлов
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-brand-gold'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('border-brand-gold'));
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('border-brand-gold');
+      if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length) handleFile(e.target.files[0]);
+    });
+
+    function handleFile(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        inputArea.value = e.target.result;
+        convertGCode();
+      };
+      reader.readAsText(file);
+    }
+
+    // Переключение табов
+    const tabEditor = document.getElementById('tab-editor');
+    const tabVis = document.getElementById('tab-vis');
+    const viewEditor = document.getElementById('view-editor');
+    const viewVis = document.getElementById('view-vis');
+
+    tabEditor.addEventListener('click', () => {
+      viewEditor.classList.remove('hidden'); viewEditor.classList.add('flex');
+      viewVis.classList.add('hidden'); viewVis.classList.remove('flex');
+      tabEditor.className = 'px-4 py-1.5 rounded-lg text-xs font-bold transition border border-brand-gold/50 bg-brand-gold/10 text-brand-gold';
+      tabVis.className = 'px-4 py-1.5 rounded-lg text-xs font-bold transition border border-transparent text-neutral-400 hover:text-neutral-200';
+    });
+
+    tabVis.addEventListener('click', () => {
+      viewVis.classList.remove('hidden'); viewVis.classList.add('flex');
+      viewEditor.classList.add('hidden'); viewEditor.classList.remove('flex');
+      tabVis.className = 'px-4 py-1.5 rounded-lg text-xs font-bold transition border border-brand-gold/50 bg-brand-gold/10 text-brand-gold';
+      tabEditor.className = 'px-4 py-1.5 rounded-lg text-xs font-bold transition border border-transparent text-neutral-400 hover:text-neutral-200';
+      convertGCode();
+    });
+
+    // Копирование
+    document.getElementById('btn-copy').addEventListener('click', () => {
+      if (!outputArea.value) return;
+      navigator.clipboard.writeText(outputArea.value);
+      alert('Скопировано в буфер обмена!');
+    });
+
+    // Функция Скачивания Файла
+    function downloadFile() {
+      const text = outputArea.value;
+      if (!text) {
+        alert('Нет обработанного кода для скачивания!');
+        return;
+      }
+      const ext = exportExt.value;
+      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `Program_${Date.now()}${ext}`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    document.getElementById('btn-top-download').addEventListener('click', downloadFile);
+    document.getElementById('btn-download-bottom').addEventListener('click', downloadFile);
+    document.getElementById('btn-top-convert').addEventListener('click', convertGCode);
+    document.getElementById('btn-apply').addEventListener('click', convertGCode);
+    document.getElementById('btn-clear').addEventListener('click', () => { inputArea.value = ''; convertGCode(); });
+
+    inputArea.addEventListener('input', convertGCode);
+
+    // Первичная инициализация
+    convertGCode();
+  </script>
 </body>
 </html>
