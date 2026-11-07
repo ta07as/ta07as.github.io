@@ -60,6 +60,37 @@
         </div>
       </div>
 
+
+      <section class="bg-neutral-900/90 border border-neutral-800 rounded-2xl p-5 shadow-2xl">
+        <div class="flex items-center justify-between gap-3 mb-3">
+          <h2 class="text-xs font-bold text-neutral-400 uppercase tracking-widest">👁️ Предпросмотр изображения</h2>
+          <span id="preview-status" class="text-[10px] text-neutral-500">Ожидает изображение</span>
+        </div>
+        <p class="text-[11px] text-neutral-400 mb-3">Проверьте расположение рисунка на заготовке. Это отдельный визуальный просмотр: исходный алгоритм генерации .TAP не изменён.</p>
+        <div class="rounded-xl overflow-hidden border border-neutral-800 bg-black">
+          <canvas id="image-preview" class="block w-full" style="height:260px;background:#080808;"></canvas>
+        </div>
+        <div class="grid grid-cols-2 gap-3 mt-4">
+          <label class="text-[11px] text-neutral-400">Масштаб (%)
+            <input id="preview-scale" type="number" min="10" max="300" value="100" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 font-mono">
+          </label>
+          <label class="text-[11px] text-neutral-400">Поворот (°)
+            <input id="preview-rotation" type="number" min="-180" max="180" value="0" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 font-mono">
+          </label>
+          <label class="text-[11px] text-neutral-400">Смещение X (мм)
+            <input id="preview-x" type="number" step="1" value="0" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 font-mono">
+          </label>
+          <label class="text-[11px] text-neutral-400">Смещение Y (мм)
+            <input id="preview-y" type="number" step="1" value="0" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 font-mono">
+          </label>
+        </div>
+        <div class="flex gap-2 mt-3">
+          <button id="preview-reset" type="button" class="flex-1 bg-neutral-800 hover:bg-neutral-700 text-white text-xs font-semibold rounded-lg py-2.5">↺ Сбросить</button>
+          <button id="preview-center" type="button" class="flex-1 bg-amber-400 hover:bg-amber-300 text-black text-xs font-bold rounded-lg py-2.5">⊙ По центру</button>
+        </div>
+        <div id="preview-warning" class="hidden mt-3 text-[11px] text-amber-300 bg-amber-400/10 border border-amber-400/30 rounded-lg p-3"></div>
+      </section>
+
       <!-- Геометрия и физика фрезеровки -->
       <div class="bg-neutral-900/90 border border-neutral-800 rounded-2xl p-5 shadow-2xl flex flex-col gap-4">
         <h2 class="text-xs font-bold text-neutral-400 uppercase tracking-widest">
@@ -229,6 +260,99 @@
     let loadedImage = null;
     let loadedRawText = null;
 
+
+    // Дополнительный предпросмотр. Не меняет исходную генерацию .TAP.
+    const previewCanvas = document.getElementById('image-preview');
+    const previewCtx = previewCanvas.getContext('2d');
+    const previewScale = document.getElementById('preview-scale');
+    const previewRotation = document.getElementById('preview-rotation');
+    const previewX = document.getElementById('preview-x');
+    const previewY = document.getElementById('preview-y');
+    const previewStatus = document.getElementById('preview-status');
+    const previewWarning = document.getElementById('preview-warning');
+
+    function renderImagePreview() {
+      const cssW = Math.max(260, Math.floor(previewCanvas.getBoundingClientRect().width || 320));
+      const cssH = 260;
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      previewCanvas.width = Math.round(cssW * dpr);
+      previewCanvas.height = Math.round(cssH * dpr);
+      previewCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      previewCtx.fillStyle = '#080808';
+      previewCtx.fillRect(0, 0, cssW, cssH);
+
+      const stockW = Math.max(1, Number(paramWidth.value) || 400);
+      const stockH = Math.max(1, Number(paramHeight.value) || 400);
+      const margin = 18;
+      const fit = Math.min((cssW - margin * 2) / stockW, (cssH - margin * 2) / stockH);
+      const boardW = stockW * fit;
+      const boardH = stockH * fit;
+      const left = (cssW - boardW) / 2;
+      const top = (cssH - boardH) / 2;
+
+      previewCtx.fillStyle = '#b7a17b';
+      previewCtx.fillRect(left, top, boardW, boardH);
+      previewCtx.strokeStyle = '#FBBF24';
+      previewCtx.lineWidth = 1;
+      previewCtx.strokeRect(left, top, boardW, boardH);
+
+      if (!loadedImage) {
+        previewStatus.textContent = 'Ожидает изображение';
+        previewWarning.classList.add('hidden');
+        previewCtx.fillStyle = '#3f3f46';
+        previewCtx.font = '12px Inter, sans-serif';
+        previewCtx.textAlign = 'center';
+        previewCtx.fillText('Загрузите изображение для предпросмотра', cssW / 2, cssH / 2);
+      } else {
+        const pct = Math.min(300, Math.max(10, Number(previewScale.value) || 100)) / 100;
+        const angle = (Number(previewRotation.value) || 0) * Math.PI / 180;
+        const base = Math.min(boardW / loadedImage.width, boardH / loadedImage.height);
+        const drawW = loadedImage.width * base * pct;
+        const drawH = loadedImage.height * base * pct;
+        const dx = (Number(previewX.value) || 0) * fit;
+        const dy = (Number(previewY.value) || 0) * fit;
+        const cx = left + boardW / 2 + dx;
+        const cy = top + boardH / 2 - dy;
+
+        previewCtx.save();
+        previewCtx.beginPath();
+        previewCtx.rect(left, top, boardW, boardH);
+        previewCtx.clip();
+        previewCtx.translate(cx, cy);
+        previewCtx.rotate(angle);
+        previewCtx.drawImage(loadedImage, -drawW / 2, -drawH / 2, drawW, drawH);
+        previewCtx.restore();
+
+        const outside = Math.abs(Number(previewX.value) || 0) + drawW / (2 * fit) > stockW / 2 ||
+                        Math.abs(Number(previewY.value) || 0) + drawH / (2 * fit) > stockH / 2;
+        previewWarning.classList.toggle('hidden', !outside);
+        previewWarning.textContent = outside ? 'Внимание: рисунок может выходить за границы заготовки.' : '';
+        previewStatus.textContent = loadedImage.width + ' × ' + loadedImage.height + ' px';
+      }
+
+      previewCtx.fillStyle = '#fbbf24';
+      previewCtx.font = '10px Inter, sans-serif';
+      previewCtx.textAlign = 'left';
+      previewCtx.fillText(stockW + ' × ' + stockH + ' мм', 8, 14);
+    }
+
+    [previewScale, previewRotation, previewX, previewY, paramWidth, paramHeight].forEach(el => {
+      el.addEventListener('input', renderImagePreview);
+    });
+    document.getElementById('preview-reset').addEventListener('click', () => {
+      previewScale.value = 100;
+      previewRotation.value = 0;
+      previewX.value = 0;
+      previewY.value = 0;
+      renderImagePreview();
+    });
+    document.getElementById('preview-center').addEventListener('click', () => {
+      previewX.value = 0;
+      previewY.value = 0;
+      renderImagePreview();
+    });
+    window.addEventListener('resize', renderImagePreview);
+
     // Чтение файлов (Картинки, Текст, G-код)
     fileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
@@ -242,6 +366,7 @@
             loadedImage = img;
             loadedRawText = null;
             inputArea.value = `[Загружено изображение: ${file.name}, ${img.width}x${img.height}px]`;
+            renderImagePreview();
             generateTapFromImage();
           };
           img.src = event.target.result;
@@ -464,6 +589,8 @@
       tabCode.className = 'px-4 py-1.5 rounded-lg text-xs font-bold transition border border-transparent text-neutral-400 hover:text-white flex items-center gap-1.5';
       if (outputArea.value) generateTapFromText();
     });
+
+    renderImagePreview();
 
     // Drag and Drop
     dropZone.addEventListener('click', () => fileInput.click());
