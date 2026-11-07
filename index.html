@@ -66,7 +66,7 @@
           <h2 class="text-xs font-bold text-neutral-400 uppercase tracking-widest">👁️ Предпросмотр изображения</h2>
           <span id="preview-status" class="text-[10px] text-neutral-500">Ожидает изображение</span>
         </div>
-        <p class="text-[11px] text-neutral-400 mb-3">Предпросмотр и генерация .TAP используют одинаковые масштаб, поворот и смещения X/Y.</p>
+        <p class="text-[11px] text-neutral-400 mb-3">Проверьте расположение рисунка на заготовке. Масштаб, поворот и смещение учитываются при генерации траектории: рисунок вписывается в заготовку с сохранением пропорций.</p>
         <div class="rounded-xl overflow-hidden border border-neutral-800 bg-black">
           <canvas id="image-preview" class="block w-full" style="height:260px;background:#080808;"></canvas>
         </div>
@@ -107,7 +107,7 @@
             <input type="number" id="param-height" value="400" class="w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 focus:outline-none focus:border-amber-400 font-mono">
           </div>
           <div>
-            <label class="block text-[11px] text-neutral-400 mb-1">Глубина реза (Z):</label>
+            <label class="block text-[11px] text-neutral-400 mb-1">Общая глубина реза (Z):</label>
             <input type="number" id="param-cutz" value="-2.0" step="0.5" class="w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 focus:outline-none focus:border-amber-400 font-mono">
           </div>
           <div>
@@ -115,7 +115,7 @@
             <input type="number" id="param-safez" value="5.0" step="1" class="w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 focus:outline-none focus:border-amber-400 font-mono">
           </div>
           <div>
-            <label class="block text-[11px] text-neutral-400 mb-1">Рабочая подача (F):</label> врезания
+            <label class="block text-[11px] text-neutral-400 mb-1">Рабочая подача (F), мм/мин:</label>
             <input type="number" id="param-feed" value="1200" step="100" class="w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 focus:outline-none focus:border-amber-400 font-mono">
           </div>
           <div>
@@ -124,34 +124,49 @@
           </div>
         </div>
 
-        <section class="mt-2 border-t border-neutral-800 pt-4 space-y-3">
-          <h3 class="text-xs font-bold text-amber-400 uppercase tracking-widest">Дополнительные параметры — черновик</h3>
-          <p class="text-[10px] leading-relaxed text-neutral-400">Настройки сохраняются в этом браузере и отображаются для проверки. Они не добавляются в машинный .TAP-код.</p>
+        <div class="pt-3 border-t border-neutral-800 flex flex-col gap-3">
+          <h3 class="text-[11px] font-bold text-amber-400 uppercase tracking-widest">🛠 Фрезеровка</h3>
           <div class="grid grid-cols-2 gap-3">
-            <label class="text-[11px] text-neutral-400">Обороты шпинделя (об/мин)
-              <input id="draft-rpm" type="number" min="0" placeholder="Не задано" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 font-mono">
-            </label>
-            <label class="text-[11px] text-neutral-400">Скорость холостого хода (мм/мин)
-              <input id="draft-rapid" type="number" min="0" placeholder="Не задано" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 font-mono">
-            </label>
-            <label class="text-[11px] text-neutral-400">Диаметр инструмента (мм)
-              <input id="draft-tool-diameter" type="number" min="0" step="0.1" placeholder="Не задано" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 font-mono">
-            </label>
-            <label class="text-[11px] text-neutral-400">Количество проходов
-              <select id="draft-passes" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 font-mono">
-                <option value="1">1 проход</option><option value="2">2 прохода</option><option value="3">3 прохода</option>
+            <div>
+              <label class="block text-[11px] text-neutral-400 mb-1">Диаметр фрезы (мм):</label>
+              <input type="number" id="param-tool" value="3" min="0.1" step="0.1" class="w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 focus:outline-none focus:border-amber-400 font-mono">
+            </div>
+            <div>
+              <label class="block text-[11px] text-neutral-400 mb-1">Количество проходов:</label>
+              <select id="param-passes" class="w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 focus:outline-none focus:border-amber-400 font-mono">
+                <option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option>
               </select>
-            </label>
-            <label class="text-[11px] text-neutral-400 col-span-2">Сторона контура
-              <select id="draft-side" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 font-mono">
-                <option value="center">По центру линии — визуально</option>
-                <option value="inside">Внутрь — визуальная пометка</option>
-                <option value="outside">Наружу — визуальная пометка</option>
-              </select>
-            </label>
+            </div>
           </div>
-          <div id="draft-save-status" class="text-[10px] text-neutral-500">Черновые настройки будут сохранены автоматически.</div>
-        </section>
+          <div>
+            <label class="block text-[11px] text-neutral-400 mb-1">Режим обработки:</label>
+            <select id="param-mode" class="w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 focus:outline-none focus:border-amber-400 font-mono">
+              <option value="pocket">1 — Внутренний карман (Inside Pocket)</option>
+              <option value="clear">2 — Очистка снаружи контура (Outside Clearing)</option>
+              <option value="center" selected>3 — По центру линии (Centerline)</option>
+              <option value="lineout">4 — Снаружи линии (Outside Line)</option>
+              <option value="linein">5 — Внутри линии (Inside Line)</option>
+            </select>
+          </div>
+          <div id="open-row" class="hidden">
+            <label class="block text-[11px] text-neutral-400 mb-1">Открытые линии (сторона не определена):</label>
+            <select id="param-open" class="w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 focus:outline-none focus:border-amber-400 font-mono">
+              <option value="skip" selected>Пропустить и предупредить</option>
+              <option value="center">Пройти по центру линии</option>
+            </select>
+          </div>
+          <label class="flex items-start gap-2 text-[11px] text-neutral-300 cursor-pointer">
+            <input type="checkbox" id="chk-fill" checked class="accent-amber-400 rounded mt-0.5">
+            Замкнутый контур = область (заливать то, что внутри замкнутой линии)
+          </label>
+          <div>
+            <div class="text-[11px] text-neutral-400 mb-1">Глубина каждого прохода (Z &lt; 0, мм). Последний проход = общая глубина:</div>
+            <div id="depth-fields" class="grid grid-cols-2 gap-3"></div>
+          </div>
+          <button id="btn-distribute" type="button" class="w-full bg-neutral-800 hover:bg-neutral-700 text-amber-400 text-xs font-semibold rounded-lg py-2.5 border border-amber-400/30">📏 Распределить глубину равномерно</button>
+          <div id="depth-status" class="text-[11px] rounded-lg p-2.5 border"></div>
+          <div id="cam-log" class="hidden"></div>
+        </div>
 
         <div class="pt-2 border-t border-neutral-800 space-y-2">
           <label class="flex items-center gap-2 text-xs text-neutral-300 cursor-pointer">
@@ -290,7 +305,7 @@
     let loadedRawText = null;
 
 
-    // Предпросмотр и генерация .TAP используют одну и ту же геометрию размещения.
+    // Дополнительный предпросмотр. Не меняет исходную генерацию .TAP.
     const previewCanvas = document.getElementById('image-preview');
     const previewCtx = previewCanvas.getContext('2d');
     const previewScale = document.getElementById('preview-scale');
@@ -373,41 +388,7 @@
       previewRotation.value = 0;
       previewX.value = 0;
       previewY.value = 0;
- 
-     // Черновые параметры сохраняются локально, но намеренно не влияют на машинный G-код.
-     const draftSettingIds = ['draft-rpm', 'draft-rapid', 'draft-tool-diameter', 'draft-passes', 'draft-side'];
-     const draftStatus = document.getElementById('draft-save-status');
-     function loadDraftSettings() {
-       try {
-         const saved = JSON.parse(localStorage.getItem('talasProfiCncDraftSettings') || '{}');
-         draftSettingIds.forEach(id => {
-           const el = document.getElementById(id);
-           if (el && saved[id] !== undefined) el.value = saved[id];
-         });
-       } catch (_) {
-         draftStatus.textContent = 'Не удалось загрузить черновик из памяти браузера.';
-       }
-     }
-     function saveDraftSettings() {
-       const data = {};
-       draftSettingIds.forEach(id => {
-         const el = document.getElementById(id);
-         if (el) data[id] = el.value;
-       });
-       try {
-         localStorage.setItem('talasProfiCncDraftSettings', JSON.stringify(data));
-         draftStatus.textContent = 'Черновые настройки сохранены в этом браузере.';
-       } catch (_) {
-         draftStatus.textContent = 'Браузер не разрешил сохранить черновик.';
-       }
-     }
-     draftSettingIds.forEach(id => {
-       const el = document.getElementById(id);
-       if (el) el.addEventListener('input', saveDraftSettings);
-     });
-     loadDraftSettings();
-
-     renderImagePreview();
+      renderImagePreview();
     });
     document.getElementById('preview-center').addEventListener('click', () => {
       previewX.value = 0;
@@ -426,6 +407,7 @@
         reader.onload = (event) => {
           const img = new Image();
           img.onload = () => {
+            if (!img.width || !img.height) { img.width = 800; img.height = 800; }
             loadedImage = img;
             loadedRawText = null;
             inputArea.value = `[Загружено изображение: ${file.name}, ${img.width}x${img.height}px]`;
@@ -446,86 +428,422 @@
       }
     });
 
-    // Преобразует изображение в ту же геометрию, что показана в предпросмотре.
-    function generateTapFromImage() {
-      if (!loadedImage) return;
-
-      const wMax = Number(paramWidth.value);
-      const hMax = Number(paramHeight.value);
-      const cutZ = Number(paramCutZ.value);
-      const safeZ = Number(paramSafeZ.value);
-      const feed = Number(paramFeed.value);
-      const step = Number(paramStep.value);
-      const sep = chkTabs.checked ? '\t' : ' ';
-
-      if (![wMax, hMax, cutZ, safeZ, feed, step].every(Number.isFinite) ||
-          wMax <= 0 || hMax <= 0 || step <= 0 || feed <= 0) {
-        alert('Проверьте размеры заготовки, глубину, безопасную Z, подачу и шаг растра.');
-        return;
+    // ===================== ФРЕЗЕРОВКА: ГЕОМЕТРИЯ (растровый движок) =====================
+    // <ENGINE>
+    function edt1d(f, n, d, v, z) {
+      let k = 0; v[0] = 0; z[0] = -1e30; z[1] = 1e30;
+      for (let q = 1; q < n; q++) {
+        let s = ((f[q] + q * q) - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]);
+        while (s <= z[k]) { k--; s = ((f[q] + q * q) - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]); }
+        k++; v[k] = q; z[k] = s; z[k + 1] = 1e30;
       }
-
-      const pct = Math.min(300, Math.max(10, Number(previewScale.value) || 100)) / 100;
-      const angle = (Number(previewRotation.value) || 0) * Math.PI / 180;
-      const offsetX = Number(previewX.value) || 0;
-      const offsetY = Number(previewY.value) || 0;
-
-      // Один пиксель виртуального холста соответствует шагу растра в миллиметрах.
-      const targetCols = Math.max(1, Math.ceil(wMax / step));
-      const targetRows = Math.max(1, Math.ceil(hMax / step));
-      const c = document.createElement('canvas');
-      c.width = targetCols;
-      c.height = targetRows;
-      const tCtx = c.getContext('2d', { willReadFrequently: true });
-      tCtx.fillStyle = '#ffffff';
-      tCtx.fillRect(0, 0, targetCols, targetRows);
-
-      // Повторяем масштабирование предпросмотра: изображение вписывается в заготовку,
-      // затем применяется пользовательский процент масштаба, поворот и сдвиги.
-      const baseMmPerPixel = Math.min(wMax / loadedImage.width, hMax / loadedImage.height);
-      const drawW = loadedImage.width * baseMmPerPixel * pct / step;
-      const drawH = loadedImage.height * baseMmPerPixel * pct / step;
-      const cx = wMax / (2 * step) + offsetX / step;
-      const cy = hMax / (2 * step) - offsetY / step;
-
-      tCtx.save();
-      tCtx.beginPath();
-      tCtx.rect(0, 0, wMax / step, hMax / step);
-      tCtx.clip();
-      tCtx.translate(cx, cy);
-      tCtx.rotate(angle);
-      tCtx.drawImage(loadedImage, -drawW / 2, -drawH / 2, drawW, drawH);
-      tCtx.restore();
-
-      const imgData = tCtx.getImageData(0, 0, targetCols, targetRows).data;
-      const lines = ['G90', `G0${sep}Z${safeZ.toFixed(3)}`, 'M3'];
-
-      // Сканируем только пиксели внутри заготовки; координаты остаются в её пределах.
-      for (let y = 0; y < targetRows; y++) {
-        let drawing = false;
-        for (let x = 0; x < targetCols; x++) {
-          const idx = (y * targetCols + x) * 4;
-          const brightness = (imgData[idx] + imgData[idx + 1] + imgData[idx + 2]) / 3;
-          if (brightness < 130) {
-            const realX = Math.min(wMax, x * step).toFixed(3);
-            const realY = Math.min(hMax, (targetRows - 1 - y) * step).toFixed(3);
-            if (!drawing) {
-              lines.push(`G0${sep}X${realX}${sep}Y${realY}`);
-              lines.push(`G1${sep}Z${cutZ.toFixed(3)}${sep}F${feed}`);
-              drawing = true;
-            } else {
-              lines.push(`G1${sep}X${realX}${sep}Y${realY}${sep}F${feed}`);
-            }
-          } else if (drawing) {
-            lines.push(`G0${sep}Z${safeZ.toFixed(3)}`);
-            drawing = false;
+      k = 0;
+      for (let q = 0; q < n; q++) { while (z[k + 1] < q) k++; d[q] = (q - v[k]) * (q - v[k]) + f[v[k]]; }
+    }
+    // Евклидово расстояние (в пикселях) до ближайшего пикселя со значением 1
+    function edt(feat, cols, rows) {
+      const INF = 1e12, n = Math.max(cols, rows);
+      const f = new Float64Array(n), d = new Float64Array(n), v = new Int32Array(n), z = new Float64Array(n + 2);
+      const out = new Float32Array(cols * rows), tmp = new Float64Array(cols * rows);
+      for (let x = 0; x < cols; x++) {
+        for (let y = 0; y < rows; y++) f[y] = feat[y * cols + x] ? 0 : INF;
+        edt1d(f, rows, d, v, z);
+        for (let y = 0; y < rows; y++) tmp[y * cols + x] = d[y];
+      }
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) f[x] = tmp[y * cols + x];
+        edt1d(f, cols, d, v, z);
+        for (let x = 0; x < cols; x++) out[y * cols + x] = Math.sqrt(d[x]);
+      }
+      return out;
+    }
+    // Знаковое поле расстояний до фигуры F (мм): <0 внутри, >0 снаружи; din — глубина внутри (пикс.)
+    function signedField(F, cols, rows, px) {
+      const N = cols * rows, inv = new Uint8Array(N);
+      for (let i = 0; i < N; i++) inv[i] = F[i] ? 0 : 1;
+      const dout = edt(F, cols, rows), din = edt(inv, cols, rows), c = new Float32Array(N);
+      for (let i = 0; i < N; i++) c[i] = F[i] ? -(din[i] - 0.5) * px : (dout[i] - 0.5) * px;
+      return { c, din };
+    }
+    function samp(c, cols, rows, px, H, x, y) {
+      const fx = x / px - 0.5, fy = (H - y) / px - 0.5;
+      const i = Math.max(0, Math.min(cols - 2, Math.floor(fx))), j = Math.max(0, Math.min(rows - 2, Math.floor(fy)));
+      const tx = Math.min(1, Math.max(0, fx - i)), ty = Math.min(1, Math.max(0, fy - j)), k = j * cols + i;
+      return (c[k] * (1 - tx) + c[k + 1] * tx) * (1 - ty) + (c[k + cols] * (1 - tx) + c[k + cols + 1] * tx) * ty;
+    }
+    // Изолиния поля c на уровне L (marching squares, субпиксельная точность)
+    function contourLines(c, cols, rows, px, H, L) {
+      const segs = [], adj = new Map();
+      const eid = (i, j, v) => (j * cols + i) * 2 + v;
+      const pt = (id) => {
+        const v = id & 1, idx = id >> 1, j = Math.floor(idx / cols), i = idx % cols;
+        const a = c[j * cols + i], b = v ? c[(j + 1) * cols + i] : c[j * cols + i + 1], t = (L - a) / (b - a);
+        return [(i + 0.5 + (v ? 0 : t)) * px, H - (j + 0.5 + (v ? t : 0)) * px];
+      };
+      for (let j = 0; j < rows - 1; j++) for (let i = 0; i < cols - 1; i++) {
+        const tl = c[j * cols + i], tr = c[j * cols + i + 1], br = c[(j + 1) * cols + i + 1], bl = c[(j + 1) * cols + i];
+        const a = tl < L, b = tr < L, d = br < L, e = bl < L;
+        if (a === b && b === d && d === e) continue;
+        const T = a !== b ? eid(i, j, 0) : -1, Rt = b !== d ? eid(i + 1, j, 1) : -1,
+              B = e !== d ? eid(i, j + 1, 0) : -1, Lf = a !== e ? eid(i, j, 1) : -1;
+        const cr = [T, Rt, B, Lf].filter(q => q >= 0);
+        if (cr.length === 2) segs.push(cr);
+        else if (((tl + tr + br + bl) / 4 < L) === a) segs.push([T, Rt], [B, Lf]);
+        else segs.push([T, Lf], [Rt, B]);
+      }
+      segs.forEach((s, k) => s.forEach(id => { if (!adj.has(id)) adj.set(id, []); adj.get(id).push(k); }));
+      const used = new Uint8Array(segs.length), out = [];
+      const next = (id, s) => { for (const t of adj.get(id)) if (t !== s && !used[t]) return t; return -1; };
+      for (let s0 = 0; s0 < segs.length; s0++) {
+        if (used[s0]) continue;
+        used[s0] = 1;
+        const ids = [segs[s0][0], segs[s0][1]];
+        for (const fwd of [true, false]) {
+          let s = s0;
+          for (;;) {
+            const end = fwd ? ids[ids.length - 1] : ids[0], t = next(end, s);
+            if (t < 0) break;
+            used[t] = 1;
+            const o = segs[t][0] === end ? segs[t][1] : segs[t][0];
+            if (fwd) ids.push(o); else ids.unshift(o);
+            s = t;
           }
         }
-        if (drawing) lines.push(`G0${sep}Z${safeZ.toFixed(3)}`);
+        out.push({ pts: ids.map(pt), closed: ids[0] === ids[ids.length - 1] });
+      }
+      return out;
+    }
+    function rdp(p, tol) {
+      if (p.length < 3) return p;
+      const keep = new Uint8Array(p.length); keep[0] = keep[p.length - 1] = 1;
+      const st = [[0, p.length - 1]];
+      while (st.length) {
+        const [a, b] = st.pop(); let md = 0, mi = -1;
+        const dx = p[b][0] - p[a][0], dy = p[b][1] - p[a][1], Ln = Math.hypot(dx, dy);
+        for (let i = a + 1; i < b; i++) {
+          const d = Ln ? Math.abs(dy * (p[i][0] - p[a][0]) - dx * (p[i][1] - p[a][1])) / Ln : Math.hypot(p[i][0] - p[a][0], p[i][1] - p[a][1]);
+          if (d > md) { md = d; mi = i; }
+        }
+        if (md > tol) { keep[mi] = 1; st.push([a, mi], [mi, b]); }
+      }
+      return p.filter((_, i) => keep[i]);
+    }
+    function lb(p, q, b) {
+      let t0 = 0, t1 = 1; const dx = q[0] - p[0], dy = q[1] - p[1];
+      const chk = (pp, qq) => {
+        if (pp === 0) return qq >= 0;
+        const t = qq / pp;
+        if (pp < 0) { if (t > t1) return false; if (t > t0) t0 = t; } else { if (t < t0) return false; if (t < t1) t1 = t; }
+        return true;
+      };
+      return (chk(-dx, p[0] - b.x0) && chk(dx, b.x1 - p[0]) && chk(-dy, p[1] - b.y0) && chk(dy, b.y1 - p[1])) ? [t0, t1] : null;
+    }
+    // Обрезка ломаной по прямоугольнику (разрезает на части, не соединяет через пустоту)
+    function clipPoly(pts, b) {
+      const res = []; let cur = [], clipped = false;
+      const flush = () => { if (cur.length > 1) res.push(cur); cur = []; };
+      for (let i = 1; i < pts.length; i++) {
+        const p = pts[i - 1], q = pts[i], t = lb(p, q, b);
+        if (!t) { flush(); clipped = true; continue; }
+        const a = [p[0] + (q[0] - p[0]) * t[0], p[1] + (q[1] - p[1]) * t[0]], e = [p[0] + (q[0] - p[0]) * t[1], p[1] + (q[1] - p[1]) * t[1]];
+        if (t[0] > 1e-12) { flush(); clipped = true; }
+        if (!cur.length) cur.push(a);
+        cur.push(e);
+        if (t[1] < 1 - 1e-12) { flush(); clipped = true; }
+      }
+      flush();
+      return { res, clipped };
+    }
+    // Растровые проходы заливки: интервалы строк, где поле удовлетворяет условию
+    function fillRows(c, cols, rows, px, H, inside, R, box, sp) {
+      const L = inside ? -R : R, out = [];
+      const ny = Math.max(1, Math.ceil((box.y1 - box.y0) / sp)), dy = (box.y1 - box.y0) / ny;
+      let flip = false;
+      const cross = (xa, va, xb, vb) => xa + (L - va) / (vb - va) * (xb - xa);
+      for (let k = 0; k <= ny; k++) {
+        const y = box.y0 + k * dy, fy = (H - y) / px - 0.5;
+        const j = Math.max(0, Math.min(rows - 2, Math.floor(fy))), ty = Math.min(1, Math.max(0, fy - j));
+        const ivs = []; let prevOk = false, pv = 0, pxx = 0, s = null;
+        for (let i = 0; i < cols; i++) {
+          const x = (i + 0.5) * px, v = c[j * cols + i] * (1 - ty) + c[(j + 1) * cols + i] * ty, ok = inside ? v <= L : v >= L;
+          if (i === 0) { if (ok) s = x; }
+          else if (ok && !prevOk) s = cross(pxx, pv, x, v);
+          else if (!ok && prevOk) { ivs.push([s, cross(pxx, pv, x, v)]); s = null; }
+          prevOk = ok; pv = v; pxx = x;
+        }
+        if (prevOk && s !== null) ivs.push([s, pxx]);
+        const row = [];
+        ivs.forEach(([a, b]) => { a = Math.max(a, box.x0); b = Math.min(b, box.x1); if (b - a >= 0.01) row.push([a, b]); });
+        if (flip) { row.reverse(); row.forEach(([a, b]) => out.push({ pts: [[b, y], [a, y]] })); }
+        else row.forEach(([a, b]) => out.push({ pts: [[a, y], [b, y]] }));
+        if (row.length) flip = !flip;
+      }
+      return out;
+    }
+    function fillHoles(d, cols, rows) {
+      const N = cols * rows, out = new Uint8Array(d), seen = new Uint8Array(N), st = [];
+      const push = (i) => { if (!seen[i] && !d[i]) { seen[i] = 1; st.push(i); } };
+      for (let x = 0; x < cols; x++) { push(x); push((rows - 1) * cols + x); }
+      for (let y = 0; y < rows; y++) { push(y * cols); push(y * cols + cols - 1); }
+      while (st.length) {
+        const i = st.pop(), x = i % cols;
+        if (i >= cols) push(i - cols); if (i < N - cols) push(i + cols); if (x > 0) push(i - 1); if (x < cols - 1) push(i + 1);
+      }
+      for (let i = 0; i < N; i++) if (!d[i] && !seen[i]) out[i] = 1;
+      return out;
+    }
+    // Компоненты фигуры: «тонкие» = уже диаметра фрезы (открытые линии / штрихи)
+    function thinComps(F, din, cols, rows, D, px) {
+      const N = cols * rows, lab = new Int32Array(N), ms = [0], st = []; let n = 0;
+      for (let s = 0; s < N; s++) {
+        if (!F[s] || lab[s]) continue;
+        n++; ms.push(0); lab[s] = n; st.push(s);
+        while (st.length) {
+          const i = st.pop(), x = i % cols, y = (i - x) / cols;
+          if (din[i] > ms[n]) ms[n] = din[i];
+          for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+            const xx = x + dx, yy = y + dy;
+            if (xx < 0 || yy < 0 || xx >= cols || yy >= rows) continue;
+            const q = yy * cols + xx;
+            if (F[q] && !lab[q]) { lab[q] = n; st.push(q); }
+          }
+        }
+      }
+      const isThin = ms.map((m, k) => k > 0 && (2 * m - 1) * px < D);
+      const thin = new Uint8Array(N), thick = new Uint8Array(N); let thinCount = 0;
+      isThin.forEach(t => { if (t) thinCount++; });
+      for (let i = 0; i < N; i++) if (lab[i]) (isThin[lab[i]] ? thin : thick)[i] = 1;
+      return { thin, thick, thinCount };
+    }
+    function zhangSuen(s, cols, rows) {
+      for (let x = 0; x < cols; x++) { s[x] = 0; s[(rows - 1) * cols + x] = 0; }
+      for (let y = 0; y < rows; y++) { s[y * cols] = 0; s[y * cols + cols - 1] = 0; }
+      const rm = []; let changed = true;
+      while (changed) {
+        changed = false;
+        for (let pass = 0; pass < 2; pass++) {
+          rm.length = 0;
+          for (let y = 1; y < rows - 1; y++) for (let x = 1; x < cols - 1; x++) {
+            const i = y * cols + x; if (!s[i]) continue;
+            const p2 = s[i - cols], p3 = s[i - cols + 1], p4 = s[i + 1], p5 = s[i + cols + 1], p6 = s[i + cols], p7 = s[i + cols - 1], p8 = s[i - 1], p9 = s[i - cols - 1];
+            const B = p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9;
+            if (B < 2 || B > 6) continue;
+            const A = (p2 === 0 && p3 === 1) + (p3 === 0 && p4 === 1) + (p4 === 0 && p5 === 1) + (p5 === 0 && p6 === 1) +
+                      (p6 === 0 && p7 === 1) + (p7 === 0 && p8 === 1) + (p8 === 0 && p9 === 1) + (p9 === 0 && p2 === 1);
+            if (A !== 1) continue;
+            if (pass === 0) { if (p2 * p4 * p6 !== 0 || p4 * p6 * p8 !== 0) continue; }
+            else if (p2 * p4 * p8 !== 0 || p2 * p6 * p8 !== 0) continue;
+            rm.push(i);
+          }
+          for (let k = 0; k < rm.length; k++) s[rm[k]] = 0;
+          if (rm.length) changed = true;
+        }
+      }
+    }
+    // Осевые линии: утончение маски до скелета и трассировка в ломаные
+    function skeletonPaths(mask, cols, rows, px, H) {
+      const N = cols * rows, s = new Uint8Array(mask), seen = new Uint8Array(N), raw = [];
+      zhangSuen(s, cols, rows);
+      const nbrs = (i) => {
+        const x = i % cols, r = [], up = i >= cols, dn = i < N - cols, lf = x > 0, rt = x < cols - 1;
+        if (up) r.push(i - cols); if (dn) r.push(i + cols); if (lf) r.push(i - 1); if (rt) r.push(i + 1);
+        if (up && lf) r.push(i - cols - 1); if (up && rt) r.push(i - cols + 1); if (dn && lf) r.push(i + cols - 1); if (dn && rt) r.push(i + cols + 1);
+        return r;
+      };
+      const free = (i) => nbrs(i).filter(n => s[n] && !seen[n]);
+      const walk = (start) => {
+        const p = [start]; let cur = start;
+        for (;;) { const f = free(cur); if (!f.length) break; cur = f[0]; seen[cur] = 1; p.push(cur); }
+        if (p.length > 8 && nbrs(cur).includes(p[0])) p.push(p[0]);
+        return p;
+      };
+      const idx = []; for (let i = 0; i < N; i++) if (s[i]) idx.push(i);
+      for (const i of idx) if (!seen[i] && nbrs(i).filter(n => s[n]).length === 1) { seen[i] = 1; raw.push(walk(i)); }
+      for (const i of idx) if (!seen[i]) { seen[i] = 1; raw.push(walk(i)); }
+      for (let prog = true; prog;) { prog = false; for (const i of idx) if (seen[i] && free(i).length) { prog = true; raw.push(walk(i)); } }
+      const out = [];
+      raw.forEach(p => {
+        const w = rdp(p.map(i => [(i % cols + 0.5) * px, H - (Math.floor(i / cols) + 0.5) * px]), px * 0.7);
+        let len = 0; for (let k = 1; k < w.length; k++) len += Math.hypot(w[k][0] - w[k - 1][0], w[k][1] - w[k - 1][1]);
+        if (w.length >= 2 && len >= 2 * px) out.push(w);
+      });
+      return out;
+    }
+    // </ENGINE>
+
+    // ===================== ФРЕЗЕРОВКА: интерфейс, глубины, проверки =====================
+    const $ = (id) => document.getElementById(id);
+    const paramTool = $('param-tool'), paramMode = $('param-mode'), paramOpen = $('param-open'), chkFill = $('chk-fill'),
+          paramPasses = $('param-passes'), depthBox = $('depth-fields'), depthStatus = $('depth-status'), camLog = $('cam-log');
+    let depthVals = [], depthTouched = false;
+    const r3 = (v) => Math.round(v * 1000) / 1000;
+    const MODE_NAMES = { pocket: 'Внутренний карман', clear: 'Очистка снаружи контура', center: 'По центру линии', lineout: 'Снаружи линии', linein: 'Внутри линии' };
+
+    function distributeDepth() {
+      const n = parseInt(paramPasses.value), total = parseFloat(paramCutZ.value);
+      depthVals = [];
+      for (let k = 1; k <= n; k++) depthVals.push(isFinite(total) ? String(k === n ? r3(total) : r3(total * k / n)) : '');
+    }
+    function validateDepths() {
+      const errs = [], n = parseInt(paramPasses.value), total = parseFloat(paramCutZ.value), z = [];
+      if (!isFinite(total) || total >= 0) errs.push('Общая глубина реза должна быть отрицательной (Z < 0).');
+      if (depthVals.length !== n) errs.push('Количество полей глубины (' + depthVals.length + ') не равно числу проходов (' + n + ').');
+      for (let k = 0; k < n; k++) {
+        const v = parseFloat(depthVals[k]); z.push(v);
+        if (!isFinite(v)) errs.push('Проход ' + (k + 1) + ': глубина не задана.');
+        else if (v >= 0) errs.push('Проход ' + (k + 1) + ': глубина должна быть отрицательной (Z < 0), сейчас Z = ' + v + '.');
+        else if (k > 0 && isFinite(z[k - 1]) && v > z[k - 1] + 1e-9) errs.push('Проход ' + (k + 1) + ' (Z = ' + v + ') мельче предыдущего (Z = ' + z[k - 1] + ').');
+      }
+      if (isFinite(total) && isFinite(z[n - 1]) && Math.abs(z[n - 1] - total) > 1e-6)
+        errs.push('Последний проход (Z = ' + z[n - 1] + ') должен совпадать с общей глубиной (Z = ' + total + ').');
+      return { errs, z };
+    }
+    function showDepthStatus() {
+      const e = validateDepths().errs;
+      depthStatus.className = 'text-[11px] rounded-lg p-2.5 border ' + (e.length ? 'text-red-300 bg-red-500/10 border-red-500/30' : 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30');
+      depthStatus.innerHTML = e.length ? e.map(x => '⚠ ' + x).join('<br>') : '✓ Глубины корректны: ' + depthVals.join(' → ') + ' мм';
+    }
+    function renderDepthFields() {
+      const n = parseInt(paramPasses.value);
+      depthBox.innerHTML = '';
+      for (let k = 0; k < n; k++) {
+        const lb = document.createElement('label'); lb.className = 'text-[11px] text-neutral-400'; lb.textContent = 'Проход ' + (k + 1) + ': Z (мм)';
+        const inp = document.createElement('input'); inp.type = 'number'; inp.step = '0.1'; inp.id = 'depth-' + k; inp.value = depthVals[k] !== undefined ? depthVals[k] : '';
+        inp.className = 'mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 focus:outline-none focus:border-amber-400 font-mono';
+        inp.addEventListener('input', () => { depthVals[k] = inp.value; depthTouched = true; showDepthStatus(); });
+        lb.appendChild(inp); depthBox.appendChild(lb);
+      }
+      showDepthStatus();
+    }
+    paramPasses.addEventListener('change', () => {
+      const n = parseInt(paramPasses.value);
+      if (!depthTouched) distributeDepth();
+      else {
+        depthVals.length = Math.min(depthVals.length, n);
+        while (depthVals.length < n) { const p = parseFloat(depthVals[depthVals.length - 1]); depthVals.push(String(r3((isFinite(p) ? p : 0) - 1))); }
+      }
+      renderDepthFields();
+    });
+    paramCutZ.addEventListener('input', () => { if (!depthTouched) { distributeDepth(); renderDepthFields(); } else showDepthStatus(); });
+    $('btn-distribute').addEventListener('click', () => { distributeDepth(); depthTouched = false; renderDepthFields(); });
+    function updateOpenRow() { $('open-row').classList.toggle('hidden', !(paramMode.value === 'lineout' || paramMode.value === 'linein')); }
+    paramMode.addEventListener('change', updateOpenRow);
+
+    function setLog(msgs, kind) {
+      const cls = { err: 'text-red-300 bg-red-500/10 border-red-500/30', warn: 'text-amber-300 bg-amber-400/10 border-amber-400/30', ok: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30' }[kind];
+      camLog.className = 'text-[11px] rounded-lg p-3 border space-y-1 ' + cls;
+      camLog.innerHTML = msgs.map(m => '<div>' + m + '</div>').join('');
+    }
+    function failGen(errs) {
+      outputArea.value = ''; statLines.textContent = 'Кадров: 0'; statSize.textContent = 'Вес: 0 KB';
+      setLog(errs.map(e => '⛔ ' + e).concat('G-код НЕ сгенерирован.'), 'err');
+    }
+
+    // Маска «тёмных» пикселей с учётом масштаба, поворота и смещения из предпросмотра изображения
+    function buildMask(W, H, px, cols, rows) {
+      const cv = document.createElement('canvas'); cv.width = cols; cv.height = rows;
+      const g = cv.getContext('2d', { willReadFrequently: true });
+      g.fillStyle = '#fff'; g.fillRect(0, 0, cols, rows);
+      const iw = loadedImage.width, ih = loadedImage.height;
+      const pct = Math.min(300, Math.max(10, Number(previewScale.value) || 100)) / 100;
+      const k = Math.min(W / iw, H / ih) * pct / px;
+      g.translate((W / 2 + (Number(previewX.value) || 0)) / px, (H / 2 - (Number(previewY.value) || 0)) / px);
+      g.rotate((Number(previewRotation.value) || 0) * Math.PI / 180);
+      g.imageSmoothingQuality = 'high';
+      g.drawImage(loadedImage, -iw * k / 2, -ih * k / 2, iw * k, ih * k);
+      const d = g.getImageData(0, 0, cols, rows).data, m = new Uint8Array(cols * rows);
+      for (let i = 0; i < m.length; i++) m[i] = (d[i * 4] + d[i * 4 + 1] + d[i * 4 + 2]) / 3 < 130 ? 1 : 0;
+      return m;
+    }
+
+    // Обработка изображения в траекторию .TAP (режим, диаметр фрезы, глубина каждого прохода)
+    function generateTapFromImage() {
+      if (!loadedImage) return;
+      const v = validateDepths(), errs = v.errs.slice();
+      const W = parseFloat(paramWidth.value), H = parseFloat(paramHeight.value), safeZ = parseFloat(paramSafeZ.value),
+            feed = parseFloat(paramFeed.value), step = parseFloat(paramStep.value), D = parseFloat(paramTool.value);
+      if (!(W > 0 && H > 0)) errs.push('Размер заготовки X и Y должен быть больше 0.');
+      if (!(D > 0)) errs.push('Диаметр фрезы должен быть больше 0.');
+      else if (W > 0 && H > 0 && D >= Math.min(W, H)) errs.push('Диаметр фрезы не меньше размера заготовки.');
+      if (!(safeZ > 0)) errs.push('Безопасная высота Z должна быть больше 0.');
+      if (!(feed > 0)) errs.push('Рабочая подача F должна быть больше 0.');
+      if (!(step > 0)) errs.push('Шаг растра должен быть больше 0.');
+      if (errs.length) { failGen(errs); return; }
+      setLog(['⏳ Расчёт траектории…'], 'warn');
+      setTimeout(() => { try { runCam({ W, H, safeZ, feed, step, D, z: v.z }); } catch (e) { failGen([e.message]); } }, 30);
+    }
+
+    function runCam(o) {
+      const { W, H, safeZ, feed, step, D, z } = o, R = D / 2, mode = paramMode.value, warns = [];
+      let px = Math.min(Math.max(step, 0.25), 0.5);
+      while ((W / px) * (H / px) > 1.6e6) px *= 1.15;
+      if (px > R / 2) warns.push('Разрешение растра ' + px.toFixed(2) + ' мм грубое для такой фрезы: точность смещения порядка ±' + px.toFixed(2) + ' мм.');
+      const cols = Math.ceil(W / px), rows = Math.ceil(H / px);
+      const dark = buildMask(W, H, px, cols, rows);
+      if (!dark.some(q => q)) throw new Error('На изображении не найдено тёмных линий/областей (порог яркости 130). Проверьте масштаб и смещение.');
+
+      const stock = { x0: 0, y0: 0, x1: W, y1: H }, box = { x0: R, y0: R, x1: W - R, y1: H - R };
+      let strokes = [], clippedAny = false;
+      const clipAdd = (pts, b) => { const r = clipPoly(pts, b); if (r.clipped) clippedAny = true; r.res.forEach(p => strokes.push({ pts: p })); };
+      const tol = 0.03;
+
+      if (mode === 'center') {
+        skeletonPaths(dark, cols, rows, px, H).forEach(p => clipAdd(p, stock));
+        if (clippedAny) warns.push('Часть осевых линий вышла за заготовку и была обрезана по её границе.');
+      } else {
+        const F = chkFill.checked ? fillHoles(dark, cols, rows) : dark;
+        const sf = signedField(F, cols, rows, px), tc = thinComps(F, sf.din, cols, rows, D, px);
+        if (mode === 'pocket' || mode === 'clear') {
+          const pocket = mode === 'pocket', L = pocket ? -R : R, c = sf.c, eps = px * 0.35;
+          if (pocket && tc.thinCount) warns.push('Элементов уже диаметра фрезы (' + tc.thinCount + ') в кармане не обработано: инструмент в них не помещается.');
+          const reg = pocket ? (x, y) => samp(c, cols, rows, px, H, x, y) <= L + eps
+                             : (x, y) => x >= box.x0 && x <= box.x1 && y >= box.y0 && y <= box.y1 && samp(c, cols, rows, px, H, x, y) >= L - eps;
+          const sp = Math.min(step, D);
+          if (step > D) warns.push('Шаг растра больше диаметра фрезы: для заливки использован шаг = диаметру (' + D + ' мм).');
+          const segOk = (a, b) => { const n = Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / (px * 0.5)); for (let k = 1; k < n; k++) if (!reg(a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n)) return false; return true; };
+          let cur = null; const chains = [];
+          fillRows(c, cols, rows, px, H, pocket, R, box, sp).forEach(s => {
+            const a = s.pts[0];
+            if (cur) { const e = cur[cur.length - 1]; if (Math.hypot(a[0] - e[0], a[1] - e[1]) <= sp * 1.6 && segOk(e, a)) { cur.push(...s.pts); return; } chains.push(cur); }
+            cur = s.pts.slice();
+          });
+          if (cur) chains.push(cur);
+          chains.forEach(p => strokes.push({ pts: p }));
+          contourLines(c, cols, rows, px, H, L).forEach(p => clipAdd(rdp(p.pts, tol), box));
+          if (clippedAny) warns.push('Траектория ограничена так, чтобы фреза целиком оставалась в пределах заготовки (отступ ' + R + ' мм от края): у границы может остаться необработанная полоса.');
+        } else {
+          let c = sf.c;
+          if (tc.thinCount) { c = signedField(tc.thick, cols, rows, px).c; }
+          const L = mode === 'lineout' ? R : -R;
+          if (tc.thinCount) {
+            if (paramOpen.value === 'center') {
+              skeletonPaths(tc.thin, cols, rows, px, H).forEach(p => clipAdd(p, stock));
+              warns.push('Открытых/тонких линий: ' + tc.thinCount + '. Сторона обработки для них не определена — они пройдены ПО ЦЕНТРУ (по вашему выбору).');
+            } else warns.push('Открытых/тонких линий: ' + tc.thinCount + ' — ПРОПУЩЕНО. Для них «внутри/снаружи» не определено. Выберите «Пройти по центру» или режим 3.');
+          }
+          contourLines(c, cols, rows, px, H, L).forEach(p => clipAdd(rdp(p.pts, tol), box));
+          if (clippedAny) warns.push('Часть траектории выходила за допустимую область заготовки и была обрезана (фреза не должна выходить за заготовку).');
+        }
       }
 
-      lines.push(`G0${sep}Z${safeZ.toFixed(3)}`);
+      strokes = strokes.map(s => ({ pts: s.pts.filter((p, i) => i === 0 || Math.hypot(p[0] - s.pts[i - 1][0], p[1] - s.pts[i - 1][1]) > 0.004) })).filter(s => s.pts.length >= 2);
+      if (!strokes.length) throw new Error('Траектория пуста: для выбранного режима и диаметра фрезы нет допустимых перемещений (фигуры уже фрезы, не замкнуты или вне заготовки).');
+      for (const s of strokes) for (const p of s.pts)
+        if (!isFinite(p[0]) || !isFinite(p[1]) || p[0] < -1e-6 || p[1] < -1e-6 || p[0] > W + 1e-6 || p[1] > H + 1e-6)
+          throw new Error('Обнаружена координата вне заготовки — генерация прервана ради безопасности.');
+
+      const sep = chkTabs.checked ? '\t' : ' ', f3 = (q) => q.toFixed(3), plunge = Math.min(300, feed);
+      const lines = ['G90', 'G0' + sep + 'Z' + f3(safeZ), 'M3'];
+      z.forEach(zk => strokes.forEach(s => {
+        lines.push('G0' + sep + 'X' + f3(s.pts[0][0]) + sep + 'Y' + f3(s.pts[0][1]));
+        lines.push('G1' + sep + 'Z' + f3(zk) + sep + 'F' + plunge);
+        s.pts.slice(1).forEach((p, i) => lines.push('G1' + sep + 'X' + f3(p[0]) + sep + 'Y' + f3(p[1]) + (i === 0 ? sep + 'F' + feed : '')));
+        lines.push('G0' + sep + 'Z' + f3(safeZ));
+      }));
       if (chkM30.checked) lines.push('M30');
       finalizeOutput(lines);
+      setLog(['✓ ' + MODE_NAMES[mode] + ' · фреза Ø' + D + ' мм · проходов: ' + z.length + ' (Z: ' + z.join(', ') + ') · участков траектории: ' + strokes.length + ' · растр ' + px.toFixed(2) + ' мм/пикс.']
+        .concat(warns.map(w => '⚠ ' + w)), warns.length ? 'warn' : 'ok');
     }
 
     // Обработка текстового G-кода (.tap, .nc) с форматированием
@@ -564,53 +882,38 @@
       drawVisualizer(lines);
     }
 
-    // 2D Симулятор траектории
+    // 2D Симулятор траектории (G0 — серый, G1 — жёлтый, границы заготовки, фреза в масштабе)
     function drawVisualizer(lines) {
-      const width = canvas.width = canvas.parentElement.clientWidth;
-      const height = canvas.height = canvas.parentElement.clientHeight;
+      const width = canvas.width = canvas.parentElement.clientWidth || 600;
+      const height = canvas.height = canvas.parentElement.clientHeight || 520;
       ctx.clearRect(0, 0, width, height);
-
-      let curX = 0, curY = 0;
-      let minX = 0, maxX = parseFloat(paramWidth.value) || 400;
-      let minY = 0, maxY = parseFloat(paramHeight.value) || 400;
-
-      canvasInfo.textContent = `Заготовка: ${maxX}x${maxY} мм`;
-
-      const margin = 40;
-      const scaleX = (width - margin * 2) / maxX;
-      const scaleY = (height - margin * 2) / maxY;
-      const scale = Math.min(scaleX, scaleY);
-
-      const toScreenX = (x) => margin + x * scale;
-      const toScreenY = (y) => height - (margin + y * scale);
-
-      ctx.beginPath();
-      ctx.strokeStyle = '#FBBF24';
-      ctx.lineWidth = 1.2;
-
-      let isCutting = false;
+      const W = parseFloat(paramWidth.value) || 400, H = parseFloat(paramHeight.value) || 400;
+      const margin = 40, sc = Math.min((width - margin * 2) / W, (height - margin * 2) / H);
+      const sx = (x) => margin + x * sc, sy = (y) => height - (margin + y * sc);
+      const D = parseFloat(paramTool.value) || 0;
+      canvasInfo.textContent = 'Заготовка: ' + W + 'x' + H + ' мм | Фреза Ø' + D + ' | ' + (MODE_NAMES[paramMode.value] || '');
+      ctx.fillStyle = 'rgba(183,161,123,0.07)'; ctx.fillRect(sx(0), sy(H), W * sc, H * sc);
+      ctx.strokeStyle = '#FBBF24'; ctx.lineWidth = 1; ctx.setLineDash([6, 4]); ctx.strokeRect(sx(0), sy(H), W * sc, H * sc); ctx.setLineDash([]);
+      let x = 0, y = 0, g = 0, first = null;
+      const rapid = new Path2D(), cut = new Path2D();
       lines.forEach(line => {
-        const clean = line.replace(/\t/g, ' ');
-        if (clean.includes('G1') || clean.includes('G01')) isCutting = true;
-        if (clean.includes('G0') || clean.includes('G00')) isCutting = false;
-
-        const mx = clean.match(/X\s*([-+]?\d*\.?\d+)/);
-        const my = clean.match(/Y\s*([-+]?\d*\.?\d+)/);
-
-        if (mx) curX = parseFloat(mx[1]);
-        if (my) curY = parseFloat(my[1]);
-
-        if (mx || my) {
-          const sx = toScreenX(curX);
-          const sy = toScreenY(curY);
-          if (isCutting) {
-            ctx.lineTo(sx, sy);
-          } else {
-            ctx.moveTo(sx, sy);
-          }
+        const t = line.replace(/\(.*?\)/g, '').replace(/;.*/, '').toUpperCase();
+        let nx = x, ny = y, has = false;
+        for (const m of t.matchAll(/([GXY])\s*([-+]?\d*\.?\d+)/g)) {
+          const v = parseFloat(m[2]);
+          if (m[1] === 'G') { if (v === 0) g = 0; else if (v === 1 || v === 2 || v === 3) g = 1; }
+          else if (m[1] === 'X') { nx = v; has = true; } else { ny = v; has = true; }
+        }
+        if (has) {
+          const p = g === 0 ? rapid : cut;
+          p.moveTo(sx(x), sy(y)); p.lineTo(sx(nx), sy(ny));
+          if (g === 1 && !first) first = [x, y];
+          x = nx; y = ny;
         }
       });
-      ctx.stroke();
+      ctx.lineWidth = 1; ctx.strokeStyle = '#525252'; ctx.stroke(rapid);
+      ctx.lineWidth = 1.4; ctx.strokeStyle = '#FBBF24'; ctx.stroke(cut);
+      if (first && D > 0) { ctx.beginPath(); ctx.arc(sx(first[0]), sy(first[1]), D / 2 * sc, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(251,191,36,0.7)'; ctx.setLineDash([3, 3]); ctx.stroke(); ctx.setLineDash([]); }
     }
 
     // Кнопки управления
@@ -650,6 +953,7 @@
       outputArea.value = '';
       loadedImage = null;
       loadedRawText = null;
+      camLog.className = 'hidden';
       renderImagePreview();
     });
 
@@ -675,6 +979,7 @@
     });
 
     renderImagePreview();
+    distributeDepth(); renderDepthFields(); updateOpenRow();
 
     // Drag and Drop
     dropZone.addEventListener('click', () => fileInput.click());
