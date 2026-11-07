@@ -66,7 +66,7 @@
           <h2 class="text-xs font-bold text-neutral-400 uppercase tracking-widest">👁️ Предпросмотр изображения</h2>
           <span id="preview-status" class="text-[10px] text-neutral-500">Ожидает изображение</span>
         </div>
-        <p class="text-[11px] text-neutral-400 mb-3">Проверьте расположение рисунка на заготовке. Это отдельный визуальный просмотр: исходный алгоритм генерации .TAP не изменён.</p>
+        <p class="text-[11px] text-neutral-400 mb-3">Предпросмотр и генерация .TAP используют одинаковые масштаб, поворот и смещения X/Y.</p>
         <div class="rounded-xl overflow-hidden border border-neutral-800 bg-black">
           <canvas id="image-preview" class="block w-full" style="height:260px;background:#080808;"></canvas>
         </div>
@@ -123,6 +123,35 @@
             <input type="number" id="param-step" value="2" step="1" class="w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 focus:outline-none focus:border-amber-400 font-mono">
           </div>
         </div>
+
+        <section class="mt-2 border-t border-neutral-800 pt-4 space-y-3">
+          <h3 class="text-xs font-bold text-amber-400 uppercase tracking-widest">Дополнительные параметры — черновик</h3>
+          <p class="text-[10px] leading-relaxed text-neutral-400">Настройки сохраняются в этом браузере и отображаются для проверки. Они не добавляются в машинный .TAP-код.</p>
+          <div class="grid grid-cols-2 gap-3">
+            <label class="text-[11px] text-neutral-400">Обороты шпинделя (об/мин)
+              <input id="draft-rpm" type="number" min="0" placeholder="Не задано" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 font-mono">
+            </label>
+            <label class="text-[11px] text-neutral-400">Скорость холостого хода (мм/мин)
+              <input id="draft-rapid" type="number" min="0" placeholder="Не задано" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 font-mono">
+            </label>
+            <label class="text-[11px] text-neutral-400">Диаметр инструмента (мм)
+              <input id="draft-tool-diameter" type="number" min="0" step="0.1" placeholder="Не задано" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 font-mono">
+            </label>
+            <label class="text-[11px] text-neutral-400">Количество проходов
+              <select id="draft-passes" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 font-mono">
+                <option value="1">1 проход</option><option value="2">2 прохода</option><option value="3">3 прохода</option>
+              </select>
+            </label>
+            <label class="text-[11px] text-neutral-400 col-span-2">Сторона контура
+              <select id="draft-side" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 font-mono">
+                <option value="center">По центру линии — визуально</option>
+                <option value="inside">Внутрь — визуальная пометка</option>
+                <option value="outside">Наружу — визуальная пометка</option>
+              </select>
+            </label>
+          </div>
+          <div id="draft-save-status" class="text-[10px] text-neutral-500">Черновые настройки будут сохранены автоматически.</div>
+        </section>
 
         <div class="pt-2 border-t border-neutral-800 space-y-2">
           <label class="flex items-center gap-2 text-xs text-neutral-300 cursor-pointer">
@@ -261,7 +290,7 @@
     let loadedRawText = null;
 
 
-    // Дополнительный предпросмотр. Не меняет исходную генерацию .TAP.
+    // Предпросмотр и генерация .TAP используют одну и ту же геометрию размещения.
     const previewCanvas = document.getElementById('image-preview');
     const previewCtx = previewCanvas.getContext('2d');
     const previewScale = document.getElementById('preview-scale');
@@ -344,7 +373,41 @@
       previewRotation.value = 0;
       previewX.value = 0;
       previewY.value = 0;
-      renderImagePreview();
+ 
+     // Черновые параметры сохраняются локально, но намеренно не влияют на машинный G-код.
+     const draftSettingIds = ['draft-rpm', 'draft-rapid', 'draft-tool-diameter', 'draft-passes', 'draft-side'];
+     const draftStatus = document.getElementById('draft-save-status');
+     function loadDraftSettings() {
+       try {
+         const saved = JSON.parse(localStorage.getItem('talasProfiCncDraftSettings') || '{}');
+         draftSettingIds.forEach(id => {
+           const el = document.getElementById(id);
+           if (el && saved[id] !== undefined) el.value = saved[id];
+         });
+       } catch (_) {
+         draftStatus.textContent = 'Не удалось загрузить черновик из памяти браузера.';
+       }
+     }
+     function saveDraftSettings() {
+       const data = {};
+       draftSettingIds.forEach(id => {
+         const el = document.getElementById(id);
+         if (el) data[id] = el.value;
+       });
+       try {
+         localStorage.setItem('talasProfiCncDraftSettings', JSON.stringify(data));
+         draftStatus.textContent = 'Черновые настройки сохранены в этом браузере.';
+       } catch (_) {
+         draftStatus.textContent = 'Браузер не разрешил сохранить черновик.';
+       }
+     }
+     draftSettingIds.forEach(id => {
+       const el = document.getElementById(id);
+       if (el) el.addEventListener('input', saveDraftSettings);
+     });
+     loadDraftSettings();
+
+     renderImagePreview();
     });
     document.getElementById('preview-center').addEventListener('click', () => {
       previewX.value = 0;
@@ -383,47 +446,71 @@
       }
     });
 
-    // Обработка изображения в траекторию .TAP
+    // Преобразует изображение в ту же геометрию, что показана в предпросмотре.
     function generateTapFromImage() {
       if (!loadedImage) return;
 
-      const wMax = parseFloat(paramWidth.value) || 400;
-      const hMax = parseFloat(paramHeight.value) || 400;
-      const cutZ = parseFloat(paramCutZ.value) || -2;
-      const safeZ = parseFloat(paramSafeZ.value) || 5;
-      const feed = parseFloat(paramFeed.value) || 1200;
-      const step = Math.max(1, parseInt(paramStep.value) || 2);
+      const wMax = Number(paramWidth.value);
+      const hMax = Number(paramHeight.value);
+      const cutZ = Number(paramCutZ.value);
+      const safeZ = Number(paramSafeZ.value);
+      const feed = Number(paramFeed.value);
+      const step = Number(paramStep.value);
       const sep = chkTabs.checked ? '\t' : ' ';
 
-      // Создаем виртуальный холст для анализа пикселей узора
+      if (![wMax, hMax, cutZ, safeZ, feed, step].every(Number.isFinite) ||
+          wMax <= 0 || hMax <= 0 || step <= 0 || feed <= 0) {
+        alert('Проверьте размеры заготовки, глубину, безопасную Z, подачу и шаг растра.');
+        return;
+      }
+
+      const pct = Math.min(300, Math.max(10, Number(previewScale.value) || 100)) / 100;
+      const angle = (Number(previewRotation.value) || 0) * Math.PI / 180;
+      const offsetX = Number(previewX.value) || 0;
+      const offsetY = Number(previewY.value) || 0;
+
+      // Один пиксель виртуального холста соответствует шагу растра в миллиметрах.
+      const targetCols = Math.max(1, Math.ceil(wMax / step));
+      const targetRows = Math.max(1, Math.ceil(hMax / step));
       const c = document.createElement('canvas');
-      const targetCols = Math.round(wMax / step);
-      const targetRows = Math.round(hMax / step);
       c.width = targetCols;
       c.height = targetRows;
-      const tCtx = c.getContext('2d');
-      tCtx.drawImage(loadedImage, 0, 0, targetCols, targetRows);
+      const tCtx = c.getContext('2d', { willReadFrequently: true });
+      tCtx.fillStyle = '#ffffff';
+      tCtx.fillRect(0, 0, targetCols, targetRows);
+
+      // Повторяем масштабирование предпросмотра: изображение вписывается в заготовку,
+      // затем применяется пользовательский процент масштаба, поворот и сдвиги.
+      const baseMmPerPixel = Math.min(wMax / loadedImage.width, hMax / loadedImage.height);
+      const drawW = loadedImage.width * baseMmPerPixel * pct / step;
+      const drawH = loadedImage.height * baseMmPerPixel * pct / step;
+      const cx = wMax / (2 * step) + offsetX / step;
+      const cy = hMax / (2 * step) - offsetY / step;
+
+      tCtx.save();
+      tCtx.beginPath();
+      tCtx.rect(0, 0, wMax / step, hMax / step);
+      tCtx.clip();
+      tCtx.translate(cx, cy);
+      tCtx.rotate(angle);
+      tCtx.drawImage(loadedImage, -drawW / 2, -drawH / 2, drawW, drawH);
+      tCtx.restore();
 
       const imgData = tCtx.getImageData(0, 0, targetCols, targetRows).data;
-      let lines = [];
+      const lines = ['G90', `G0${sep}Z${safeZ.toFixed(3)}`, 'M3'];
 
-      lines.push(`G90`);
-      lines.push(`G0${sep}Z${safeZ.toFixed(3)}`);
-      lines.push(`M3`);
-
-      // Растрово-векторное сканирование пикселей узора
+      // Сканируем только пиксели внутри заготовки; координаты остаются в её пределах.
       for (let y = 0; y < targetRows; y++) {
         let drawing = false;
         for (let x = 0; x < targetCols; x++) {
           const idx = (y * targetCols + x) * 4;
-          const brightness = (imgData[idx] + imgData[idx+1] + imgData[idx+2]) / 3;
-
-          if (brightness < 130) { // Темный пиксель (линия узора)
-            const realX = (x * step).toFixed(3);
-            const realY = ((targetRows - 1 - y) * step).toFixed(3); // Инверсия Y для ЧПУ
+          const brightness = (imgData[idx] + imgData[idx + 1] + imgData[idx + 2]) / 3;
+          if (brightness < 130) {
+            const realX = Math.min(wMax, x * step).toFixed(3);
+            const realY = Math.min(hMax, (targetRows - 1 - y) * step).toFixed(3);
             if (!drawing) {
               lines.push(`G0${sep}X${realX}${sep}Y${realY}`);
-              lines.push(`G1${sep}Z${cutZ.toFixed(3)}${sep}F300`);
+              lines.push(`G1${sep}Z${cutZ.toFixed(3)}${sep}F${feed}`);
               drawing = true;
             } else {
               lines.push(`G1${sep}X${realX}${sep}Y${realY}${sep}F${feed}`);
@@ -433,15 +520,11 @@
             drawing = false;
           }
         }
-        if (drawing) {
-          lines.push(`G0${sep}Z${safeZ.toFixed(3)}`);
-          drawing = false;
-        }
+        if (drawing) lines.push(`G0${sep}Z${safeZ.toFixed(3)}`);
       }
 
       lines.push(`G0${sep}Z${safeZ.toFixed(3)}`);
-      if (chkM30.checked) lines.push(`M30`);
-
+      if (chkM30.checked) lines.push('M30');
       finalizeOutput(lines);
     }
 
@@ -567,6 +650,7 @@
       outputArea.value = '';
       loadedImage = null;
       loadedRawText = null;
+      renderImagePreview();
     });
 
     // Переключение вкладок Код / Визуализатор
@@ -587,7 +671,7 @@
       viewCode.classList.add('hidden'); viewCode.classList.remove('flex');
       tabVis.className = 'px-4 py-1.5 rounded-lg text-xs font-bold transition border border-amber-400/50 bg-amber-400/10 text-amber-400 flex items-center gap-1.5';
       tabCode.className = 'px-4 py-1.5 rounded-lg text-xs font-bold transition border border-transparent text-neutral-400 hover:text-white flex items-center gap-1.5';
-      if (outputArea.value) generateTapFromText();
+      if (outputArea.value) drawVisualizer(outputArea.value.split(/\r\n|\r|\n/));
     });
 
     renderImagePreview();
