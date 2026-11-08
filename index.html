@@ -30,9 +30,9 @@
       </div>
       <div>
         <h1 class="text-base md:text-lg font-bold tracking-tight text-white flex items-center gap-2">
-          Talas_profi <span class="text-amber-400 font-mono text-xs px-2 py-0.5 bg-amber-400/10 border border-amber-400/30 rounded">CNC .TAP Master v4.0</span>
+          Talas_profi <span class="text-amber-400 font-mono text-xs px-2 py-0.5 bg-amber-400/10 border border-amber-400/30 rounded">CNC .TAP Master v4.1</span>
         </h1>
-        <p class="text-[11px] text-neutral-400">Генерация, конвертация и симуляция управляющих программ для ЧПУ</p>
+        <p class="text-[11px] text-neutral-400">Генерация, раскрой букв по точным размерам и симуляция для ЧПУ</p>
       </div>
     </div>
     <div class="flex flex-wrap items-center gap-3">
@@ -70,17 +70,23 @@
         </div>
       </div>
 
-
+      <!-- Предпросмотр и размеры -->
       <section class="bg-neutral-900/90 border border-neutral-800 rounded-2xl p-5 shadow-2xl">
         <div class="flex items-center justify-between gap-3 mb-3">
-          <h2 class="text-xs font-bold text-neutral-400 uppercase tracking-widest">👁️ Предпросмотр изображения</h2>
+          <h2 class="text-xs font-bold text-neutral-400 uppercase tracking-widest">👁️ Предпросмотр и размеры</h2>
           <span id="preview-status" class="text-[10px] text-neutral-500">Ожидает изображение</span>
         </div>
-        <p class="text-[11px] text-neutral-400 mb-3">Проверьте расположение рисунка на заготовке. Масштаб, поворот и смещение учитываются при генерации траектории: рисунок вписывается в заготовку с сохранением пропорций.</p>
+        <p class="text-[11px] text-neutral-400 mb-3">Задайте точный размер буквы/картинки в миллиметрах или масштабируйте через проценты.</p>
         <div class="rounded-xl overflow-hidden border border-neutral-800 bg-black">
           <canvas id="image-preview" class="block w-full" style="height:260px;background:#080808;"></canvas>
         </div>
         <div class="grid grid-cols-2 gap-3 mt-4">
+          <label class="text-[11px] text-neutral-400">Ширина объекта (мм)
+            <input id="object-width" type="number" step="1" value="" placeholder="Авто" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 font-mono">
+          </label>
+          <label class="text-[11px] text-neutral-400">Высота объекта (мм)
+            <input id="object-height" type="number" step="1" value="" placeholder="Авто" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 font-mono">
+          </label>
           <label class="text-[11px] text-neutral-400">Масштаб (%)
             <input id="preview-scale" type="number" min="10" max="300" value="100" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 font-mono">
           </label>
@@ -344,9 +350,11 @@
     let loadedRawText = null;
 
 
-    // Дополнительный предпросмотр. Не меняет исходную генерацию .TAP.
+    // Предпросмотр изображения и точных размеров
     const previewCanvas = document.getElementById('image-preview');
     const previewCtx = previewCanvas.getContext('2d');
+    const objWidthInput = document.getElementById('object-width');
+    const objHeightInput = document.getElementById('object-height');
     const previewScale = document.getElementById('preview-scale');
     const previewRotation = document.getElementById('preview-rotation');
     const previewX = document.getElementById('preview-x');
@@ -387,11 +395,30 @@
         previewCtx.textAlign = 'center';
         previewCtx.fillText('Загрузите изображение для предпросмотра', cssW / 2, cssH / 2);
       } else {
-        const pct = Math.min(300, Math.max(10, Number(previewScale.value) || 100)) / 100;
+        const userW = parseFloat(objWidthInput.value);
+        const userH = parseFloat(objHeightInput.value);
+        let drawW, drawH;
+        const aspect = loadedImage.width / loadedImage.height;
+
+        if (userW > 0 || userH > 0) {
+          if (userW > 0 && !userH) {
+            drawW = userW * fit;
+            drawH = (userW / aspect) * fit;
+          } else if (!userW && userH > 0) {
+            drawH = userH * fit;
+            drawW = (userH * aspect) * fit;
+          } else {
+            drawW = userW * fit;
+            drawH = userH * fit;
+          }
+        } else {
+          const pct = Math.min(300, Math.max(10, Number(previewScale.value) || 100)) / 100;
+          const base = Math.min(boardW / loadedImage.width, boardH / loadedImage.height);
+          drawW = loadedImage.width * base * pct;
+          drawH = loadedImage.height * base * pct;
+        }
+
         const angle = (Number(previewRotation.value) || 0) * Math.PI / 180;
-        const base = Math.min(boardW / loadedImage.width, boardH / loadedImage.height);
-        const drawW = loadedImage.width * base * pct;
-        const drawH = loadedImage.height * base * pct;
         const dx = (Number(previewX.value) || 0) * fit;
         const dy = (Number(previewY.value) || 0) * fit;
         const cx = left + boardW / 2 + dx;
@@ -410,7 +437,7 @@
                         Math.abs(Number(previewY.value) || 0) + drawH / (2 * fit) > stockH / 2;
         previewWarning.classList.toggle('hidden', !outside);
         previewWarning.textContent = outside ? 'Внимание: рисунок может выходить за границы заготовки.' : '';
-        previewStatus.textContent = loadedImage.width + ' × ' + loadedImage.height + ' px';
+        previewStatus.textContent = Math.round(drawW / fit) + ' × ' + Math.round(drawH / fit) + ' мм';
       }
 
       previewCtx.fillStyle = '#fbbf24';
@@ -419,10 +446,12 @@
       previewCtx.fillText(stockW + ' × ' + stockH + ' мм', 8, 14);
     }
 
-    [previewScale, previewRotation, previewX, previewY, paramWidth, paramHeight].forEach(el => {
+    [objWidthInput, objHeightInput, previewScale, previewRotation, previewX, previewY, paramWidth, paramHeight].forEach(el => {
       el.addEventListener('input', renderImagePreview);
     });
     document.getElementById('preview-reset').addEventListener('click', () => {
+      objWidthInput.value = '';
+      objHeightInput.value = '';
       previewScale.value = 100;
       previewRotation.value = 0;
       previewX.value = 0;
@@ -479,7 +508,6 @@
       k = 0;
       for (let q = 0; q < n; q++) { while (z[k + 1] < q) k++; d[q] = (q - v[k]) * (q - v[k]) + f[v[k]]; }
     }
-    // Евклидово расстояние (в пикселях) до ближайшего пикселя со значением 1
     function edt(feat, cols, rows) {
       const INF = 1e12, n = Math.max(cols, rows);
       const f = new Float64Array(n), d = new Float64Array(n), v = new Int32Array(n), z = new Float64Array(n + 2);
@@ -496,7 +524,6 @@
       }
       return out;
     }
-    // Знаковое поле расстояний до фигуры F (мм): <0 внутри, >0 снаружи; din — глубина внутри (пикс.)
     function signedField(F, cols, rows, px) {
       const N = cols * rows, inv = new Uint8Array(N);
       for (let i = 0; i < N; i++) inv[i] = F[i] ? 0 : 1;
@@ -510,7 +537,6 @@
       const tx = Math.min(1, Math.max(0, fx - i)), ty = Math.min(1, Math.max(0, fy - j)), k = j * cols + i;
       return (c[k] * (1 - tx) + c[k + 1] * tx) * (1 - ty) + (c[k + cols] * (1 - tx) + c[k + cols + 1] * tx) * ty;
     }
-    // Изолиния поля c на уровне L (marching squares, субпиксельная точность)
     function contourLines(c, cols, rows, px, H, L) {
       const segs = [], adj = new Map();
       const eid = (i, j, v) => (j * cols + i) * 2 + v;
@@ -577,7 +603,6 @@
       };
       return (chk(-dx, p[0] - b.x0) && chk(dx, b.x1 - p[0]) && chk(-dy, p[1] - b.y0) && chk(dy, b.y1 - p[1])) ? [t0, t1] : null;
     }
-    // Обрезка ломаной по прямоугольнику (разрезает на части, не соединяет через пустоту)
     function clipPoly(pts, b) {
       const res = []; let cur = [], clipped = false;
       const flush = () => { if (cur.length > 1) res.push(cur); cur = []; };
@@ -593,7 +618,6 @@
       flush();
       return { res, clipped };
     }
-    // Растровые проходы заливки: интервалы строк, где поле удовлетворяет условию
     function fillRows(c, cols, rows, px, H, inside, R, box, sp) {
       const L = inside ? -R : R, out = [];
       const ny = Math.max(1, Math.ceil((box.y1 - box.y0) / sp)), dy = (box.y1 - box.y0) / ny;
@@ -631,7 +655,6 @@
       for (let i = 0; i < N; i++) if (!d[i] && !seen[i]) out[i] = 1;
       return out;
     }
-    // Компоненты фигуры: «тонкие» = уже диаметра фрезы (открытые линии / штрихи)
     function thinComps(F, din, cols, rows, D, px) {
       const N = cols * rows, lab = new Int32Array(N), ms = [0], st = []; let n = 0;
       for (let s = 0; s < N; s++) {
@@ -679,7 +702,6 @@
         }
       }
     }
-    // Осевые линии: утончение маски до скелета и трассировка в ломаные
     function skeletonPaths(mask, cols, rows, px, H) {
       const N = cols * rows, s = new Uint8Array(mask), seen = new Uint8Array(N), raw = [];
       zhangSuen(s, cols, rows);
@@ -779,24 +801,39 @@
       voiceSay(errs.some(e => /глубин/i.test(e)) ? 'Внимание, обнаружена ошибка в глубине реза' : 'Внимание, ошибка генерации. ' + errs[0]);
     }
 
-    // Маска «тёмных» пикселей с учётом масштаба, поворота и смещения из предпросмотра изображения
+    // Маска с учётом заданных точных размеров в мм или процентов масштаба
     function buildMask(W, H, px, cols, rows) {
       const cv = document.createElement('canvas'); cv.width = cols; cv.height = rows;
       const g = cv.getContext('2d', { willReadFrequently: true });
       g.fillStyle = '#fff'; g.fillRect(0, 0, cols, rows);
       const iw = loadedImage.width, ih = loadedImage.height;
-      const pct = Math.min(300, Math.max(10, Number(previewScale.value) || 100)) / 100;
-      const k = Math.min(W / iw, H / ih) * pct / px;
+      
+      const userW = parseFloat(objWidthInput.value);
+      const userH = parseFloat(objHeightInput.value);
+      let drawW, drawH;
+      const aspect = iw / ih;
+
+      if (userW > 0 || userH > 0) {
+        if (userW > 0 && !userH) { drawW = userW; drawH = userW / aspect; }
+        else if (!userW && userH > 0) { drawH = userH; drawW = userH * aspect; }
+        else { drawW = userW; drawH = userH; }
+      } else {
+        const pct = Math.min(300, Math.max(10, Number(previewScale.value) || 100)) / 100;
+        const base = Math.min(W / iw, H / ih);
+        drawW = iw * base * pct;
+        drawH = ih * base * pct;
+      }
+
+      const kx = (drawW / iw) / px, ky = (drawH / ih) / px;
       g.translate((W / 2 + (Number(previewX.value) || 0)) / px, (H / 2 - (Number(previewY.value) || 0)) / px);
       g.rotate((Number(previewRotation.value) || 0) * Math.PI / 180);
       g.imageSmoothingQuality = 'high';
-      g.drawImage(loadedImage, -iw * k / 2, -ih * k / 2, iw * k, ih * k);
+      g.drawImage(loadedImage, -iw * kx / 2, -ih * ky / 2, iw * kx, ih * ky);
       const d = g.getImageData(0, 0, cols, rows).data, m = new Uint8Array(cols * rows);
       for (let i = 0; i < m.length; i++) m[i] = (d[i * 4] + d[i * 4 + 1] + d[i * 4 + 2]) / 3 < 130 ? 1 : 0;
       return m;
     }
 
-    // Обработка изображения в траекторию .TAP (режим, диаметр фрезы, глубина каждого прохода)
     function generateTapFromImage() {
       if (!loadedImage) return;
       const v = validateDepths(), errs = v.errs.slice();
@@ -831,8 +868,6 @@
         skeletonPaths(dark, cols, rows, px, H).forEach(p => clipAdd(p, stock));
         if (clippedAny) warns.push('Часть осевых линий вышла за заготовку и была обрезана по её границе.');
       } else if (mode === 'letters') {
-        // Буква = тёмная область (отверстия НЕ заливаются). Изолиния +R: снаружи буквы = эквидистанта наружу,
-        // внутри отверстия = эквидистанта внутрь (−R от стенки отверстия). Тип контура — по чётности вложенности.
         const sf = signedField(dark, cols, rows, px);
         const cs = contourLines(sf.c, cols, rows, px, H, R).map(p => ({ pts: rdp(p.pts, tol), closed: p.closed })).filter(p => p.pts.length >= 3);
         const inPoly = (pt, poly) => { let ins = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const a = poly[i], b = poly[j]; if ((a[1] > pt[1]) !== (b[1] > pt[1]) && pt[0] < (b[0] - a[0]) * (pt[1] - a[1]) / (b[1] - a[1]) + a[0]) ins = !ins; } return ins; };
@@ -887,7 +922,7 @@
       const org = getOrigin(), ox = org.fx * W, oy = org.fy * H;
       const sep = chkTabs.checked ? '\t' : ' ', plunge = Math.min(300, feed);
       const f3 = (q) => { const s = q.toFixed(3); return s === '-0.000' ? '0.000' : s; };
-      const fx = (q) => f3(q - ox), fy = (q) => f3(q - oy);   // пересчёт в систему координат выбранного нуля (WCS)
+      const fx = (q) => f3(q - ox), fy = (q) => f3(q - oy);
       const lines = [], kinds = [], L = (s, k) => { lines.push(s); kinds.push(k || ''); };
       const tw = parseFloat($('tab-w').value), th = parseFloat($('tab-h').value), ts = parseFloat($('tab-step').value);
       const useTabs = mode === 'letters' && $('chk-holdtabs').checked && tw > 0 && th > 0;
@@ -908,7 +943,6 @@
       };
       L('G90'); L('G0' + sep + 'Z' + f3(safeZ)); L('M3');
       const nIn = strokes.filter(q => q.kind === 'in').length, nOut = strokes.length - nIn;
-      // Раскрой букв: сначала ВСЕ отверстия на полную глубину, потом внешние контуры (мостики — только на финальном проходе)
       const jobs = mode === 'letters'
         ? [{ list: orderNN(strokes.filter(q => q.kind === 'in')), tabs: false }, { list: orderNN(strokes.filter(q => q.kind !== 'in')), tabs: true }]
         : [{ list: strokes, tabs: false }];
@@ -923,7 +957,6 @@
         .concat(warns.map(w => '⚠ ' + w)), warns.length ? 'warn' : 'ok');
     }
 
-    // Обработка текстового G-кода (.tap, .nc) с форматированием
     function generateTapFromText() {
       let raw = loadedRawText || inputArea.value || '';
       if (!raw.trim()) return;
@@ -935,7 +968,6 @@
       rawLines.forEach(l => {
         let line = l.trim().toUpperCase().replace(/\(.*?\)/g, '').replace(/;.*/g, '');
         if (!line) return;
-        // Переформатирование разделителей
         line = line.replace(/\s+/g, sep).replace(/([0-9.])(?=[A-Z])/g, `$1${sep}`);
         lines.push(line);
       });
@@ -947,7 +979,6 @@
       finalizeOutput(lines);
     }
 
-    // ---- Нулевая точка (WCS Origin) ----
     const ORIGIN_NAMES = { '0,0': 'Левый нижний угол (X0 Y0) — стандарт NCStudio', '0.5,0': 'Низ по центру', '1,0': 'Правый нижний угол (X:Max Y0)',
       '0,0.5': 'Левый край по центру', '0.5,0.5': 'Центр заготовки (W/2, H/2)', '1,0.5': 'Правый край по центру',
       '0,1': 'Левый верхний угол (X0 Y:Max)', '0.5,1': 'Верх по центру', '1,1': 'Правый верхний угол (X:Max Y:Max)' };
@@ -963,7 +994,6 @@
     document.querySelectorAll('input[name="origin"]').forEach(r => r.addEventListener('change', onOriginChange));
     [paramWidth, paramHeight].forEach(el => el.addEventListener('input', updateOriginCaption));
 
-    // ---- Мостики: делит контур на участки, часть из которых — «мостик» ----
     function tabSplit(pts, tw, spacing) {
       const cum = [0]; for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
       const per = cum[cum.length - 1];
@@ -984,7 +1014,7 @@
 
     let lastGen = { kinds: null, org: { ox: 0, oy: 0 } };
     function finalizeOutput(lines, kinds, org) {
-      const eol = '\r\n'; // Стандарт для ЧПУ
+      const eol = '\r\n';
       const result = lines.join(eol);
       outputArea.value = result;
 
@@ -997,7 +1027,6 @@
       voiceSay('Траектория успешно рассчитана, кадров: ' + lines.length);
     }
 
-    // ---- 2D превью: сетка, цветовое кодирование, зум и панорамирование ----
     let viz = null, view = { z: 1, tx: 0, ty: 0 }, vp = null;
     const canvasXY = $('canvas-xy');
     function parseViz(lines, kinds) {
@@ -1058,12 +1087,10 @@
         if (viz.first && D > 0) { ctx.beginPath(); ctx.arc(viz.first[0], viz.first[1], D / 2, 0, Math.PI * 2); ctx.lineWidth = 1 / s; ctx.strokeStyle = 'rgba(251,191,36,0.7)'; ctx.setLineDash([3 / s, 3 / s]); ctx.stroke(); ctx.setLineDash([]); }
         ctx.restore();
       }
-      // линейки
       ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.fillRect(0, ch - 14, cw, 14); ctx.fillRect(0, 0, 32, ch - 14);
       ctx.fillStyle = '#8a8a8a'; ctx.font = '9px "Fira Code", monospace'; ctx.textAlign = 'left';
       for (let i = Math.ceil(xmin / major); i * major <= xmax; i++) { const v = i * major; ctx.fillText(String(Math.round(v * 100) / 100), X(v) + 2, ch - 4); }
       for (let i = Math.ceil(ymin / major); i * major <= ymax; i++) { const v = i * major; if (Y(v) < ch - 16) ctx.fillText(String(Math.round(v * 100) / 100), 2, Y(v) - 2); }
-      // маркер нуля станка
       const mx = X(0), my = Y(0);
       ctx.strokeStyle = '#ef4444'; ctx.fillStyle = '#ef4444'; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(mx - 13, my); ctx.lineTo(mx + 13, my); ctx.moveTo(mx, my - 13); ctx.lineTo(mx, my + 13); ctx.stroke();
@@ -1097,7 +1124,6 @@
     $('btn-view-reset').addEventListener('click', resetView);
     window.addEventListener('resize', () => { if (!$('view-vis').classList.contains('hidden')) renderViz(); });
 
-    // Кнопки управления
     document.getElementById('btn-process-main').addEventListener('click', () => {
       if (loadedImage) generateTapFromImage();
       else generateTapFromText();
@@ -1139,7 +1165,6 @@
       renderImagePreview();
     });
 
-    // Переключение вкладок Код / Визуализатор
     const tabCode = document.getElementById('tab-btn-code');
     const tabVis = document.getElementById('tab-btn-vis');
     const viewCode = document.getElementById('view-code');
@@ -1163,7 +1188,6 @@
     renderImagePreview();
     distributeDepth(); renderDepthFields(); updateOpenRow(); updateOriginCaption();
 
-    // Drag and Drop
     dropZone.addEventListener('click', () => fileInput.click());
     dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-amber-400'); });
     dropZone.addEventListener('dragleave', () => dropZone.classList.remove('border-amber-400'));
@@ -1189,7 +1213,7 @@
       if (!voiceOn || !('speechSynthesis' in window)) return;
       const u = new SpeechSynthesisUtterance(text); u.lang = 'ru-RU'; u.rate = 1.02;
       if (ruVoice) u.voice = ruVoice;
-      speakBusy++; try { recog && recog.stop(); } catch (e) {}   // пока говорим — не слушаем самих себя
+      speakBusy++; try { recog && recog.stop(); } catch (e) {}
       const done = () => { speakBusy = Math.max(0, speakBusy - 1); if (voiceOn && !speakBusy) startRecog(); };
       u.onend = done; u.onerror = done;
       speechSynthesis.speak(u);
@@ -1225,6 +1249,7 @@
     function clearAll() {
       inputArea.value = ''; outputArea.value = ''; loadedImage = null; loadedRawText = null; fileInput.value = '';
       camLog.className = 'hidden'; statLines.textContent = 'Кадров: 0'; statSize.textContent = 'Вес: 0 KB';
+      objWidthInput.value = ''; objHeightInput.value = '';
       previewScale.value = 100; previewRotation.value = 0; previewX.value = 0; previewY.value = 0;
       viz = null; lastGen = { kinds: null, org: { ox: 0, oy: 0 } }; view = { z: 1, tx: 0, ty: 0 };
       renderImagePreview(); renderViz(); voiceSay('Проект очищен');
