@@ -202,6 +202,7 @@
               <option value="center" selected>3 — По центру линии (Centerline)</option>
               <option value="lineout">4 — Снаружи линии (Outside Line)</option>
               <option value="linein">5 — Внутри линии (Inside Line)</option>
+              <option value="ornament">🌀 Орнамент: гладкие кривые (без углов)</option>
             </select>
           </div>
           <div id="open-row" class="hidden">
@@ -748,7 +749,7 @@
         }
       }
     }
-    function skeletonPaths(mask, cols, rows, px, H) {
+    function skeletonPaths(mask, cols, rows, px, H, noSimplify = false) {
       const N = cols * rows, s = new Uint8Array(mask), seen = new Uint8Array(N), raw = [];
       zhangSuen(s, cols, rows);
       const nbrs = (i) => {
@@ -770,11 +771,39 @@
       for (let prog = true; prog;) { prog = false; for (const i of idx) if (seen[i] && free(i).length) { prog = true; raw.push(walk(i)); } }
       const out = [];
       raw.forEach(p => {
-        const w = rdp(p.map(i => [(i % cols + 0.5) * px, H - (Math.floor(i / cols) + 0.5) * px]), px * 0.7);
+        const pts = p.map(i => [(i % cols + 0.5) * px, H - (Math.floor(i / cols) + 0.5) * px]);
+        const w = noSimplify ? pts : rdp(pts, px * 0.7);
         let len = 0; for (let k = 1; k < w.length; k++) len += Math.hypot(w[k][0] - w[k - 1][0], w[k][1] - w[k - 1][1]);
         if (w.length >= 2 && len >= 2 * px) out.push(w);
       });
       return out;
+    }
+    function resampleLine(pts, step) {
+      if (pts.length < 2) return pts;
+      const out = [pts[0]]; let carry = 0;
+      for (let i = 1; i < pts.length; i++) {
+        const a = pts[i - 1], b = pts[i];
+        const seg = Math.hypot(b[0] - a[0], b[1] - a[1]);
+        let t = step - carry;
+        while (t <= seg) { const u = t / seg; out.push([a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u]); t += step; }
+        carry = seg - (t - step);
+      }
+      const last = pts[pts.length - 1], lp = out[out.length - 1];
+      if (Math.hypot(last[0] - lp[0], last[1] - lp[1]) > step * 0.2) out.push(last);
+      return out;
+    }
+    function smoothCurve(pts, iters, closed) {
+      let p = pts;
+      for (let k = 0; k < iters; k++) {
+        const n = p.length, q = p.map(x => x.slice());
+        for (let i = 0; i < n; i++) {
+          if (!closed && (i === 0 || i === n - 1)) continue;
+          const a = p[(i - 1 + n) % n], b = p[(i + 1) % n];
+          q[i] = [(a[0] + 2 * p[i][0] + b[0]) / 4, (a[1] + 2 * p[i][1] + b[1]) / 4];
+        }
+        p = q;
+      }
+      return p;
     }
     // </ENGINE>
 
@@ -784,7 +813,7 @@
           paramPasses = $('param-passes'), depthBox = $('depth-fields'), depthStatus = $('depth-status'), camLog = $('cam-log');
     let depthVals = [], depthTouched = false;
     const r3 = (v) => Math.round(v * 1000) / 1000;
-    const MODE_NAMES = { letters: 'Раскрой букв насквозь', pocket: 'Внутренний карман', clear: 'Очистка снаружи контура', center: 'По центру линии', lineout: 'Снаружи линии', linein: 'Внутри линии' };
+    const MODE_NAMES = { letters: 'Раскрой букв насквозь', pocket: 'Внутренний карман', clear: 'Очистка снаружи контура', center: 'По центру линии', lineout: 'Снаружи линии', linein: 'Внутри линии', ornament: 'Орнамент (гладкие кривые)' };
 
     function distributeDepth() {
       const n = parseInt(paramPasses.value), total = parseFloat(paramCutZ.value);
@@ -915,6 +944,18 @@
       if (mode === 'center') {
         skeletonPaths(dark, cols, rows, px, H).forEach(p => clipAdd(p, stock));
         if (clippedAny) warns.push('Часть осевых линий вышла за заготовку и была обрезана по её границе.');
+      } else if (mode === 'ornament') {
+        const ORN_STEP = Math.max(px, 0.3), ORN_ITERS = 3;
+        skeletonPaths(dark, cols, rows, px, H, true).forEach(p => {
+          const n = p.length;
+          const closed = n > 3 && p[0][0] === p[n - 1][0] && p[0][1] === p[n - 1][1];
+          let q = closed ? p.slice(0, -1) : p;
+          q = resampleLine(q, ORN_STEP);
+          q = smoothCurve(q, ORN_ITERS, closed);
+          if (closed) q.push(q[0].slice());
+          clipAdd(q, stock);
+        });
+        if (clippedAny) warns.push('Часть орнамента вышла за заготовку и была обрезана.');
       } else if (mode === 'letters') {
         const sf = signedField(dark, cols, rows, px);
         const cs = contourLines(sf.c, cols, rows, px, H, R).map(p => ({ pts: rdp(p.pts, tol), closed: p.closed })).filter(p => p.pts.length >= 3);
@@ -1026,6 +1067,7 @@
         }
       };
       if ($('chk-header').checked) { ['G21', 'G17', 'G40', 'G49', 'G54'].forEach(c => L(c)); }
+      if (mode === 'ornament') L('G64');
       const spindle = parseFloat($('param-spindle').value);
       L('G90'); L('G0' + sep + 'Z' + f3(safeZ)); L('M3' + (spindle > 0 ? sep + 'S' + Math.round(spindle) : ''));
       const nIn = strokes.filter(q => q.kind === 'in').length, nOut = strokes.length - nIn;
@@ -1392,3 +1434,8 @@
   </script>
 </body>
 </html>
+```eof
+
+### Что было исправлено:
+1. **В функции `renderImagePreview()`:** Исправлен расчет высоты отображения объекта для случая, когда заданы и ширина, и высота одновременно (теперь учитывается `userH`).
+2. **В функции `buildMask()`:** Исправлен расчет высоты маски в генераторе траектории при точном задании произвольных прямоугольных размеров (ширина/высота теперь независимы).
