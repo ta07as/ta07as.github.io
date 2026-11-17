@@ -3,351 +3,379 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Talas_profi — CNC Image & G-Code to .TAP Master</title>
+  <title>Talas_profi — CNC Image & G-Code to .TAP Master v5.1</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap');
     body { font-family: 'Inter', sans-serif; background-color: #050505; color: #f5f5f5; }
     .code-font { font-family: 'Fira Code', monospace; }
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: #0a0a0a; }
     ::-webkit-scrollbar-thumb { background: #262626; border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: #FBBF24; }
     canvas { background-color: #000000; background-image: radial-gradient(#1a1a1a 1px, transparent 1px); background-size: 16px 16px; }
     #cnc-canvas { background-image: none; touch-action: none; cursor: grab; }
-    .vdot { position: relative; width: 10px; height: 10px; border-radius: 50%; background: var(--c, #ef4444); flex-shrink: 0; }
+    .vdot { position: relative; width: 9px; height: 9px; border-radius: 50%; background: var(--c, #ef4444); flex-shrink: 0; }
     .vdot::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: var(--c, #ef4444); animation: vping 1.4s ease-out infinite; }
     @keyframes vping { 0% { transform: scale(1); opacity: .7; } 100% { transform: scale(2.8); opacity: 0; } }
+    input[type="number"], select { padding-top: 0.38rem; padding-bottom: 0.38rem; }
   </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between selection:bg-amber-400 selection:text-black">
+<body class="min-h-screen flex flex-col justify-between selection:bg-amber-400 selection:text-black text-xs">
 
-  <!-- Шапка -->
-  <header class="border-b border-neutral-800 bg-neutral-950/90 backdrop-blur sticky top-0 z-50 px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
-    <div class="flex items-center gap-3">
-      <div class="bg-amber-400 text-black p-2.5 rounded-xl font-black text-lg shadow-lg shadow-amber-400/20">
-        ⚡
-      </div>
+  <!-- Компактная шапка -->
+  <header class="border-b border-neutral-800 bg-neutral-950/95 backdrop-blur sticky top-0 z-50 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-2.5">
+      <div class="bg-amber-400 text-black px-2.5 py-1.5 rounded-lg font-black text-base shadow-md shadow-amber-400/20">⚡</div>
       <div>
-        <h1 class="text-base md:text-lg font-bold tracking-tight text-white flex items-center gap-2">
-          Talas_profi <span class="text-amber-400 font-mono text-xs px-2 py-0.5 bg-amber-400/10 border border-amber-400/30 rounded">CNC .TAP Master v4.2</span>
+        <h1 class="text-sm md:text-base font-bold tracking-tight text-white flex items-center gap-2">
+          Talas_profi <span class="text-amber-400 font-mono text-[11px] px-1.5 py-0.5 bg-amber-400/10 border border-amber-400/30 rounded">CNC .TAP Master v5.1</span>
         </h1>
-        <p class="text-[11px] text-neutral-400">Генерация, раскрой букв по точным размерам и симуляция для ЧПУ</p>
+        <p class="text-[10px] text-neutral-400 hidden sm:block">Совместимо с Inectra / GRBL / NCStudio • Точные размеры букв • Сглаживание орнаментов</p>
       </div>
     </div>
-    <div class="flex flex-wrap items-center gap-3">
-      <span id="voice-text" class="hidden xl:block max-w-[280px] truncate text-[10px] text-neutral-500 code-font"></span>
-      <button id="btn-voice" type="button" title="Голосовые команды: «сгенерировать код», «скачать файл», «очистить всё», «сбросить вид»" class="bg-neutral-900 hover:bg-neutral-800 text-neutral-200 border border-neutral-700 font-semibold px-4 py-2.5 rounded-xl text-xs md:text-sm transition active:scale-95 flex items-center gap-2.5">
+
+    <!-- Быстрые пресеты материалов -->
+    <div class="hidden xl:flex items-center gap-1.5 bg-black/60 border border-neutral-800 px-2.5 py-1 rounded-lg">
+      <span class="text-[10px] text-neutral-500 mr-1">Пресет:</span>
+      <button type="button" data-preset="plywood4" class="preset-btn px-2 py-1 rounded bg-neutral-900 hover:bg-amber-400 hover:text-black text-neutral-300 text-[10px] font-medium transition">Фанера 4мм</button>
+      <button type="button" data-preset="mdf16" class="preset-btn px-2 py-1 rounded bg-neutral-900 hover:bg-amber-400 hover:text-black text-neutral-300 text-[10px] font-medium transition">МДФ 16мм</button>
+      <button type="button" data-preset="hardwood" class="preset-btn px-2 py-1 rounded bg-neutral-900 hover:bg-amber-400 hover:text-black text-neutral-300 text-[10px] font-medium transition">Бук / Дуб</button>
+      <button type="button" data-preset="acrylic" class="preset-btn px-2 py-1 rounded bg-neutral-900 hover:bg-amber-400 hover:text-black text-neutral-300 text-[10px] font-medium transition">Акрил 3мм</button>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <span id="voice-text" class="hidden 2xl:block max-w-[220px] truncate text-[10px] text-neutral-500 code-font"></span>
+      <button id="btn-voice" type="button" title="Голосовые команды: «сгенерировать код», «скачать файл», «очистить всё», «сбросить вид»" class="bg-neutral-900 hover:bg-neutral-800 text-neutral-200 border border-neutral-700 font-semibold px-3 py-1.5 rounded-lg text-xs transition active:scale-95 flex items-center gap-2">
         <span id="voice-dot" class="vdot" style="--c:#ef4444"></span>
-        <span>🎙️ Голосовой помощник</span>
+        <span>🎙️ Голос</span>
         <span id="voice-state" class="code-font text-[10px] uppercase text-neutral-500">Выкл</span>
       </button>
-      <button id="btn-top-generate" class="bg-amber-400 hover:bg-amber-300 text-black font-bold px-5 py-2.5 rounded-xl text-xs md:text-sm transition-all shadow-lg shadow-amber-400/20 active:scale-95 flex items-center gap-2">
+      <button id="btn-top-generate" class="bg-amber-400 hover:bg-amber-300 text-black font-bold px-4 py-1.5 rounded-lg text-xs transition-all shadow-md shadow-amber-400/20 active:scale-95 flex items-center gap-1.5">
         🚀 Сгенерировать .TAP
       </button>
-      <button id="btn-top-download" class="bg-neutral-900 hover:bg-neutral-800 text-amber-400 border border-amber-400/40 font-semibold px-4 py-2.5 rounded-xl text-xs md:text-sm transition active:scale-95 flex items-center gap-2">
+      <button id="btn-top-download" class="bg-neutral-900 hover:bg-neutral-800 text-amber-400 border border-amber-400/40 font-semibold px-3 py-1.5 rounded-lg text-xs transition active:scale-95 flex items-center gap-1.5">
         💾 Скачать
       </button>
     </div>
   </header>
 
   <!-- Основной контент -->
-  <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 p-4 md:p-6 max-w-[1920px] mx-auto w-full">
+  <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 p-3 md:p-4 max-w-[1920px] mx-auto w-full">
     
-    <!-- Настройки (4 колонки) -->
-    <div class="lg:col-span-4 flex flex-col gap-5">
+    <!-- Левая компактная панель управления (4 колонки) -->
+    <div class="lg:col-span-4 flex flex-col gap-3">
       
-      <!-- Загрузка файлов -->
-      <div class="bg-neutral-900/90 border border-neutral-800 rounded-2xl p-5 shadow-2xl">
-        <h2 class="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-          📁 1. Источник (Картинка, Эскиз, Текст, G-код)
-        </h2>
-        <div id="drop-zone" class="border-2 border-dashed border-neutral-700 hover:border-amber-400 bg-neutral-950 rounded-xl p-6 text-center cursor-pointer transition flex flex-col items-center justify-center gap-2 group">
-          <div class="text-3xl text-neutral-500 group-hover:text-amber-400 transition-colors">🖼️</div>
-          <p class="text-xs text-neutral-200 font-medium">Перетащите PNG, JPG, SVG, .tap, .nc сюда</p>
-          <p class="text-[10px] text-neutral-500">или кликните для выбора на компьютере</p>
-          <input type="file" id="file-input" class="hidden" accept=".png,.jpg,.jpeg,.svg,.tap,.nc,.gcode,.txt">
+      <!-- 1. Загрузка файла + мини-предпросмотр -->
+      <div class="bg-neutral-900/90 border border-neutral-800 rounded-xl p-3.5 shadow-xl">
+        <div class="grid grid-cols-12 gap-3 items-center">
+          <div id="drop-zone" class="col-span-5 border-2 border-dashed border-neutral-700 hover:border-amber-400 bg-neutral-950 rounded-lg p-3 text-center cursor-pointer transition flex flex-col items-center justify-center gap-1 h-[156px] group">
+            <div class="text-2xl text-neutral-500 group-hover:text-amber-400 transition-colors">🖼️</div>
+            <p class="text-[11px] text-neutral-200 font-medium leading-tight">Загрузить файл</p>
+            <p class="text-[9px] text-neutral-500 leading-tight">PNG, JPG, SVG, .TAP, .NC</p>
+            <input type="file" id="file-input" class="hidden" accept=".png,.jpg,.jpeg,.svg,.tap,.nc,.gcode,.txt">
+          </div>
+          <div class="col-span-7 flex flex-col gap-1">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-bold text-neutral-400 uppercase">Позиция на столе</span>
+              <span id="preview-status" class="text-[10px] text-amber-400 font-mono truncate max-w-[135px]">Ожидает файл</span>
+            </div>
+            <div class="rounded-lg overflow-hidden border border-neutral-800 bg-black">
+              <canvas id="image-preview" class="block w-full" style="height:136px;background:#080808;"></canvas>
+            </div>
+          </div>
         </div>
+        <div id="preview-warning" class="hidden mt-2 text-[10px] text-amber-300 bg-amber-400/10 border border-amber-400/30 rounded px-2.5 py-1.5"></div>
       </div>
 
-      <!-- Предпросмотр и размеры -->
-      <section class="bg-neutral-900/90 border border-neutral-800 rounded-2xl p-5 shadow-2xl">
-        <div class="flex items-center justify-between gap-3 mb-3">
-          <h2 class="text-xs font-bold text-neutral-400 uppercase tracking-widest">👁️ Предпросмотр и размеры</h2>
-          <span id="preview-status" class="text-[10px] text-neutral-500">Ожидает изображение</span>
-        </div>
-        <p class="text-[11px] text-neutral-400 mb-3">Задайте точный размер буквы/картинки в миллиметрах или масштабируйте через проценты.</p>
-        <div class="rounded-xl overflow-hidden border border-neutral-800 bg-black">
-          <canvas id="image-preview" class="block w-full" style="height:260px;background:#080808;"></canvas>
-        </div>
-        <div class="grid grid-cols-2 gap-3 mt-4">
-          <label class="text-[11px] text-neutral-400">Ширина объекта (мм)
-            <input id="object-width" type="number" step="1" value="" placeholder="Авто" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 font-mono">
-          </label>
-          <label class="text-[11px] text-neutral-400">Высота объекта (мм)
-            <input id="object-height" type="number" step="1" value="" placeholder="Авто" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 font-mono">
-          </label>
-          <label class="text-[11px] text-neutral-400">Масштаб (%)
-            <input id="preview-scale" type="number" min="10" max="300" value="100" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 font-mono">
-          </label>
-          <label class="text-[11px] text-neutral-400">Поворот (°)
-            <input id="preview-rotation" type="number" min="-180" max="180" value="0" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 font-mono">
-          </label>
-          <label class="text-[11px] text-neutral-400">Смещение X (мм)
-            <input id="preview-x" type="number" step="1" value="0" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 font-mono">
-          </label>
-          <label class="text-[11px] text-neutral-400">Смещение Y (мм)
-            <input id="preview-y" type="number" step="1" value="0" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 font-mono">
-          </label>
-        </div>
-        <div class="mt-3 p-3 rounded-lg border border-neutral-800 bg-black/40 flex flex-col gap-2">
-          <label class="text-[11px] text-neutral-400 flex items-center justify-between">Порог яркости (темнее порога = рез)
-            <span id="threshold-val" class="text-amber-400 font-mono">130</span>
-          </label>
-          <input id="preview-threshold" type="range" min="20" max="240" value="130" class="w-full accent-amber-400">
-          <label class="flex items-center gap-2 text-xs text-neutral-300 cursor-pointer">
-            <input type="checkbox" id="preview-invert" class="accent-amber-400 rounded"> Инвертировать (светлый рисунок на тёмном фоне)
-          </label>
-        </div>
-        <div class="flex gap-2 mt-3">
-          <button id="preview-reset" type="button" class="flex-1 bg-neutral-800 hover:bg-neutral-700 text-white text-xs font-semibold rounded-lg py-2.5">↺ Сбросить</button>
-          <button id="preview-center" type="button" class="flex-1 bg-amber-400 hover:bg-amber-300 text-black text-xs font-bold rounded-lg py-2.5">⊙ По центру</button>
-        </div>
-        <div id="preview-warning" class="hidden mt-3 text-[11px] text-amber-300 bg-amber-400/10 border border-amber-400/30 rounded-lg p-3"></div>
-      </section>
-
-      <!-- Геометрия и физика фрезеровки -->
-      <div class="bg-neutral-900/90 border border-neutral-800 rounded-2xl p-5 shadow-2xl flex flex-col gap-4">
-        <h2 class="text-xs font-bold text-neutral-400 uppercase tracking-widest">
-          ⚙️ 2. Параметры станка и заготовки (мм)
-        </h2>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-[11px] text-neutral-400 mb-1">Ширина детали (X):</label>
-            <input type="number" id="param-width" value="400" class="w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 focus:outline-none focus:border-amber-400 font-mono">
-          </div>
-          <div>
-            <label class="block text-[11px] text-neutral-400 mb-1">Высота детали (Y):</label>
-            <input type="number" id="param-height" value="400" class="w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 focus:outline-none focus:border-amber-400 font-mono">
-          </div>
-          <div>
-            <label class="block text-[11px] text-neutral-400 mb-1">Общая глубина реза (Z):</label>
-            <input type="number" id="param-cutz" value="-2.0" step="0.5" class="w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 focus:outline-none focus:border-amber-400 font-mono">
-          </div>
-          <div>
-            <label class="block text-[11px] text-neutral-400 mb-1">Безопасная Z:</label>
-            <input type="number" id="param-safez" value="5.0" step="1" class="w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 focus:outline-none focus:border-amber-400 font-mono">
-          </div>
-          <div>
-            <label class="block text-[11px] text-neutral-400 mb-1">Рабочая подача (F), мм/мин:</label>
-            <input type="number" id="param-feed" value="1200" step="100" class="w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 focus:outline-none focus:border-amber-400 font-mono">
-          </div>
-          <div>
-            <label class="block text-[11px] text-neutral-400 mb-1">Шаг растра/скана:</label>
-            <input type="number" id="param-step" value="2" step="1" class="w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 focus:outline-none focus:border-amber-400 font-mono">
-          </div>
-          <div>
-            <label class="block text-[11px] text-neutral-400 mb-1">Подача врезания (F), мм/мин:</label>
-            <input type="number" id="param-plunge" value="300" step="50" min="1" class="w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 focus:outline-none focus:border-amber-400 font-mono">
-          </div>
-          <div>
-            <label class="block text-[11px] text-neutral-400 mb-1">Обороты шпинделя (S), пусто = не писать:</label>
-            <input type="number" id="param-spindle" value="" placeholder="напр. 12000" step="500" min="0" class="w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 focus:outline-none focus:border-amber-400 font-mono">
-          </div>
-          <div>
-            <label class="block text-[11px] text-neutral-400 mb-1">Холостой ход (для оценки времени), мм/мин:</label>
-            <input type="number" id="param-rapid" value="3000" step="500" min="100" class="w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 focus:outline-none focus:border-amber-400 font-mono">
-          </div>
+      <!-- 2. Компактные вкладки настроек -->
+      <div class="bg-neutral-900/90 border border-neutral-800 rounded-xl p-3.5 shadow-xl flex flex-col gap-3 flex-1">
+        
+        <div class="grid grid-cols-4 gap-1 bg-black p-1 rounded-lg border border-neutral-800">
+          <button type="button" data-stab="size" class="stab-btn py-1.5 px-1 rounded text-[11px] font-bold bg-amber-400 text-black transition">📐 Размеры</button>
+          <button type="button" data-stab="stock" class="stab-btn py-1.5 px-1 rounded text-[11px] font-semibold text-neutral-400 hover:text-white transition">🪵 Стол / 0</button>
+          <button type="button" data-stab="mill" class="stab-btn py-1.5 px-1 rounded text-[11px] font-semibold text-neutral-400 hover:text-white transition">🛠 Фреза</button>
+          <button type="button" data-stab="depth" class="stab-btn py-1.5 px-1 rounded text-[11px] font-semibold text-neutral-400 hover:text-white transition">⏬ Глубина</button>
         </div>
 
-        <div class="pt-3 border-t border-neutral-800 flex flex-col gap-3">
-          <h3 class="text-[11px] font-bold text-amber-400 uppercase tracking-widest">📍 Нулевая точка станка (WCS Origin)</h3>
-          <div class="flex items-center gap-4">
-            <div class="grid grid-cols-3 gap-1.5 shrink-0">
-              <label class="cursor-pointer" title="Левый верхний"><input type="radio" name="origin" value="0,1" class="peer sr-only"><span class="flex items-center justify-center w-9 h-9 rounded-lg border border-neutral-700 bg-black text-neutral-400 text-sm transition hover:border-amber-400/60 peer-checked:bg-amber-400 peer-checked:text-black peer-checked:border-amber-400 peer-checked:font-bold">↖</span></label>
-              <label class="cursor-pointer" title="Верх по центру"><input type="radio" name="origin" value="0.5,1" class="peer sr-only"><span class="flex items-center justify-center w-9 h-9 rounded-lg border border-neutral-700 bg-black text-neutral-400 text-sm transition hover:border-amber-400/60 peer-checked:bg-amber-400 peer-checked:text-black peer-checked:border-amber-400 peer-checked:font-bold">↑</span></label>
-              <label class="cursor-pointer" title="Правый верхний"><input type="radio" name="origin" value="1,1" class="peer sr-only"><span class="flex items-center justify-center w-9 h-9 rounded-lg border border-neutral-700 bg-black text-neutral-400 text-sm transition hover:border-amber-400/60 peer-checked:bg-amber-400 peer-checked:text-black peer-checked:border-amber-400 peer-checked:font-bold">↗</span></label>
-              <label class="cursor-pointer" title="Левый край по центру"><input type="radio" name="origin" value="0,0.5" class="peer sr-only"><span class="flex items-center justify-center w-9 h-9 rounded-lg border border-neutral-700 bg-black text-neutral-400 text-sm transition hover:border-amber-400/60 peer-checked:bg-amber-400 peer-checked:text-black peer-checked:border-amber-400 peer-checked:font-bold">←</span></label>
-              <label class="cursor-pointer" title="Центр заготовки"><input type="radio" name="origin" value="0.5,0.5" class="peer sr-only"><span class="flex items-center justify-center w-9 h-9 rounded-lg border border-neutral-700 bg-black text-neutral-400 text-sm transition hover:border-amber-400/60 peer-checked:bg-amber-400 peer-checked:text-black peer-checked:border-amber-400 peer-checked:font-bold">⊙</span></label>
-              <label class="cursor-pointer" title="Правый край по центру"><input type="radio" name="origin" value="1,0.5" class="peer sr-only"><span class="flex items-center justify-center w-9 h-9 rounded-lg border border-neutral-700 bg-black text-neutral-400 text-sm transition hover:border-amber-400/60 peer-checked:bg-amber-400 peer-checked:text-black peer-checked:border-amber-400 peer-checked:font-bold">→</span></label>
-              <label class="cursor-pointer" title="Левый нижний (стандарт NCStudio)"><input type="radio" name="origin" value="0,0" class="peer sr-only" checked><span class="flex items-center justify-center w-9 h-9 rounded-lg border border-neutral-700 bg-black text-neutral-400 text-sm transition hover:border-amber-400/60 peer-checked:bg-amber-400 peer-checked:text-black peer-checked:border-amber-400 peer-checked:font-bold">↙</span></label>
-              <label class="cursor-pointer" title="Низ по центру"><input type="radio" name="origin" value="0.5,0" class="peer sr-only"><span class="flex items-center justify-center w-9 h-9 rounded-lg border border-neutral-700 bg-black text-neutral-400 text-sm transition hover:border-amber-400/60 peer-checked:bg-amber-400 peer-checked:text-black peer-checked:border-amber-400 peer-checked:font-bold">↓</span></label>
-              <label class="cursor-pointer" title="Правый нижний"><input type="radio" name="origin" value="1,0" class="peer sr-only"><span class="flex items-center justify-center w-9 h-9 rounded-lg border border-neutral-700 bg-black text-neutral-400 text-sm transition hover:border-amber-400/60 peer-checked:bg-amber-400 peer-checked:text-black peer-checked:border-amber-400 peer-checked:font-bold">↘</span></label>
-              </div>
-            <div id="origin-caption" class="text-[11px] text-neutral-400 code-font leading-relaxed"></div>
-          </div>
-        </div>
+        <!-- ВКЛАДКА 1: РАЗМЕРЫ БУКВ И ПОЗИЦИЯ -->
+        <div id="stab-size" class="stab-panel flex flex-col gap-2.5">
+          <label class="flex items-center gap-2 text-[11px] text-amber-300 font-medium cursor-pointer bg-amber-400/10 border border-amber-400/30 px-2.5 py-1.5 rounded-lg">
+            <input type="checkbox" id="chk-trim-bounds" checked class="accent-amber-400 rounded">
+            Авто-обрезка пустых полей (размер строго по самим буквам)
+          </label>
 
-        <div class="pt-3 border-t border-neutral-800 flex flex-col gap-3">
-          <h3 class="text-[11px] font-bold text-amber-400 uppercase tracking-widest">🛠 Фрезеровка</h3>
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-[11px] text-neutral-400 mb-1">Диаметр фрезы (мм):</label>
-              <input type="number" id="param-tool" value="3" min="0.1" step="0.1" class="w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 focus:outline-none focus:border-amber-400 font-mono">
+          <div class="grid grid-cols-2 gap-2.5">
+            <label class="text-[11px] text-neutral-300 font-semibold">Ширина букв/объекта (мм)
+              <input id="object-width" type="number" step="0.5" min="0.1" value="" placeholder="Напр. 40" class="mt-1 w-full bg-black border border-amber-400/50 text-amber-400 text-xs rounded-lg px-2.5 font-mono focus:outline-none focus:border-amber-400">
+            </label>
+            <label class="text-[11px] text-neutral-300 font-semibold">Высота букв/объекта (мм)
+              <input id="object-height" type="number" step="0.5" min="0.1" value="" placeholder="Напр. 20" class="mt-1 w-full bg-black border border-amber-400/50 text-amber-400 text-xs rounded-lg px-2.5 font-mono focus:outline-none focus:border-amber-400">
+            </label>
+            <label class="text-[11px] text-neutral-400">Масштаб (%) если мм пусто
+              <input id="preview-scale" type="number" min="1" max="500" value="100" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2.5 font-mono">
+            </label>
+            <label class="text-[11px] text-neutral-400">Поворот (°)
+              <input id="preview-rotation" type="number" min="-180" max="180" value="0" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2.5 font-mono">
+            </label>
+            <label class="text-[11px] text-neutral-400">Смещение X (мм)
+              <input id="preview-x" type="number" step="1" value="0" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2.5 font-mono">
+            </label>
+            <label class="text-[11px] text-neutral-400">Смещение Y (мм)
+              <input id="preview-y" type="number" step="1" value="0" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2.5 font-mono">
+            </label>
+          </div>
+
+          <div class="p-2.5 rounded-lg border border-neutral-800 bg-black/50 flex flex-col gap-1.5">
+            <div class="flex items-center justify-between text-[11px] text-neutral-400">
+              <span>Порог яркости (контраст):</span>
+              <span id="threshold-val" class="text-amber-400 font-mono">130</span>
             </div>
-            <div>
-              <label class="block text-[11px] text-neutral-400 mb-1">Количество проходов:</label>
-              <select id="param-passes" class="w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 focus:outline-none focus:border-amber-400 font-mono">
+            <input id="preview-threshold" type="range" min="20" max="240" value="130" class="w-full accent-amber-400 h-1.5">
+            <label class="flex items-center gap-2 text-[11px] text-neutral-300 cursor-pointer pt-0.5">
+              <input type="checkbox" id="preview-invert" class="accent-amber-400 rounded"> Инвертировать (белый рисунок на чёрном)
+            </label>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <button id="preview-reset" type="button" class="bg-neutral-800 hover:bg-neutral-700 text-white text-xs font-semibold rounded-lg py-1.5">↺ Сбросить</button>
+            <button id="preview-center" type="button" class="bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 border border-amber-400/40 text-xs font-bold rounded-lg py-1.5">⊙ По центру</button>
+          </div>
+        </div>
+
+        <!-- ВКЛАДКА 2: ЗАГОТОВКА, СКОРОСТИ И НУЛЕВАЯ ТОЧКА -->
+        <div id="stab-stock" class="stab-panel hidden flex-col gap-2.5">
+          <div class="grid grid-cols-2 gap-2.5">
+            <label class="text-[11px] text-neutral-400">Ширина заготовки X (мм)
+              <input type="number" id="param-width" value="400" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2.5 font-mono">
+            </label>
+            <label class="text-[11px] text-neutral-400">Высота заготовки Y (мм)
+              <input type="number" id="param-height" value="400" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2.5 font-mono">
+            </label>
+            <label class="text-[11px] text-neutral-400">Рабочая подача F (мм/мин)
+              <input type="number" id="param-feed" value="1200" step="100" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2.5 font-mono">
+            </label>
+            <label class="text-[11px] text-neutral-400">Подача врезания (мм/мин)
+              <input type="number" id="param-plunge" value="300" step="50" min="1" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2.5 font-mono">
+            </label>
+            <label class="text-[11px] text-neutral-400">Безопасная Z (мм)
+              <input type="number" id="param-safez" value="5.0" step="1" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2.5 font-mono">
+            </label>
+            <label class="text-[11px] text-neutral-400">Шпиндель (S, об/мин)
+              <input type="number" id="param-spindle" value="12000" step="500" min="0" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2.5 font-mono">
+            </label>
+            <label class="text-[11px] text-neutral-400">Шаг растра (мм)
+              <input type="number" id="param-step" value="1.5" step="0.5" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2.5 font-mono">
+            </label>
+            <label class="text-[11px] text-neutral-400">Холостой ход (для расчёта)
+              <input type="number" id="param-rapid" value="3000" step="500" min="100" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2.5 font-mono">
+            </label>
+          </div>
+
+          <div class="pt-2 border-t border-neutral-800 flex items-center gap-3.5">
+            <div class="grid grid-cols-3 gap-1 shrink-0">
+              <label class="cursor-pointer"><input type="radio" name="origin" value="0,1" class="peer sr-only"><span class="flex items-center justify-center w-8 h-8 rounded border border-neutral-700 bg-black text-neutral-400 text-xs peer-checked:bg-amber-400 peer-checked:text-black peer-checked:font-bold">↖</span></label>
+              <label class="cursor-pointer"><input type="radio" name="origin" value="0.5,1" class="peer sr-only"><span class="flex items-center justify-center w-8 h-8 rounded border border-neutral-700 bg-black text-neutral-400 text-xs peer-checked:bg-amber-400 peer-checked:text-black peer-checked:font-bold">↑</span></label>
+              <label class="cursor-pointer"><input type="radio" name="origin" value="1,1" class="peer sr-only"><span class="flex items-center justify-center w-8 h-8 rounded border border-neutral-700 bg-black text-neutral-400 text-xs peer-checked:bg-amber-400 peer-checked:text-black peer-checked:font-bold">↗</span></label>
+              <label class="cursor-pointer"><input type="radio" name="origin" value="0,0.5" class="peer sr-only"><span class="flex items-center justify-center w-8 h-8 rounded border border-neutral-700 bg-black text-neutral-400 text-xs peer-checked:bg-amber-400 peer-checked:text-black peer-checked:font-bold">←</span></label>
+              <label class="cursor-pointer"><input type="radio" name="origin" value="0.5,0.5" class="peer sr-only"><span class="flex items-center justify-center w-8 h-8 rounded border border-neutral-700 bg-black text-neutral-400 text-xs peer-checked:bg-amber-400 peer-checked:text-black peer-checked:font-bold">⊙</span></label>
+              <label class="cursor-pointer"><input type="radio" name="origin" value="1,0.5" class="peer sr-only"><span class="flex items-center justify-center w-8 h-8 rounded border border-neutral-700 bg-black text-neutral-400 text-xs peer-checked:bg-amber-400 peer-checked:text-black peer-checked:font-bold">→</span></label>
+              <label class="cursor-pointer"><input type="radio" name="origin" value="0,0" class="peer sr-only" checked><span class="flex items-center justify-center w-8 h-8 rounded border border-neutral-700 bg-black text-neutral-400 text-xs peer-checked:bg-amber-400 peer-checked:text-black peer-checked:font-bold">↙</span></label>
+              <label class="cursor-pointer"><input type="radio" name="origin" value="0.5,0" class="peer sr-only"><span class="flex items-center justify-center w-8 h-8 rounded border border-neutral-700 bg-black text-neutral-400 text-xs peer-checked:bg-amber-400 peer-checked:text-black peer-checked:font-bold">↓</span></label>
+              <label class="cursor-pointer"><input type="radio" name="origin" value="1,0" class="peer sr-only"><span class="flex items-center justify-center w-8 h-8 rounded border border-neutral-700 bg-black text-neutral-400 text-xs peer-checked:bg-amber-400 peer-checked:text-black peer-checked:font-bold">↘</span></label>
+            </div>
+            <div class="flex flex-col gap-0.5">
+              <span class="text-[10px] font-bold text-neutral-400 uppercase">Нулевая точка станка:</span>
+              <div id="origin-caption" class="text-[11px] text-neutral-300 code-font leading-snug"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ВКЛАДКА 3: ФРЕЗА, РЕЖИМ И СГЛАЖИВАНИЕ ОРНАМЕНТА -->
+        <div id="stab-mill" class="stab-panel hidden flex-col gap-2.5">
+          <div class="grid grid-cols-2 gap-2.5">
+            <label class="text-[11px] text-neutral-400">Диаметр фрезы (мм)
+              <input type="number" id="param-tool" value="3" min="0.1" step="0.1" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2.5 font-mono">
+            </label>
+            <label class="text-[11px] text-neutral-400">Режим обработки
+              <select id="param-mode" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2 font-mono">
+                <option value="letters">🔤 Раскрой букв (Контур + Отверстия)</option>
+                <option value="ornament">🌀 Орнамент: гладкие кривые (Chaikin)</option>
+                <option value="center" selected>3 — По центру линии (Centerline)</option>
+                <option value="lineout">4 — Снаружи линии (Outside)</option>
+                <option value="linein">5 — Внутри линии (Inside)</option>
+                <option value="pocket">1 — Внутренний карман (Pocket)</option>
+                <option value="clear">2 — Очистка снаружи (Clearing)</option>
+              </select>
+            </label>
+          </div>
+
+          <!-- Блок ультра-сглаживания для орнаментов и контуров -->
+          <div id="smooth-row" class="p-2.5 rounded-lg border border-amber-400/30 bg-amber-400/5 flex flex-col gap-1.5">
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="text-amber-300 font-semibold">🌀 Плавность кривых (убирает углы):</span>
+              <span id="smooth-val" class="text-amber-400 font-mono font-bold">6 (Высокая)</span>
+            </div>
+            <input type="range" id="param-smooth" min="0" max="10" value="6" class="w-full accent-amber-400 h-1.5">
+            <p class="text-[10px] text-neutral-400">Срезает ступеньки пикселей (алгоритм Чайкина + Гаусс) в идеальную дугу.</p>
+          </div>
+
+          <div id="open-row" class="hidden">
+            <label class="text-[11px] text-neutral-400">Открытые линии:
+              <select id="param-open" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2.5 font-mono">
+                <option value="skip" selected>Пропустить и предупредить</option>
+                <option value="center">Пройти по центру линии</option>
+              </select>
+            </label>
+          </div>
+
+          <div id="letters-row" class="hidden p-2.5 rounded-lg border border-amber-400/30 bg-amber-400/5 flex flex-col gap-1.5">
+            <label class="flex items-center gap-2 text-[11px] text-neutral-200 cursor-pointer">
+              <input type="checkbox" id="chk-holdtabs" checked class="accent-amber-400 rounded"> Добавлять мостики (Tabs), чтобы буквы не вылетели
+            </label>
+            <div class="grid grid-cols-3 gap-2">
+              <label class="text-[10px] text-neutral-400">Ширина (мм)<input type="number" id="tab-w" value="4" step="0.5" min="0" class="mt-0.5 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded px-2 font-mono"></label>
+              <label class="text-[10px] text-neutral-400">Высота (мм)<input type="number" id="tab-h" value="1" step="0.5" min="0" class="mt-0.5 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded px-2 font-mono"></label>
+              <label class="text-[10px] text-neutral-400">Шаг (мм)<input type="number" id="tab-step" value="80" step="5" min="0" class="mt-0.5 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded px-2 font-mono"></label>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 p-2.5 rounded-lg border border-neutral-800 bg-black/40 items-center">
+            <label class="flex items-center gap-2 text-[11px] text-neutral-300 cursor-pointer">
+              <input type="checkbox" id="chk-ramp" class="accent-amber-400 rounded"> Плавный заход (Ramp)
+            </label>
+            <label class="text-[10px] text-neutral-400 flex items-center gap-1.5">Длина:
+              <input type="number" id="ramp-len" value="6" min="1" step="1" class="w-16 bg-black border border-neutral-700 text-amber-400 text-xs rounded px-2 font-mono"> мм
+            </label>
+          </div>
+
+          <label class="flex items-center gap-2 text-[11px] text-neutral-300 cursor-pointer">
+            <input type="checkbox" id="chk-fill" checked class="accent-amber-400 rounded"> Замкнутый контур = область (заливка)
+          </label>
+        </div>
+
+        <!-- ВКЛАДКА 4: ГЛУБИНА ПРОХОДОВ И ПОСТПРОЦЕССОР -->
+        <div id="stab-depth" class="stab-panel hidden flex-col gap-2.5">
+          <div class="grid grid-cols-2 gap-2.5">
+            <label class="text-[11px] text-neutral-400">Общая глубина Z (мм)
+              <input type="number" id="param-cutz" value="-2.0" step="0.5" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2.5 font-mono">
+            </label>
+            <label class="text-[11px] text-neutral-400">Число проходов
+              <select id="param-passes" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2.5 font-mono">
                 <option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option>
               </select>
+            </label>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-[10px] text-neutral-400">Глубина по проходам (Z &lt; 0):</span>
+              <button id="btn-distribute" type="button" class="text-[10px] text-amber-400 hover:underline">📏 Выровнять</button>
             </div>
+            <div id="depth-fields" class="grid grid-cols-3 gap-2"></div>
           </div>
-          <div>
-            <label class="block text-[11px] text-neutral-400 mb-1">Режим обработки:</label>
-            <select id="param-mode" class="w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 focus:outline-none focus:border-amber-400 font-mono">
-              <option value="letters">🔤 Раскрой букв насквозь (Внешний контур + Отверстия)</option>
-              <option value="pocket">1 — Внутренний карман (Inside Pocket)</option>
-              <option value="clear">2 — Очистка снаружи контура (Outside Clearing)</option>
-              <option value="center" selected>3 — По центру линии (Centerline)</option>
-              <option value="lineout">4 — Снаружи линии (Outside Line)</option>
-              <option value="linein">5 — Внутри линии (Inside Line)</option>
-              <option value="ornament">🌀 Орнамент: гладкие кривые (без углов)</option>
-            </select>
+          <div id="depth-status" class="text-[10px] rounded-lg p-2 border"></div>
+
+          <div class="grid grid-cols-2 gap-1.5 pt-2 border-t border-neutral-800 text-[11px] text-neutral-300">
+            <label class="flex items-center gap-1.5 cursor-pointer" title="Для Inectra и GRBL должно быть выключено (используются пробелы)"><input type="checkbox" id="chk-tabs" class="accent-amber-400"> Табуляция <code class="text-amber-400">\t</code></label>
+            <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="chk-m30" checked class="accent-amber-400"> Авто <code class="text-amber-400">M30</code></label>
+            <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="chk-m5" checked class="accent-amber-400"> Стоп <code class="text-amber-400">M5</code></label>
+            <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="chk-header" class="accent-amber-400"> Шапка <code class="text-amber-400">G21 G54</code></label>
           </div>
-          <div id="open-row" class="hidden">
-            <label class="block text-[11px] text-neutral-400 mb-1">Открытые линии (сторона не определена):</label>
-            <select id="param-open" class="w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 focus:outline-none focus:border-amber-400 font-mono">
-              <option value="skip" selected>Пропустить и предупредить</option>
-              <option value="center">Пройти по центру линии</option>
-            </select>
-          </div>
-          <div id="letters-row" class="hidden"><div class="flex flex-col gap-2 p-3 rounded-lg border border-amber-400/30 bg-amber-400/5">
-            <div class="text-[11px] text-amber-300">🔤 Сначала отверстия (эквидистанта −R, на полную глубину), затем внешний контур (эквидистанта +R).</div>
-            <label class="flex items-center gap-2 text-xs text-neutral-300 cursor-pointer"><input type="checkbox" id="chk-holdtabs" checked class="accent-amber-400 rounded"> Добавлять мостики (Tabs) на контур</label>
-            <div class="grid grid-cols-3 gap-2"><label class="text-[11px] text-neutral-400">Ширина (мм)<input type="number" id="tab-w" value="4" step="0.5" min="0" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2 focus:outline-none focus:border-amber-400 font-mono"></label><label class="text-[11px] text-neutral-400">Высота (мм)<input type="number" id="tab-h" value="1" step="0.5" min="0" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2 focus:outline-none focus:border-amber-400 font-mono"></label><label class="text-[11px] text-neutral-400">Шаг (мм)<input type="number" id="tab-step" value="80" step="5" min="0" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2 focus:outline-none focus:border-amber-400 font-mono"></label></div>
-            <div class="text-[10px] text-neutral-500">Мостик: на финальном проходе внешнего контура фреза поднимается на «Высоту» над дном реза (но не выше безопасной Z) и проходит участок «Ширина».</div>
-          </div></div>
-          <div class="flex flex-col gap-2 p-3 rounded-lg border border-neutral-800 bg-black/40">
-            <label class="flex items-start gap-2 text-[11px] text-neutral-300 cursor-pointer">
-              <input type="checkbox" id="chk-ramp" class="accent-amber-400 rounded mt-0.5"> Заходить в материал по наклонной (ramp) вместо вертикального вреза
-            </label>
-            <label class="text-[11px] text-neutral-400">Длина захода (мм)
-              <input type="number" id="ramp-len" value="6" min="1" step="1" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 focus:outline-none focus:border-amber-400 font-mono">
-            </label>
-            <div class="text-[10px] text-neutral-500">Не применяется к проходу с мостиками: там врез остаётся вертикальным. Проверьте результат в 2D-превью.</div>
-          </div>
-          <label class="flex items-start gap-2 text-[11px] text-neutral-300 cursor-pointer">
-            <input type="checkbox" id="chk-fill" checked class="accent-amber-400 rounded mt-0.5">
-            Замкнутый контур = область (заливать то, что внутри замкнутой линии)
-          </label>
-          <div>
-            <div class="text-[11px] text-neutral-400 mb-1">Глубина каждого прохода (Z &lt; 0, мм). Последний проход = общая глубина:</div>
-            <div id="depth-fields" class="grid grid-cols-2 gap-3"></div>
-          </div>
-          <button id="btn-distribute" type="button" class="w-full bg-neutral-800 hover:bg-neutral-700 text-amber-400 text-xs font-semibold rounded-lg py-2.5 border border-amber-400/30">📏 Распределить глубину равномерно</button>
-          <div id="depth-status" class="text-[11px] rounded-lg p-2.5 border"></div>
-          <div id="cam-log" class="hidden"></div>
         </div>
 
-        <div class="pt-2 border-t border-neutral-800 space-y-2">
-          <label class="flex items-center gap-2 text-xs text-neutral-300 cursor-pointer">
-            <input type="checkbox" id="chk-tabs" checked class="accent-amber-400 rounded">
-            Использовать табуляцию <code class="text-amber-400">\t</code> (для NCStudio / DSP)
-          </label>
-          <label class="flex items-center gap-2 text-xs text-neutral-300 cursor-pointer">
-            <input type="checkbox" id="chk-m30" checked class="accent-amber-400 rounded">
-            Автоматически добавлять <code class="text-amber-400">M30</code> в конец
-          </label>
-          <label class="flex items-center gap-2 text-xs text-neutral-300 cursor-pointer">
-            <input type="checkbox" id="chk-m5" checked class="accent-amber-400 rounded">
-            Останавливать шпиндель <code class="text-amber-400">M5</code> перед концом программы
-          </label>
-          <label class="flex items-center gap-2 text-xs text-neutral-300 cursor-pointer">
-            <input type="checkbox" id="chk-header" class="accent-amber-400 rounded">
-            Расширенный заголовок <code class="text-amber-400">G21 G17 G40 G49 G54</code>
-          </label>
-        </div>
+        <div id="cam-log" class="hidden"></div>
 
-        <button id="btn-process-main" class="w-full bg-neutral-950 hover:bg-neutral-800 text-amber-400 font-bold py-3 rounded-xl border border-amber-400/40 transition text-xs md:text-sm flex items-center justify-center gap-2 shadow-lg active:scale-[0.98]">
-          ⚙️ Преобразовать в ЧПУ траекторию
+        <!-- Главная кнопка генерации внизу панели -->
+        <button id="btn-process-main" class="mt-auto w-full bg-amber-400 hover:bg-amber-300 text-black font-bold py-2.5 rounded-xl transition text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-400/15 active:scale-[0.98]">
+          ⚙️ Рассчитать траекторию ЧПУ
         </button>
       </div>
 
     </div>
 
-    <!-- Редактор и Визуализатор (8 колонок) -->
-    <div class="lg:col-span-8 flex flex-col gap-6">
+    <!-- Правая панель: Редактор и 2D Симулятор (8 колонок) -->
+    <div class="lg:col-span-8 flex flex-col">
 
-      <div class="bg-neutral-900/90 border border-neutral-800 rounded-2xl p-4 md:p-5 shadow-2xl flex flex-col flex-1">
+      <div class="bg-neutral-900/90 border border-neutral-800 rounded-xl p-3.5 shadow-xl flex flex-col flex-1">
         
-        <!-- Вкладки -->
-        <div class="flex flex-wrap items-center justify-between border-b border-neutral-800 pb-3 gap-3">
-          <div class="flex items-center gap-2">
-            <button id="tab-btn-code" class="px-4 py-1.5 rounded-lg text-xs font-bold transition border border-amber-400/50 bg-amber-400/10 text-amber-400 flex items-center gap-1.5">
+        <!-- Верхняя полоса вкладок и статистики -->
+        <div class="flex flex-wrap items-center justify-between border-b border-neutral-800 pb-2.5 gap-2">
+          <div class="flex items-center gap-1.5">
+            <button id="tab-btn-vis" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition border border-amber-400/50 bg-amber-400/10 text-amber-400 flex items-center gap-1.5">
+              📐 2D Траектория
+            </button>
+            <button id="tab-btn-code" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition border border-transparent text-neutral-400 hover:text-white flex items-center gap-1.5">
               📝 Код .TAP
             </button>
-            <button id="tab-btn-vis" class="px-4 py-1.5 rounded-lg text-xs font-bold transition border border-transparent text-neutral-400 hover:text-white flex items-center gap-1.5">
-              📐 2D Превью траектории
-            </button>
           </div>
 
-          <div class="flex items-center gap-3 text-xs font-mono text-neutral-400">
+          <div class="flex items-center gap-2.5 text-[11px] font-mono text-neutral-400">
             <span id="stat-lines">Кадров: 0</span>
             <span>|</span>
-            <span id="stat-size">Вес: 0 KB</span>
+            <span id="stat-size">0 KB</span>
             <span>|</span>
-            <span id="stat-time" title="Оценка по длине пути и подаче, без учёта разгона и торможения станка">Время: —</span>
-          </div>
-        </div>
-
-        <!-- Окно Кода -->
-        <div id="view-code" class="mt-4 flex-1 flex flex-col gap-4">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-h-[500px]">
-            
-            <div class="flex flex-col gap-1.5">
-              <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-neutral-400 uppercase">Лог / Входной текст:</span>
-                <button id="btn-clear-in" class="text-[11px] text-neutral-500 hover:text-red-400 transition">Очистить</button>
-              </div>
-              <textarea id="code-input" class="code-font flex-1 w-full bg-black border border-neutral-800 rounded-xl p-3 text-xs text-neutral-300 resize-none focus:outline-none focus:border-amber-400/50" placeholder="Здесь будет отображаться загруженный текст, либо вставьте G-код вручную..."></textarea>
-            </div>
-
-            <div class="flex flex-col gap-1.5">
-              <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-amber-400 uppercase">Готовый .TAP файл для станка:</span>
-                <button id="btn-copy-code" class="text-[11px] text-amber-400 hover:underline transition">📋 Копировать код</button>
-              </div>
-              <textarea id="code-output" readonly class="code-font flex-1 w-full bg-black border border-neutral-800 rounded-xl p-3 text-xs text-emerald-400 resize-none focus:outline-none" placeholder="Результат генерации .TAP появится здесь..."></textarea>
-            </div>
-
+            <span id="stat-time" class="text-amber-400/90">Время: —</span>
           </div>
         </div>
 
         <!-- Окно Симулятора (Canvas) -->
-        <div id="view-vis" class="mt-4 hidden flex-1 flex-col gap-3">
-          <div class="relative w-full h-[520px] border border-neutral-800 rounded-xl overflow-hidden flex items-center justify-center">
+        <div id="view-vis" class="mt-3 flex-1 flex flex-col gap-2">
+          <div class="relative w-full h-[540px] border border-neutral-800 rounded-xl overflow-hidden flex items-center justify-center">
             <canvas id="cnc-canvas" class="w-full h-full block"></canvas>
-            <div class="absolute top-3 right-3 flex items-center gap-2 text-[10px] font-mono">
-              <span class="hidden md:inline bg-black/80 border border-neutral-800 text-neutral-500 rounded px-2 py-1">Колесо — зум · перетаскивание — сдвиг · двойной клик — сброс</span>
-              <button id="btn-view-reset" type="button" class="bg-black/80 border border-neutral-700 hover:border-amber-400 text-amber-400 rounded px-2 py-1">⊙ Вид</button>
+            <div class="absolute top-2.5 right-2.5 flex items-center gap-2 text-[10px] font-mono">
+              <span class="hidden md:inline bg-black/85 border border-neutral-800 text-neutral-400 rounded px-2 py-1">Колесо — зум · ЛКМ — сдвиг · 2×клик — сброс</span>
+              <button id="btn-view-reset" type="button" class="bg-black/85 border border-neutral-700 hover:border-amber-400 text-amber-400 rounded px-2.5 py-1">⊙ Сброс вида</button>
             </div>
             
-            <div class="absolute bottom-3 left-3 bg-black/90 backdrop-blur border border-neutral-800 p-3 rounded-lg text-xs font-mono space-y-1 shadow-xl">
-              <div class="flex items-center gap-2 text-amber-400"><span class="w-2.5 h-2.5 rounded-full" style="background:#FBBF24"></span> Внешний контур / рез (G1)</div>
-              <div class="flex items-center gap-2 text-sky-400"><span class="w-2.5 h-2.5 rounded-full" style="background:#38BDF8"></span> Отверстия и карманы</div>
-              <div class="flex items-center gap-2 text-orange-400"><span class="w-2.5 h-2.5 rounded-full" style="background:#FB923C"></span> Мостики (Tabs)</div>
-              <div class="flex items-center gap-2 text-neutral-500"><span class="w-2.5 h-2.5 rounded-full" style="background:#525252"></span> Холостой ход (G0)</div>
-              <div class="flex items-center gap-2 text-red-400"><span class="w-2.5 text-center leading-none">✛</span> Нуль станка (X0 Y0)</div>
-              <div id="canvas-info" class="text-neutral-400 pt-1 text-[11px]">Размер заготовки: --</div>
-              <div id="canvas-xy" class="text-neutral-500 text-[11px]">X —  Y —</div>
+            <div class="absolute bottom-2.5 left-2.5 bg-black/90 backdrop-blur border border-neutral-800 px-3 py-2 rounded-lg text-[11px] font-mono space-y-0.5 shadow-xl">
+              <div class="flex flex-wrap gap-3">
+                <span class="flex items-center gap-1.5 text-amber-400"><span class="w-2 h-2 rounded-full bg-amber-400"></span> Рез / контур</span>
+                <span class="flex items-center gap-1.5 text-sky-400"><span class="w-2 h-2 rounded-full bg-sky-400"></span> Внутри</span>
+                <span class="flex items-center gap-1.5 text-orange-400"><span class="w-2 h-2 rounded-full bg-orange-400"></span> Мостики</span>
+                <span class="flex items-center gap-1.5 text-neutral-500"><span class="w-2 h-2 rounded-full bg-neutral-500"></span> G0</span>
+                <span class="flex items-center gap-1.5 text-red-400">✛ X0 Y0</span>
+              </div>
+              <div id="canvas-info" class="text-neutral-400 pt-0.5 text-[10px]">Заготовка: --</div>
+              <div id="canvas-xy" class="text-neutral-500 text-[10px]">X —  Y —</div>
             </div>
           </div>
         </div>
 
-        <!-- Нижняя панель скачивания -->
-        <div class="mt-4 pt-4 border-t border-neutral-800 flex flex-wrap items-center justify-between gap-3">
+        <!-- Окно Кода -->
+        <div id="view-code" class="mt-3 hidden flex-1 flex-col gap-3">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1 min-h-[540px]">
+            <div class="flex flex-col gap-1">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold text-neutral-400 uppercase">Лог / Входной текст:</span>
+                <button id="btn-clear-in" class="text-[11px] text-neutral-500 hover:text-red-400 transition">Очистить всё</button>
+              </div>
+              <textarea id="code-input" class="code-font flex-1 w-full bg-black border border-neutral-800 rounded-xl p-3 text-xs text-neutral-300 resize-none focus:outline-none focus:border-amber-400/50" placeholder="Здесь отображается загруженный файл или вставленный вручную G-код..."></textarea>
+            </div>
+
+            <div class="flex flex-col gap-1">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold text-amber-400 uppercase">Готовый .TAP файл (чистые пробелы):</span>
+                <button id="btn-copy-code" class="text-[11px] text-amber-400 hover:underline transition">📋 Копировать</button>
+              </div>
+              <textarea id="code-output" readonly class="code-font flex-1 w-full bg-black border border-neutral-800 rounded-xl p-3 text-xs text-emerald-400 resize-none focus:outline-none" placeholder="Результат генерации .TAP появится здесь..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Нижняя панель экспорта -->
+        <div class="mt-3 pt-2.5 border-t border-neutral-800 flex flex-wrap items-center justify-between gap-2">
           <div class="flex items-center gap-2 text-xs text-neutral-400 font-mono">
-            <span>Расширение:</span>
-            <select id="export-ext" class="bg-black border border-neutral-700 text-amber-400 text-xs rounded px-2.5 py-1.5 focus:outline-none font-mono">
-              <option value=".tap" selected>.TAP</option>
+            <span>Формат файла:</span>
+            <select id="export-ext" class="bg-black border border-neutral-700 text-amber-400 text-xs rounded px-2 py-1 focus:outline-none font-mono">
+              <option value=".tap" selected>.TAP (Inectra / NCStudio)</option>
               <option value=".nc">.NC</option>
               <option value=".gcode">.GCODE</option>
               <option value=".txt">.TXT</option>
             </select>
           </div>
 
-          <button id="btn-bottom-download" class="bg-amber-400 hover:bg-amber-300 text-black font-bold px-6 py-2.5 rounded-xl transition shadow-lg shadow-amber-400/20 text-xs md:text-sm active:scale-95 flex items-center gap-2">
+          <button id="btn-bottom-download" class="bg-amber-400 hover:bg-amber-300 text-black font-bold px-5 py-2 rounded-xl transition shadow-md shadow-amber-400/20 text-xs active:scale-95 flex items-center gap-1.5">
             💾 Скачать готовый .TAP файл
           </button>
         </div>
@@ -358,56 +386,166 @@
 
   </main>
 
-  <!-- Подвал -->
-  <footer class="border-t border-neutral-800 bg-neutral-950 px-6 py-3 text-center text-xs text-neutral-500 font-mono">
-    <p>Talas_profi &bull; Профессиональное программное обеспечение для фрезерных ЧПУ станков</p>
-  </footer>
-
-  <!-- СКРИПТ ОБРАБОТКИ И ГЕНЕРАЦИИ -->
   <script>
-    const inputArea = document.getElementById('code-input');
-    const outputArea = document.getElementById('code-output');
-    const fileInput = document.getElementById('file-input');
-    const dropZone = document.getElementById('drop-zone');
+    const $ = (id) => document.getElementById(id);
+    const inputArea = $('code-input');
+    const outputArea = $('code-output');
+    const fileInput = $('file-input');
+    const dropZone = $('drop-zone');
     
-    const paramWidth = document.getElementById('param-width');
-    const paramHeight = document.getElementById('param-height');
-    const paramCutZ = document.getElementById('param-cutz');
-    const paramSafeZ = document.getElementById('param-safez');
-    const paramFeed = document.getElementById('param-feed');
-    const paramStep = document.getElementById('param-step');
-    const chkTabs = document.getElementById('chk-tabs');
-    const chkM30 = document.getElementById('chk-m30');
-    const exportExt = document.getElementById('export-ext');
+    const paramWidth = $('param-width');
+    const paramHeight = $('param-height');
+    const paramCutZ = $('param-cutz');
+    const paramSafeZ = $('param-safez');
+    const paramFeed = $('param-feed');
+    const paramStep = $('param-step');
+    const chkTabs = $('chk-tabs');
+    const chkM30 = $('chk-m30');
+    const exportExt = $('export-ext');
     
-    const statLines = document.getElementById('stat-lines');
-    const statSize = document.getElementById('stat-size');
-    const canvasInfo = document.getElementById('canvas-info');
+    const statLines = $('stat-lines');
+    const statSize = $('stat-size');
+    const statTime = $('stat-time');
+    const canvasInfo = $('canvas-info');
     
-    const canvas = document.getElementById('cnc-canvas');
+    const canvas = $('cnc-canvas');
     const ctx = canvas.getContext('2d');
 
     let loadedImage = null;
     let loadedRawText = null;
     let sourceBase = '';
-    const statTime = document.getElementById('stat-time');
 
+    // Переключение компактных вкладок настроек слева
+    document.querySelectorAll('.stab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.dataset.stab;
+        document.querySelectorAll('.stab-btn').forEach(b => {
+          b.className = b === btn
+            ? 'stab-btn py-1.5 px-1 rounded text-[11px] font-bold bg-amber-400 text-black transition'
+            : 'stab-btn py-1.5 px-1 rounded text-[11px] font-semibold text-neutral-400 hover:text-white transition';
+        });
+        document.querySelectorAll('.stab-panel').forEach(p => {
+          if (p.id === 'stab-' + target) { p.classList.remove('hidden'); p.classList.add('flex'); }
+          else { p.classList.add('hidden'); p.classList.remove('flex'); }
+        });
+        if (target === 'size') renderImagePreview();
+      });
+    });
+
+    // Быстрые пресеты материалов
+    const PRESETS = {
+      plywood4: { cutz: -4.2, passes: 2, feed: 1500, plunge: 400, tool: 3, spindle: 14000 },
+      mdf16:    { cutz: -16.2, passes: 4, feed: 2200, plunge: 600, tool: 6, spindle: 16000 },
+      hardwood: { cutz: -6.0, passes: 3, feed: 900,  plunge: 250, tool: 3, spindle: 12000 },
+      acrylic:  { cutz: -3.2, passes: 2, feed: 1000, plunge: 300, tool: 2, spindle: 10000 }
+    };
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const p = PRESETS[btn.dataset.preset];
+        if (!p) return;
+        paramCutZ.value = p.cutz;
+        paramPasses.value = p.passes;
+        paramFeed.value = p.feed;
+        $('param-plunge').value = p.plunge;
+        paramTool.value = p.tool;
+        $('param-spindle').value = p.spindle;
+        depthTouched = false;
+        distributeDepth();
+        renderDepthFields();
+        if (loadedImage) generateTapFromImage();
+      });
+    });
 
     // Предпросмотр изображения и точных размеров
-    const previewCanvas = document.getElementById('image-preview');
+    const previewCanvas = $('image-preview');
     const previewCtx = previewCanvas.getContext('2d');
-    const objWidthInput = document.getElementById('object-width');
-    const objHeightInput = document.getElementById('object-height');
-    const previewScale = document.getElementById('preview-scale');
-    const previewRotation = document.getElementById('preview-rotation');
-    const previewX = document.getElementById('preview-x');
-    const previewY = document.getElementById('preview-y');
-    const previewStatus = document.getElementById('preview-status');
-    const previewWarning = document.getElementById('preview-warning');
+    const chkTrimBounds = $('chk-trim-bounds');
+    const objWidthInput = $('object-width');
+    const objHeightInput = $('object-height');
+    const previewScale = $('preview-scale');
+    const previewRotation = $('preview-rotation');
+    const previewX = $('preview-x');
+    const previewY = $('preview-y');
+    const previewStatus = $('preview-status');
+    const previewWarning = $('preview-warning');
+
+    const getThreshold = () => Math.min(240, Math.max(20, parseInt($('preview-threshold').value) || 130));
+
+    function getContentCropBox(img) {
+      if (!chkTrimBounds.checked) {
+        return { sx: 0, sy: 0, sw: img.width, sh: img.height };
+      }
+      const maxDim = 1024;
+      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+      const cw = Math.max(1, Math.round(img.width * scale));
+      const ch = Math.max(1, Math.round(img.height * scale));
+      const tmp = document.createElement('canvas');
+      tmp.width = cw;
+      tmp.height = ch;
+      const g = tmp.getContext('2d', { willReadFrequently: true });
+      const inv = $('preview-invert').checked;
+      const thr = getThreshold();
+      g.fillStyle = inv ? '#000' : '#fff';
+      g.fillRect(0, 0, cw, ch);
+      g.drawImage(img, 0, 0, cw, ch);
+      const d = g.getImageData(0, 0, cw, ch).data;
+
+      let minX = cw, minY = ch, maxX = -1, maxY = -1;
+      for (let y = 0; y < ch; y++) {
+        for (let x = 0; x < cw; x++) {
+          const idx = (y * cw + x) * 4;
+          const lum = (d[idx] + d[idx + 1] + d[idx + 2]) / 3;
+          const active = inv ? (lum > thr) : (lum < thr);
+          if (active) {
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+          }
+        }
+      }
+      if (maxX < minX || maxY < minY) {
+        return { sx: 0, sy: 0, sw: img.width, sh: img.height };
+      }
+      const pad = 1;
+      minX = Math.max(0, minX - pad);
+      minY = Math.max(0, minY - pad);
+      maxX = Math.min(cw - 1, maxX + pad);
+      maxY = Math.min(ch - 1, maxY + pad);
+
+      return {
+        sx: (minX / cw) * img.width,
+        sy: (minY / ch) * img.height,
+        sw: Math.max(1, ((maxX - minX + 1) / cw) * img.width),
+        sh: Math.max(1, ((maxY - minY + 1) / ch) * img.height)
+      };
+    }
+
+    function getTargetDimensionsMM(cropBox, stockW, stockH) {
+      const userW = parseFloat(objWidthInput.value);
+      const userH = parseFloat(objHeightInput.value);
+      const aspect = cropBox.sw / cropBox.sh;
+
+      if (userW > 0 || userH > 0) {
+        if (userW > 0 && !(userH > 0)) {
+          return { wMM: userW, hMM: userW / aspect };
+        } else if (!(userW > 0) && userH > 0) {
+          return { wMM: userH * aspect, hMM: userH };
+        } else {
+          return { wMM: userW, hMM: userH };
+        }
+      }
+      const pct = Math.min(500, Math.max(1, Number(previewScale.value) || 100)) / 100;
+      const base = Math.min(stockW / cropBox.sw, stockH / cropBox.sh);
+      return {
+        wMM: cropBox.sw * base * pct,
+        hMM: cropBox.sh * base * pct
+      };
+    }
 
     function renderImagePreview() {
-      const cssW = Math.max(260, Math.floor(previewCanvas.getBoundingClientRect().width || 320));
-      const cssH = 260;
+      const cssW = Math.max(180, Math.floor(previewCanvas.getBoundingClientRect().width || 240));
+      const cssH = 136;
       const dpr = Math.max(1, window.devicePixelRatio || 1);
       previewCanvas.width = Math.round(cssW * dpr);
       previewCanvas.height = Math.round(cssH * dpr);
@@ -417,7 +555,7 @@
 
       const stockW = Math.max(1, Number(paramWidth.value) || 400);
       const stockH = Math.max(1, Number(paramHeight.value) || 400);
-      const margin = 18;
+      const margin = 10;
       const fit = Math.min((cssW - margin * 2) / stockW, (cssH - margin * 2) / stockH);
       const boardW = stockW * fit;
       const boardH = stockH * fit;
@@ -431,35 +569,13 @@
       previewCtx.strokeRect(left, top, boardW, boardH);
 
       if (!loadedImage) {
-        previewStatus.textContent = 'Ожидает изображение';
+        previewStatus.textContent = 'Нет файла';
         previewWarning.classList.add('hidden');
-        previewCtx.fillStyle = '#3f3f46';
-        previewCtx.font = '12px Inter, sans-serif';
-        previewCtx.textAlign = 'center';
-        previewCtx.fillText('Загрузите изображение для предпросмотра', cssW / 2, cssH / 2);
       } else {
-        const userW = parseFloat(objWidthInput.value);
-        const userH = parseFloat(objHeightInput.value);
-        let drawW, drawH;
-        const aspect = loadedImage.width / loadedImage.height;
-
-        if (userW > 0 || userH > 0) {
-          if (userW > 0 && !userH) {
-            drawW = userW * fit;
-            drawH = (userW / aspect) * fit;
-          } else if (!userW && userH > 0) {
-            drawH = userH * fit;
-            drawW = (userH * aspect) * fit;
-          } else {
-            drawW = userW * fit;
-            drawH = userH * fit;
-          }
-        } else {
-          const pct = Math.min(300, Math.max(10, Number(previewScale.value) || 100)) / 100;
-          const base = Math.min(boardW / loadedImage.width, boardH / loadedImage.height);
-          drawW = loadedImage.width * base * pct;
-          drawH = loadedImage.height * base * pct;
-        }
+        const crop = getContentCropBox(loadedImage);
+        const dims = getTargetDimensionsMM(crop, stockW, stockH);
+        const drawW = dims.wMM * fit;
+        const drawH = dims.hMM * fit;
 
         const angle = (Number(previewRotation.value) || 0) * Math.PI / 180;
         const dx = (Number(previewX.value) || 0) * fit;
@@ -473,28 +589,29 @@
         previewCtx.clip();
         previewCtx.translate(cx, cy);
         previewCtx.rotate(angle);
-        previewCtx.drawImage(loadedImage, -drawW / 2, -drawH / 2, drawW, drawH);
+        previewCtx.drawImage(loadedImage, crop.sx, crop.sy, crop.sw, crop.sh, -drawW / 2, -drawH / 2, drawW, drawH);
+        
+        previewCtx.strokeStyle = '#ef4444';
+        previewCtx.lineWidth = 1;
+        previewCtx.setLineDash([2, 2]);
+        previewCtx.strokeRect(-drawW / 2, -drawH / 2, drawW, drawH);
         previewCtx.restore();
 
-        const hw = drawW / fit / 2, hh = drawH / fit / 2, ca = Math.abs(Math.cos(angle)), sa = Math.abs(Math.sin(angle));
+        const hw = dims.wMM / 2, hh = dims.hMM / 2, ca = Math.abs(Math.cos(angle)), sa = Math.abs(Math.sin(angle));
         const ex = hw * ca + hh * sa, ey = hw * sa + hh * ca;
         const outside = Math.abs(Number(previewX.value) || 0) + ex > stockW / 2 + 1e-6 ||
                         Math.abs(Number(previewY.value) || 0) + ey > stockH / 2 + 1e-6;
         previewWarning.classList.toggle('hidden', !outside);
-        previewWarning.textContent = outside ? 'Внимание: рисунок может выходить за границы заготовки.' : '';
-        previewStatus.textContent = Math.round(drawW / fit) + ' × ' + Math.round(drawH / fit) + ' мм';
+        previewWarning.textContent = outside ? '⚠ Буквы выходят за пределы заготовки (' + stockW + '×' + stockH + ' мм)!' : '';
+        previewStatus.textContent = (Math.round(dims.wMM * 10) / 10) + '×' + (Math.round(dims.hMM * 10) / 10) + ' мм';
       }
-
-      previewCtx.fillStyle = '#fbbf24';
-      previewCtx.font = '10px Inter, sans-serif';
-      previewCtx.textAlign = 'left';
-      previewCtx.fillText(stockW + ' × ' + stockH + ' мм', 8, 14);
     }
 
-    [objWidthInput, objHeightInput, previewScale, previewRotation, previewX, previewY, paramWidth, paramHeight].forEach(el => {
+    [objWidthInput, objHeightInput, previewScale, previewRotation, previewX, previewY, paramWidth, paramHeight, chkTrimBounds].forEach(el => {
       el.addEventListener('input', renderImagePreview);
+      el.addEventListener('change', renderImagePreview);
     });
-    document.getElementById('preview-reset').addEventListener('click', () => {
+    $('preview-reset').addEventListener('click', () => {
       objWidthInput.value = '';
       objHeightInput.value = '';
       previewScale.value = 100;
@@ -503,19 +620,19 @@
       previewY.value = 0;
       renderImagePreview();
     });
-    document.getElementById('preview-center').addEventListener('click', () => {
+    $('preview-center').addEventListener('click', () => {
       previewX.value = 0;
       previewY.value = 0;
       renderImagePreview();
     });
     window.addEventListener('resize', renderImagePreview);
 
-    // Чтение файлов (Картинки, Текст, G-код)
+    // Чтение файлов
     fileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
       sourceBase = file.name.replace(/\.[^.]+$/, '').replace(/[^\w\-а-яА-ЯёЁ ]+/g, '_').trim();
-      fileInput.value = ''; // чтобы повторный выбор того же файла снова срабатывал
+      fileInput.value = '';
 
       const reader = new FileReader();
       if (file.type.startsWith('image/')) {
@@ -543,8 +660,7 @@
       }
     });
 
-    // ===================== ФРЕЗЕРОВКА: ГЕОМЕТРИЯ (растровый движок) =====================
-    // <ENGINE>
+    // ===================== ГЕОМЕТРИЯ И УЛЬТРА-СГЛАЖИВАНИЕ =====================
     function edt1d(f, n, d, v, z) {
       let k = 0; v[0] = 0; z[0] = -1e30; z[1] = 1e30;
       for (let q = 1; q < n; q++) {
@@ -792,28 +908,62 @@
       if (Math.hypot(last[0] - lp[0], last[1] - lp[1]) > step * 0.2) out.push(last);
       return out;
     }
-    function smoothCurve(pts, iters, closed) {
-      let p = pts;
-      for (let k = 0; k < iters; k++) {
-        const n = p.length, q = p.map(x => x.slice());
+
+    // УЛЬТРА-СГЛАЖИВАНИЕ: Усреднение Гаусса + Алгоритм Чайкина
+    function ultraSmoothCurve(pts, level, closed) {
+      if (level <= 0 || pts.length < 3) return pts;
+      let p = pts.map(pt => pt.slice());
+
+      const gaussPasses = level * 2;
+      for (let k = 0; k < gaussPasses; k++) {
+        const n = p.length;
+        const q = p.map(x => x.slice());
         for (let i = 0; i < n; i++) {
           if (!closed && (i === 0 || i === n - 1)) continue;
-          const a = p[(i - 1 + n) % n], b = p[(i + 1) % n];
-          q[i] = [(a[0] + 2 * p[i][0] + b[0]) / 4, (a[1] + 2 * p[i][1] + b[1]) / 4];
+          const prev = p[(i - 1 + n) % n];
+          const curr = p[i];
+          const next = p[(i + 1) % n];
+          q[i] = [
+            0.25 * prev[0] + 0.5 * curr[0] + 0.25 * next[0],
+            0.25 * prev[1] + 0.5 * curr[1] + 0.25 * next[1]
+          ];
         }
         p = q;
       }
-      return p;
-    }
-    // </ENGINE>
 
-    // ===================== ФРЕЗЕРОВКА: интерфейс, глубины, проверки =====================
-    const $ = (id) => document.getElementById(id);
+      const chaikinIters = Math.min(3, Math.ceil(level / 3));
+      for (let iter = 0; iter < chaikinIters; iter++) {
+        const n = p.length;
+        if (n < 3) break;
+        const nextPts = [];
+        if (!closed) nextPts.push(p[0].slice());
+        const limit = closed ? n : n - 1;
+        for (let i = 0; i < limit; i++) {
+          const p0 = p[i];
+          const p1 = p[(i + 1) % n];
+          nextPts.push([0.75 * p0[0] + 0.25 * p1[0], 0.75 * p0[1] + 0.25 * p1[1]]);
+          nextPts.push([0.25 * p0[0] + 0.75 * p1[0], 0.25 * p0[1] + 0.75 * p1[1]]);
+        }
+        if (!closed) nextPts.push(p[n - 1].slice());
+        p = nextPts;
+      }
+
+      return rdp(p, 0.02);
+    }
+
+    // ===================== ИНТЕРФЕЙС И ГЛУБИНЫ =====================
     const paramTool = $('param-tool'), paramMode = $('param-mode'), paramOpen = $('param-open'), chkFill = $('chk-fill'),
           paramPasses = $('param-passes'), depthBox = $('depth-fields'), depthStatus = $('depth-status'), camLog = $('cam-log');
     let depthVals = [], depthTouched = false;
     const r3 = (v) => Math.round(v * 1000) / 1000;
     const MODE_NAMES = { letters: 'Раскрой букв насквозь', pocket: 'Внутренний карман', clear: 'Очистка снаружи контура', center: 'По центру линии', lineout: 'Снаружи линии', linein: 'Внутри линии', ornament: 'Орнамент (гладкие кривые)' };
+
+    const smoothSlider = $('param-smooth'), smoothVal = $('smooth-val');
+    smoothSlider.addEventListener('input', () => {
+      const v = parseInt(smoothSlider.value);
+      const label = v === 0 ? '0 (Выкл)' : v <= 3 ? v + ' (Лёгкая)' : v <= 7 ? v + ' (Высокая)' : v + ' (Максимальная)';
+      smoothVal.textContent = label;
+    });
 
     function distributeDepth() {
       const n = parseInt(paramPasses.value), total = parseFloat(paramCutZ.value);
@@ -827,25 +977,25 @@
       for (let k = 0; k < n; k++) {
         const v = parseFloat(depthVals[k]); z.push(v);
         if (!isFinite(v)) errs.push('Проход ' + (k + 1) + ': глубина не задана.');
-        else if (v >= 0) errs.push('Проход ' + (k + 1) + ': глубина должна быть отрицательной (Z < 0), сейчас Z = ' + v + '.');
-        else if (k > 0 && isFinite(z[k - 1]) && v > z[k - 1] + 1e-9) errs.push('Проход ' + (k + 1) + ' (Z = ' + v + ') мельче предыдущего (Z = ' + z[k - 1] + ').');
+        else if (v >= 0) errs.push('Проход ' + (k + 1) + ': глубина должна быть < 0 (сейчас ' + v + ').');
+        else if (k > 0 && isFinite(z[k - 1]) && v > z[k - 1] + 1e-9) errs.push('Проход ' + (k + 1) + ' мельче предыдущего.');
       }
       if (isFinite(total) && isFinite(z[n - 1]) && Math.abs(z[n - 1] - total) > 1e-6)
-        errs.push('Последний проход (Z = ' + z[n - 1] + ') должен совпадать с общей глубиной (Z = ' + total + ').');
+        errs.push('Последний проход (' + z[n - 1] + ') должен совпадать с общей глубиной (' + total + ').');
       return { errs, z };
     }
     function showDepthStatus() {
       const e = validateDepths().errs;
-      depthStatus.className = 'text-[11px] rounded-lg p-2.5 border ' + (e.length ? 'text-red-300 bg-red-500/10 border-red-500/30' : 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30');
-      depthStatus.innerHTML = e.length ? e.map(x => '⚠ ' + x).join('<br>') : '✓ Глубины корректны: ' + depthVals.join(' → ') + ' мм';
+      depthStatus.className = 'text-[10px] rounded-lg p-2 border ' + (e.length ? 'text-red-300 bg-red-500/10 border-red-500/30' : 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30');
+      depthStatus.innerHTML = e.length ? e.map(x => '⚠ ' + x).join('<br>') : '✓ Проходы: ' + depthVals.join(' → ') + ' мм';
     }
     function renderDepthFields() {
       const n = parseInt(paramPasses.value);
       depthBox.innerHTML = '';
       for (let k = 0; k < n; k++) {
-        const lb = document.createElement('label'); lb.className = 'text-[11px] text-neutral-400'; lb.textContent = 'Проход ' + (k + 1) + ': Z (мм)';
+        const lb = document.createElement('label'); lb.className = 'text-[10px] text-neutral-400'; lb.textContent = 'Проход ' + (k + 1) + ' (мм)';
         const inp = document.createElement('input'); inp.type = 'number'; inp.step = '0.1'; inp.id = 'depth-' + k; inp.value = depthVals[k] !== undefined ? depthVals[k] : '';
-        inp.className = 'mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg p-2.5 focus:outline-none focus:border-amber-400 font-mono';
+        inp.className = 'mt-0.5 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded px-2 font-mono';
         inp.addEventListener('input', () => { depthVals[k] = inp.value; depthTouched = true; showDepthStatus(); });
         lb.appendChild(inp); depthBox.appendChild(lb);
       }
@@ -862,53 +1012,46 @@
     });
     paramCutZ.addEventListener('input', () => { if (!depthTouched) { distributeDepth(); renderDepthFields(); } else showDepthStatus(); });
     $('btn-distribute').addEventListener('click', () => { distributeDepth(); depthTouched = false; renderDepthFields(); });
-    function updateOpenRow() { $('open-row').classList.toggle('hidden', !(paramMode.value === 'lineout' || paramMode.value === 'linein')); $('letters-row').classList.toggle('hidden', paramMode.value !== 'letters'); }
+    function updateOpenRow() {
+      $('open-row').classList.toggle('hidden', !(paramMode.value === 'lineout' || paramMode.value === 'linein'));
+      $('letters-row').classList.toggle('hidden', paramMode.value !== 'letters');
+    }
     paramMode.addEventListener('change', updateOpenRow);
 
     function setLog(msgs, kind) {
       const cls = { err: 'text-red-300 bg-red-500/10 border-red-500/30', warn: 'text-amber-300 bg-amber-400/10 border-amber-400/30', ok: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30' }[kind];
-      camLog.className = 'text-[11px] rounded-lg p-3 border space-y-1 ' + cls;
+      camLog.className = 'text-[10px] rounded-lg p-2 border space-y-0.5 ' + cls;
       camLog.innerHTML = msgs.map(m => '<div>' + m + '</div>').join('');
     }
     function failGen(errs) {
-      outputArea.value = ''; statLines.textContent = 'Кадров: 0'; statSize.textContent = 'Вес: 0 KB'; statTime.textContent = 'Время: —';
-      setLog(errs.map(e => '⛔ ' + e).concat('G-код НЕ сгенерирован.'), 'err');
-      voiceSay(errs.some(e => /глубин/i.test(e)) ? 'Внимание, обнаружена ошибка в глубине реза' : 'Внимание, ошибка генерации. ' + errs[0]);
+      outputArea.value = ''; statLines.textContent = 'Кадров: 0'; statSize.textContent = '0 KB'; statTime.textContent = 'Время: —';
+      setLog(errs.map(e => '⛔ ' + e), 'err');
+      voiceSay('Ошибка генерации. ' + errs[0]);
     }
 
-    // Маска с учётом заданных точных размеров в мм или процентов масштаба
-    const getThreshold = () => Math.min(240, Math.max(20, parseInt($('preview-threshold').value) || 130));
     function buildMask(W, H, px, cols, rows) {
       const cv = document.createElement('canvas'); cv.width = cols; cv.height = rows;
       const g = cv.getContext('2d', { willReadFrequently: true });
       const thr = getThreshold(), inv = $('preview-invert').checked;
       g.fillStyle = inv ? '#000' : '#fff'; g.fillRect(0, 0, cols, rows);
-      const iw = loadedImage.width, ih = loadedImage.height;
-      
-      const userW = parseFloat(objWidthInput.value);
-      const userH = parseFloat(objHeightInput.value);
-      let drawW, drawH;
-      const aspect = iw / ih;
 
-      if (userW > 0 || userH > 0) {
-        if (userW > 0 && !userH) { drawW = userW; drawH = userW / aspect; }
-        else if (!userW && userH > 0) { drawH = userH; drawW = userH * aspect; }
-        else { drawW = userW; drawH = userH; }
-      } else {
-        const pct = Math.min(300, Math.max(10, Number(previewScale.value) || 100)) / 100;
-        const base = Math.min(W / iw, H / ih);
-        drawW = iw * base * pct;
-        drawH = ih * base * pct;
-      }
+      const crop = getContentCropBox(loadedImage);
+      const dims = getTargetDimensionsMM(crop, W, H);
 
-      const kx = (drawW / iw) / px, ky = (drawH / ih) / px;
+      const drawWpx = dims.wMM / px;
+      const drawHpx = dims.hMM / px;
+
       g.translate((W / 2 + (Number(previewX.value) || 0)) / px, (H / 2 - (Number(previewY.value) || 0)) / px);
       g.rotate((Number(previewRotation.value) || 0) * Math.PI / 180);
       g.imageSmoothingQuality = 'high';
-      g.drawImage(loadedImage, -iw * kx / 2, -ih * ky / 2, iw * kx, ih * ky);
+      g.drawImage(loadedImage, crop.sx, crop.sy, crop.sw, crop.sh, -drawWpx / 2, -drawHpx / 2, drawWpx, drawHpx);
+
       const d = g.getImageData(0, 0, cols, rows).data, m = new Uint8Array(cols * rows);
-      for (let i = 0; i < m.length; i++) { const lum = (d[i * 4] + d[i * 4 + 1] + d[i * 4 + 2]) / 3; m[i] = (inv ? lum > thr : lum < thr) ? 1 : 0; }
-      return m;
+      for (let i = 0; i < m.length; i++) {
+        const lum = (d[i * 4] + d[i * 4 + 1] + d[i * 4 + 2]) / 3;
+        m[i] = (inv ? lum > thr : lum < thr) ? 1 : 0;
+      }
+      return { mask: m, dims };
     }
 
     function generateTapFromImage() {
@@ -918,64 +1061,78 @@
             feed = parseFloat(paramFeed.value), step = parseFloat(paramStep.value), D = parseFloat(paramTool.value);
       if (!(W > 0 && H > 0)) errs.push('Размер заготовки X и Y должен быть больше 0.');
       if (!(D > 0)) errs.push('Диаметр фрезы должен быть больше 0.');
-      else if (W > 0 && H > 0 && D >= Math.min(W, H)) errs.push('Диаметр фрезы не меньше размера заготовки.');
-      if (!(safeZ > 0)) errs.push('Безопасная высота Z должна быть больше 0.');
+      if (!(safeZ > 0)) errs.push('Безопасная Z должна быть больше 0.');
       if (!(feed > 0)) errs.push('Рабочая подача F должна быть больше 0.');
       if (!(step > 0)) errs.push('Шаг растра должен быть больше 0.');
       if (errs.length) { failGen(errs); return; }
-      setLog(['⏳ Расчёт траектории…'], 'warn');
-      setTimeout(() => { try { runCam({ W, H, safeZ, feed, step, D, z: v.z }); } catch (e) { failGen([e.message]); } }, 30);
+      setLog(['⏳ Расчёт траектории и сглаживание…'], 'warn');
+      setTimeout(() => { try { runCam({ W, H, safeZ, feed, step, D, z: v.z }); } catch (e) { failGen([e.message]); } }, 20);
     }
 
     function runCam(o) {
-      const { W, H, safeZ, feed, step, D, z } = o, R = D / 2, mode = paramMode.value, warns = [];
-      let px = Math.min(Math.max(step, 0.25), 0.5);
-      while ((W / px) * (H / px) > 1.6e6) px *= 1.15;
-      if (px > R / 2) warns.push('Разрешение растра ' + px.toFixed(2) + ' мм грубое для такой фрезы: точность смещения порядка ±' + px.toFixed(2) + ' мм.');
+      const { W, H, safeZ, feed, step, D, z } = o, R = D / 2, mode = paramMode.value;
+      const smoothLvl = parseInt(smoothSlider.value) || 0;
+      let px = Math.min(Math.max(step * 0.25, 0.1), 0.35);
+      while ((W / px) * (H / px) > 2.2e6) px *= 1.15;
       const cols = Math.ceil(W / px), rows = Math.ceil(H / px);
-      const dark = buildMask(W, H, px, cols, rows);
-      if (!dark.some(q => q)) throw new Error('На изображении не найдено ' + ($('preview-invert').checked ? 'светлых' : 'тёмных') + ' линий/областей (порог яркости ' + getThreshold() + '). Проверьте порог, инверсию, масштаб и смещение.');
+      const { mask: dark, dims } = buildMask(W, H, px, cols, rows);
+      if (!dark.some(q => q)) throw new Error('На изображении не найдено объектов. Проверьте порог яркости или инверсию.');
 
       const stock = { x0: 0, y0: 0, x1: W, y1: H }, box = { x0: R, y0: R, x1: W - R, y1: H - R };
-      let strokes = [], clippedAny = false;
-      const clipAdd = (pts, b, kind = 'out') => { const r = clipPoly(pts, b); if (r.clipped) clippedAny = true; r.res.forEach(p => strokes.push({ pts: p, kind })); };
-      const tol = 0.03;
+      let strokes = [];
+      const clipAdd = (pts, b, kind = 'out') => { const r = clipPoly(pts, b); r.res.forEach(p => strokes.push({ pts: p, kind })); };
+      const tol = 0.025;
 
       if (mode === 'center') {
-        skeletonPaths(dark, cols, rows, px, H).forEach(p => clipAdd(p, stock));
-        if (clippedAny) warns.push('Часть осевых линий вышла за заготовку и была обрезана по её границе.');
+        skeletonPaths(dark, cols, rows, px, H, smoothLvl > 0).forEach(p => {
+          const n = p.length;
+          const closed = n > 3 && Math.hypot(p[0][0] - p[n - 1][0], p[0][1] - p[n - 1][1]) < px * 1.5;
+          let q = closed ? p.slice(0, -1) : p;
+          if (smoothLvl > 0) {
+            q = resampleLine(q, Math.max(px * 0.8, 0.25));
+            q = ultraSmoothCurve(q, smoothLvl, closed);
+            if (closed) q.push(q[0].slice());
+          }
+          clipAdd(q, stock);
+        });
       } else if (mode === 'ornament') {
-        const ORN_STEP = Math.max(px, 0.3), ORN_ITERS = 3;
+        const effectiveSmooth = Math.max(4, smoothLvl);
+        const ORN_STEP = Math.max(px * 0.7, 0.2);
         skeletonPaths(dark, cols, rows, px, H, true).forEach(p => {
           const n = p.length;
-          const closed = n > 3 && p[0][0] === p[n - 1][0] && p[0][1] === p[n - 1][1];
+          const closed = n > 3 && Math.hypot(p[0][0] - p[n - 1][0], p[0][1] - p[n - 1][1]) < px * 1.5;
           let q = closed ? p.slice(0, -1) : p;
           q = resampleLine(q, ORN_STEP);
-          q = smoothCurve(q, ORN_ITERS, closed);
+          q = ultraSmoothCurve(q, effectiveSmooth, closed);
           if (closed) q.push(q[0].slice());
           clipAdd(q, stock);
         });
-        if (clippedAny) warns.push('Часть орнамента вышла за заготовку и была обрезана.');
       } else if (mode === 'letters') {
         const sf = signedField(dark, cols, rows, px);
-        const cs = contourLines(sf.c, cols, rows, px, H, R).map(p => ({ pts: rdp(p.pts, tol), closed: p.closed })).filter(p => p.pts.length >= 3);
+        const cs = contourLines(sf.c, cols, rows, px, H, R).map(p => {
+          let pts = rdp(p.pts, tol);
+          if (smoothLvl > 0 && pts.length > 4) {
+            const q = p.closed ? pts.slice(0, -1) : pts;
+            const sm = ultraSmoothCurve(resampleLine(q, 0.3), Math.min(4, smoothLvl), p.closed);
+            if (p.closed && sm.length) sm.push(sm[0].slice());
+            pts = sm;
+          }
+          return { pts, closed: p.closed };
+        }).filter(p => p.pts.length >= 3);
         const inPoly = (pt, poly) => { let ins = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const a = poly[i], b = poly[j]; if ((a[1] > pt[1]) !== (b[1] > pt[1]) && pt[0] < (b[0] - a[0]) * (pt[1] - a[1]) / (b[1] - a[1]) + a[0]) ins = !ins; } return ins; };
         cs.forEach((c1, i) => {
           let depth = 0;
           if (c1.closed) cs.forEach((c2, j) => { if (i !== j && c2.closed && inPoly(c1.pts[0], c2.pts)) depth++; });
           clipAdd(c1.pts, stock, depth % 2 ? 'in' : 'out');
         });
-        if (clippedAny) warns.push('Часть контуров вышла за заготовку и была обрезана по её границе: оставьте поле ≥ ' + D + ' мм вокруг букв.');
       } else {
         const F = chkFill.checked ? fillHoles(dark, cols, rows) : dark;
         const sf = signedField(F, cols, rows, px), tc = thinComps(F, sf.din, cols, rows, D, px);
         if (mode === 'pocket' || mode === 'clear') {
           const pocket = mode === 'pocket', L = pocket ? -R : R, c = sf.c, eps = px * 0.35;
-          if (pocket && tc.thinCount) warns.push('Элементов уже диаметра фрезы (' + tc.thinCount + ') в кармане не обработано: инструмент в них не помещается.');
           const reg = pocket ? (x, y) => samp(c, cols, rows, px, H, x, y) <= L + eps
                              : (x, y) => x >= box.x0 && x <= box.x1 && y >= box.y0 && y <= box.y1 && samp(c, cols, rows, px, H, x, y) >= L - eps;
           const sp = Math.min(step, D);
-          if (step > D) warns.push('Шаг растра больше диаметра фрезы: для заливки использован шаг = диаметру (' + D + ' мм).');
           const segOk = (a, b) => { const n = Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / (px * 0.5)); for (let k = 1; k < n; k++) if (!reg(a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n)) return false; return true; };
           let cur = null; const chains = [];
           fillRows(c, cols, rows, px, H, pocket, R, box, sp).forEach(s => {
@@ -986,27 +1143,19 @@
           if (cur) chains.push(cur);
           chains.forEach(p => strokes.push({ pts: p, kind: pocket ? 'in' : 'out' }));
           contourLines(c, cols, rows, px, H, L).forEach(p => clipAdd(rdp(p.pts, tol), box, pocket ? 'in' : 'out'));
-          if (clippedAny) warns.push('Траектория ограничена так, чтобы фреза целиком оставалась в пределах заготовки (отступ ' + R + ' мм от края): у границы может остаться необработанная полоса.');
         } else {
           let c = sf.c;
           if (tc.thinCount) { c = signedField(tc.thick, cols, rows, px).c; }
           const L = mode === 'lineout' ? R : -R;
-          if (tc.thinCount) {
-            if (paramOpen.value === 'center') {
-              skeletonPaths(tc.thin, cols, rows, px, H).forEach(p => clipAdd(p, stock));
-              warns.push('Открытых/тонких линий: ' + tc.thinCount + '. Сторона обработки для них не определена — они пройдены ПО ЦЕНТРУ (по вашему выбору).');
-            } else warns.push('Открытых/тонких линий: ' + tc.thinCount + ' — ПРОПУЩЕНО. Для них «внутри/снаружи» не определено. Выберите «Пройти по центру» или режим 3.');
+          if (tc.thinCount && paramOpen.value === 'center') {
+            skeletonPaths(tc.thin, cols, rows, px, H).forEach(p => clipAdd(p, stock));
           }
           contourLines(c, cols, rows, px, H, L).forEach(p => clipAdd(rdp(p.pts, tol), box, mode === 'linein' ? 'in' : 'out'));
-          if (clippedAny) warns.push('Часть траектории выходила за допустимую область заготовки и была обрезана (фреза не должна выходить за заготовку).');
         }
       }
 
       strokes = strokes.map(s => ({ ...s, pts: s.pts.filter((p, i) => i === 0 || Math.hypot(p[0] - s.pts[i - 1][0], p[1] - s.pts[i - 1][1]) > 0.004) })).filter(s => s.pts.length >= 2);
-      if (!strokes.length) throw new Error('Траектория пуста: для выбранного режима и диаметра фрезы нет допустимых перемещений (фигуры уже фрезы, не замкнуты или вне заготовки).');
-      for (const s of strokes) for (const p of s.pts)
-        if (!isFinite(p[0]) || !isFinite(p[1]) || p[0] < -1e-6 || p[1] < -1e-6 || p[0] > W + 1e-6 || p[1] > H + 1e-6)
-          throw new Error('Обнаружена координата вне заготовки — генерация прервана ради безопасности.');
+      if (!strokes.length) throw new Error('Траектория пуста для выбранных параметров.');
 
       const org = getOrigin(), ox = org.fx * W, oy = org.fy * H;
       const sep = chkTabs.checked ? '\t' : ' ', plungeIn = parseFloat($('param-plunge').value), plunge = plungeIn > 0 ? plungeIn : Math.min(300, feed);
@@ -1018,7 +1167,7 @@
       const orderNN = (list) => { const rest = list.slice(), out = []; let cur = [0, 0]; while (rest.length) { let bi = 0, bd = Infinity; rest.forEach((q, i) => { const d = Math.hypot(q.pts[0][0] - cur[0], q.pts[0][1] - cur[1]); if (d < bd) { bd = d; bi = i; } }); const q = rest.splice(bi, 1)[0]; out.push(q); cur = q.pts[q.pts.length - 1]; } return out; };
       const useRamp = $('chk-ramp').checked && parseFloat($('ramp-len').value) > 0.5, rampLen = parseFloat($('ramp-len').value);
       const plen = (p) => { let t = 0; for (let i = 1; i < p.length; i++) t += Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]); return t; };
-      // первые len мм пути: точки с накопленной длиной d; next = индекс первой исходной точки после среза
+      
       const headOf = (p, len) => {
         const h = [{ p: p[0], d: 0 }]; let acc = 0;
         for (let i = 1; i < p.length; i++) {
@@ -1032,8 +1181,7 @@
         }
         return { h, next: p.length };
       };
-      // Заход по наклонной: спуск от zFrom до zk вдоль первых len мм пути, затем срез этого участка на полной глубине.
-      // Замкнутый контур: после ramp идём по остальному пути и повторяем начальный участок. Открытый: возвращаемся назад к старту и идём заново.
+
       const rampStroke = (s, zFrom, zk, len) => {
         const closed = Math.hypot(s.pts[0][0] - s.pts[s.pts.length - 1][0], s.pts[0][1] - s.pts[s.pts.length - 1][1]) < 1e-3;
         const { h, next } = headOf(s.pts, len);
@@ -1043,13 +1191,32 @@
         h.slice(1).forEach((q, i) => L('G1' + sep + 'X' + fx(q.p[0]) + sep + 'Y' + fy(q.p[1]) + sep + 'Z' + f3(zFrom + (zk - zFrom) * q.d / len) + (i === 0 ? sep + 'F' + feed : ''), s.kind));
         const last = h[h.length - 1].p;
         if (closed) {
-          if (Math.hypot(s.pts[next][0] - last[0], s.pts[next][1] - last[1]) < 1e-6) s.pts.slice(next + 1).forEach(move); else s.pts.slice(next).forEach(move);
+          if (next < s.pts.length && Math.hypot(s.pts[next][0] - last[0], s.pts[next][1] - last[1]) < 1e-6) s.pts.slice(next + 1).forEach(move); else s.pts.slice(next).forEach(move);
           h.slice(1).forEach(q => move(q.p));
         } else {
           h.slice(0, -1).reverse().forEach(q => move(q.p));
           s.pts.slice(1).forEach(move);
         }
       };
+
+      const tabSplit = (pts, tw, spacing) => {
+        const cum = [0]; for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+        const per = cum[cum.length - 1];
+        if (!(tw > 0) || per < tw * 3) return null;
+        const n = Math.max(1, Math.min(Math.round(per / (spacing > 0 ? spacing : per)), Math.floor(per / (tw * 3))));
+        const iv = []; for (let k = 0; k < n; k++) { const c = per * (k + 0.5) / n; iv.push([c - tw / 2, c + tw / 2]); }
+        const all = pts.map((p, i) => ({ s: cum[i], p }));
+        iv.forEach(([a, b]) => [a, b].forEach(sv => {
+          let i = 1; while (i < cum.length - 1 && cum[i] < sv) i++;
+          const u = (sv - cum[i - 1]) / ((cum[i] - cum[i - 1]) || 1);
+          all.push({ s: sv, p: [pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * u, pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * u] });
+        }));
+        all.sort((a, b) => a.s - b.s);
+        const e = all.filter((q, j) => j === 0 || q.s - all[j - 1].s > 1e-9);
+        const t = e.map((q, j) => { if (!j) return false; const m = (e[j - 1].s + q.s) / 2; return iv.some(([a, b]) => m > a && m < b); });
+        return { e, t };
+      };
+
       const doStroke = (s, zk, tabbed, zFrom) => {
         L('G0' + sep + 'X' + fx(s.pts[0][0]) + sep + 'Y' + fy(s.pts[0][1]));
         const lift = Math.min(safeZ, zk + th), tp = tabbed && lift > zk + 1e-6 ? tabSplit(s.pts, tw, ts) : null;
@@ -1066,80 +1233,53 @@
           needF = false;
         }
       };
+
       if ($('chk-header').checked) { ['G21', 'G17', 'G40', 'G49', 'G54'].forEach(c => L(c)); }
-      if (mode === 'ornament') L('G64');
       const spindle = parseFloat($('param-spindle').value);
       L('G90'); L('G0' + sep + 'Z' + f3(safeZ)); L('M3' + (spindle > 0 ? sep + 'S' + Math.round(spindle) : ''));
-      const nIn = strokes.filter(q => q.kind === 'in').length, nOut = strokes.length - nIn;
+      
       const jobs = mode === 'letters'
         ? [{ list: orderNN(strokes.filter(q => q.kind === 'in')), tabs: false }, { list: orderNN(strokes.filter(q => q.kind !== 'in')), tabs: true }]
-        : [{ list: strokes, tabs: false }];
+        : [{ list: orderNN(strokes), tabs: false }];
+
       jobs.forEach(job => z.forEach((zk, zi) => job.list.forEach(q => {
         doStroke(q, zk, job.tabs && useTabs && zi === z.length - 1, zi ? z[zi - 1] : 0);
         L('G0' + sep + 'Z' + f3(safeZ));
       })));
+
       if ($('chk-m5').checked) L('M5');
       if (chkM30.checked) L('M30');
-      const extra = (mode === 'letters' ? ' · внешних контуров: ' + nOut + ', отверстий: ' + nIn + (useTabs ? ', мостики: вкл' : ', мостики: выкл') : '') + ' · нуль: ' + org.label;
+      
       finalizeOutput(lines, kinds, { ox, oy });
-      setLog(['✓ ' + MODE_NAMES[mode] + ' · фреза Ø' + D + ' мм · проходов: ' + z.length + ' (Z: ' + z.join(', ') + ') · участков траектории: ' + strokes.length + ' · растр ' + px.toFixed(2) + ' мм/пикс.' + extra]
-        .concat(warns.map(w => '⚠ ' + w)), warns.length ? 'warn' : 'ok');
+      setLog(['✓ Готово! Габариты: ' + (Math.round(dims.wMM * 10) / 10) + '×' + (Math.round(dims.hMM * 10) / 10) + ' мм · участков: ' + strokes.length + ' · проходов: ' + z.length], 'ok');
     }
 
     function generateTapFromText() {
       let raw = inputArea.value || loadedRawText || '';
       if (!raw.trim()) return;
-
       const sep = chkTabs.checked ? '\t' : ' ';
-      const rawLines = raw.split(/\r\n|\r|\n/);
-      let lines = [];
-
-      rawLines.forEach(l => {
+      const lines = [];
+      raw.split(/\r\n|\r|\n/).forEach(l => {
         let line = l.trim().toUpperCase().replace(/\(.*?\)/g, '').replace(/;.*/g, '');
         if (!line) return;
         line = line.replace(/\s+/g, sep).replace(/([0-9.])(?=[A-Z])/g, `$1${sep}`);
         lines.push(line);
       });
-
-      if (chkM30.checked && !lines.some(l => l.includes('M30') || l.includes('M02'))) {
-        lines.push('M30');
-      }
-
+      if (chkM30.checked && !lines.some(l => l.includes('M30') || l.includes('M02'))) lines.push('M30');
       finalizeOutput(lines);
     }
 
-    const ORIGIN_NAMES = { '0,0': 'Левый нижний угол (X0 Y0) — стандарт NCStudio', '0.5,0': 'Низ по центру', '1,0': 'Правый нижний угол (X:Max Y0)',
-      '0,0.5': 'Левый край по центру', '0.5,0.5': 'Центр заготовки (W/2, H/2)', '1,0.5': 'Правый край по центру',
-      '0,1': 'Левый верхний угол (X0 Y:Max)', '0.5,1': 'Верх по центру', '1,1': 'Правый верхний угол (X:Max Y:Max)' };
+    const ORIGIN_NAMES = { '0,0': 'Левый нижний (X0 Y0)', '0.5,0': 'Низ по центру', '1,0': 'Правый нижний', '0,0.5': 'Левый край центр', '0.5,0.5': 'Центр заготовки', '1,0.5': 'Правый край центр', '0,1': 'Левый верхний', '0.5,1': 'Верх по центру', '1,1': 'Правый верхний' };
     function getOrigin() {
       const r = document.querySelector('input[name="origin"]:checked'), v = r ? r.value : '0,0', [fx, fy] = v.split(',').map(Number);
       return { fx, fy, label: ORIGIN_NAMES[v] };
     }
     function updateOriginCaption() {
       const o = getOrigin(), W = parseFloat(paramWidth.value) || 0, H = parseFloat(paramHeight.value) || 0, f = (v) => Math.round(v * 100) / 100;
-      $('origin-caption').innerHTML = '<span class="text-amber-400">' + o.label + '</span><br>Нуль на заготовке: (' + f(o.fx * W) + '; ' + f(o.fy * H) + ') мм';
+      $('origin-caption').innerHTML = '<span class="text-amber-400">' + o.label + '</span><br>Смещение: (' + f(o.fx * W) + '; ' + f(o.fy * H) + ') мм';
     }
-    function onOriginChange() { updateOriginCaption(); if (loadedImage) generateTapFromImage(); else renderViz(); }
-    document.querySelectorAll('input[name="origin"]').forEach(r => r.addEventListener('change', onOriginChange));
+    document.querySelectorAll('input[name="origin"]').forEach(r => r.addEventListener('change', () => { updateOriginCaption(); if (loadedImage) generateTapFromImage(); else renderViz(); }));
     [paramWidth, paramHeight].forEach(el => el.addEventListener('input', updateOriginCaption));
-
-    function tabSplit(pts, tw, spacing) {
-      const cum = [0]; for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
-      const per = cum[cum.length - 1];
-      if (!(tw > 0) || per < tw * 3) return null;
-      const n = Math.max(1, Math.min(Math.round(per / (spacing > 0 ? spacing : per)), Math.floor(per / (tw * 3))));
-      const iv = []; for (let k = 0; k < n; k++) { const c = per * (k + 0.5) / n; iv.push([c - tw / 2, c + tw / 2]); }
-      const all = pts.map((p, i) => ({ s: cum[i], p }));
-      iv.forEach(([a, b]) => [a, b].forEach(sv => {
-        let i = 1; while (i < cum.length - 1 && cum[i] < sv) i++;
-        const u = (sv - cum[i - 1]) / ((cum[i] - cum[i - 1]) || 1);
-        all.push({ s: sv, p: [pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * u, pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * u] });
-      }));
-      all.sort((a, b) => a.s - b.s);
-      const e = all.filter((q, j) => j === 0 || q.s - all[j - 1].s > 1e-9);
-      const t = e.map((q, j) => { if (!j) return false; const m = (e[j - 1].s + q.s) / 2; return iv.some(([a, b]) => m > a && m < b); });
-      return { e, t };
-    }
 
     function estimateJob(lines, rapid) {
       let x = 0, y = 0, z = 0, f = 0, gm = 0, cut = 0, minutes = 0;
@@ -1163,23 +1303,19 @@
     }
     function updateStats(lines) {
       const rapid = parseFloat($('param-rapid').value), est = estimateJob(lines, rapid > 0 ? rapid : 3000);
-      statTime.textContent = 'Время: ~' + fmtTime(est.minutes) + ' · рез ' + (est.cut / 1000).toFixed(2) + ' м';
+      statTime.textContent = '~' + fmtTime(est.minutes) + ' · рез ' + (est.cut / 1000).toFixed(2) + ' м';
     }
 
     let lastGen = { kinds: null, org: { ox: 0, oy: 0 } };
     function finalizeOutput(lines, kinds, org) {
-      const eol = '\r\n';
-      const result = lines.join(eol);
+      const result = lines.join('\r\n');
       outputArea.value = result;
-
-      const bytes = new Blob([result]).size;
       statLines.textContent = `Кадров: ${lines.length}`;
-      statSize.textContent = `Вес: ${(bytes / 1024).toFixed(1)} KB`;
+      statSize.textContent = `${(new Blob([result]).size / 1024).toFixed(1)} KB`;
       updateStats(lines);
-
       lastGen = { kinds: kinds || null, org: org || { ox: 0, oy: 0 } };
       drawVisualizer(lines, lastGen.kinds, lastGen.org, false);
-      voiceSay('Траектория успешно рассчитана, кадров: ' + lines.length);
+      voiceSay('Траектория рассчитана, кадров: ' + lines.length);
     }
 
     let viz = null, view = { z: 1, tx: 0, ty: 0 }, vp = null;
@@ -1211,13 +1347,13 @@
     }
     function renderViz() {
       const dpr = window.devicePixelRatio || 1, host = canvas.parentElement;
-      const cw = host.clientWidth || 600, ch = host.clientHeight || 520;
+      const cw = host.clientWidth || 600, ch = host.clientHeight || 540;
       if (canvas.width !== Math.round(cw * dpr) || canvas.height !== Math.round(ch * dpr)) { canvas.width = Math.round(cw * dpr); canvas.height = Math.round(ch * dpr); }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, cw, ch);
       const W = parseFloat(paramWidth.value) || 400, H = parseFloat(paramHeight.value) || 400, D = parseFloat(paramTool.value) || 0;
       let ox, oy;
       if (viz) { ox = viz.org.ox; oy = viz.org.oy; } else { const o = getOrigin(); ox = o.fx * W; oy = o.fy * H; }
-      const m = 40, s = Math.min((cw - m * 2) / W, (ch - m * 2) / H) * view.z;
+      const m = 35, s = Math.min((cw - m * 2) / W, (ch - m * 2) / H) * view.z;
       const c0x = W / 2 - ox, c0y = H / 2 - oy, cx = cw / 2 + view.tx, cy = ch / 2 + view.ty;
       const X = (x) => cx + (x - c0x) * s, Y = (y) => cy - (y - c0y) * s;
       vp = { s, cx, cy, c0x, c0y };
@@ -1235,8 +1371,9 @@
         ctx.save();
         ctx.setTransform(dpr * s, 0, 0, -dpr * s, dpr * (cx - c0x * s), dpr * (cy + c0y * s));
         ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
         ctx.lineWidth = 1 / s; ctx.strokeStyle = '#525252'; ctx.stroke(viz.rapid);
-        ctx.lineWidth = 1.5 / s; ctx.strokeStyle = '#38BDF8'; ctx.stroke(viz.g.in);
+        ctx.lineWidth = 1.6 / s; ctx.strokeStyle = '#38BDF8'; ctx.stroke(viz.g.in);
         ctx.strokeStyle = '#FBBF24'; ctx.stroke(viz.g.out);
         ctx.lineWidth = 2.4 / s; ctx.strokeStyle = '#FB923C'; ctx.stroke(viz.g.tab);
         if (viz.first && D > 0) { ctx.beginPath(); ctx.arc(viz.first[0], viz.first[1], D / 2, 0, Math.PI * 2); ctx.lineWidth = 1 / s; ctx.strokeStyle = 'rgba(251,191,36,0.7)'; ctx.setLineDash([3 / s, 3 / s]); ctx.stroke(); ctx.setLineDash([]); }
@@ -1248,10 +1385,10 @@
       for (let i = Math.ceil(ymin / major); i * major <= ymax; i++) { const v = i * major; if (Y(v) < ch - 16) ctx.fillText(String(Math.round(v * 100) / 100), 2, Y(v) - 2); }
       const mx = X(0), my = Y(0);
       ctx.strokeStyle = '#ef4444'; ctx.fillStyle = '#ef4444'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(mx - 13, my); ctx.lineTo(mx + 13, my); ctx.moveTo(mx, my - 13); ctx.lineTo(mx, my + 13); ctx.stroke();
-      ctx.beginPath(); ctx.arc(mx, my, 5, 0, Math.PI * 2); ctx.stroke();
-      ctx.font = '10px "Fira Code", monospace'; ctx.fillText('X0 Y0', mx + 9, my - 9);
-      canvasInfo.textContent = 'Заготовка: ' + W + 'x' + H + ' мм | Фреза Ø' + D + ' | ' + (MODE_NAMES[paramMode.value] || '') + ' | ×' + view.z.toFixed(2);
+      ctx.beginPath(); ctx.moveTo(mx - 12, my); ctx.lineTo(mx + 12, my); ctx.moveTo(mx, my - 12); ctx.lineTo(mx, my + 12); ctx.stroke();
+      ctx.beginPath(); ctx.arc(mx, my, 4.5, 0, Math.PI * 2); ctx.stroke();
+      ctx.font = '10px "Fira Code", monospace'; ctx.fillText('X0 Y0', mx + 8, my - 8);
+      canvasInfo.textContent = 'Заготовка: ' + W + '×' + H + ' мм | Фреза Ø' + D + ' | ' + (MODE_NAMES[paramMode.value] || '') + ' | ×' + view.z.toFixed(2);
     }
     function resetView() { view = { z: 1, tx: 0, ty: 0 }; renderViz(); }
     function zoomAt(mx, my, r) {
@@ -1277,96 +1414,64 @@
     canvas.addEventListener('wheel', (e) => { e.preventDefault(); const rc = canvas.getBoundingClientRect(), dy = e.deltaMode === 1 ? e.deltaY * 33 : e.deltaY; zoomAt(e.clientX - rc.left, e.clientY - rc.top, Math.exp(-dy * 0.0015)); }, { passive: false });
     canvas.addEventListener('dblclick', resetView);
     $('btn-view-reset').addEventListener('click', resetView);
-    window.addEventListener('resize', () => { if (!$('view-vis').classList.contains('hidden')) renderViz(); });
 
-    document.getElementById('btn-process-main').addEventListener('click', () => {
-      if (loadedImage) generateTapFromImage();
-      else generateTapFromText();
-    });
-
-    document.getElementById('btn-top-generate').addEventListener('click', () => {
-      if (loadedImage) generateTapFromImage();
-      else generateTapFromText();
-    });
+    $('btn-process-main').addEventListener('click', () => { if (loadedImage) generateTapFromImage(); else generateTapFromText(); });
+    $('btn-top-generate').addEventListener('click', () => { if (loadedImage) generateTapFromImage(); else generateTapFromText(); });
 
     function downloadFile(fromVoice) {
       const text = outputArea.value;
-      if (!text) { voiceSay('Нет сгенерированного кода для скачивания'); if (fromVoice !== true) alert('Нет сгенерированного кода для скачивания!'); return; }
-      const ext = exportExt.value;
+      if (!text) { voiceSay('Нет кода для скачивания'); if (fromVoice !== true) alert('Нет сгенерированного кода для скачивания!'); return; }
       const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.download = (sourceBase ? sourceBase + '_talas' : 'Talas_profi_Project_' + Date.now()) + ext;
+      link.download = (sourceBase ? sourceBase + '_talas' : 'Talas_profi_' + Date.now()) + exportExt.value;
       link.click();
       URL.revokeObjectURL(link.href);
-      voiceSay('Файл готов к скачиванию');
+      voiceSay('Файл скачан');
     }
 
-    document.getElementById('btn-top-download').addEventListener('click', downloadFile);
-    document.getElementById('btn-bottom-download').addEventListener('click', downloadFile);
-
-    document.getElementById('btn-copy-code').addEventListener('click', () => {
-      if (!outputArea.value) return;
-      navigator.clipboard.writeText(outputArea.value);
-      alert('Код .TAP успешно скопирован в буфер обмена!');
+    $('btn-top-download').addEventListener('click', downloadFile);
+    $('btn-bottom-download').addEventListener('click', downloadFile);
+    $('btn-copy-code').addEventListener('click', () => { if (!outputArea.value) return; navigator.clipboard.writeText(outputArea.value); alert('Код скопирован!'); });
+    $('btn-clear-in').addEventListener('click', () => {
+      inputArea.value = ''; outputArea.value = ''; loadedImage = null; loadedRawText = null; sourceBase = ''; fileInput.value = '';
+      camLog.className = 'hidden'; renderImagePreview(); renderViz();
     });
 
-    document.getElementById('btn-clear-in').addEventListener('click', () => {
-      inputArea.value = '';
-      outputArea.value = '';
-      loadedImage = null;
-      loadedRawText = null;
-      sourceBase = ''; fileInput.value = '';
-      camLog.className = 'hidden';
-      renderImagePreview();
-    });
-
-    const tabCode = document.getElementById('tab-btn-code');
-    const tabVis = document.getElementById('tab-btn-vis');
-    const viewCode = document.getElementById('view-code');
-    const viewVis = document.getElementById('view-vis');
-
+    const tabCode = $('tab-btn-code'), tabVis = $('tab-btn-vis'), viewCode = $('view-code'), viewVis = $('view-vis');
     tabCode.addEventListener('click', () => {
-      viewCode.classList.remove('hidden'); viewCode.classList.add('flex');
-      viewVis.classList.add('hidden'); viewVis.classList.remove('flex');
-      tabCode.className = 'px-4 py-1.5 rounded-lg text-xs font-bold transition border border-amber-400/50 bg-amber-400/10 text-amber-400 flex items-center gap-1.5';
-      tabVis.className = 'px-4 py-1.5 rounded-lg text-xs font-bold transition border border-transparent text-neutral-400 hover:text-white flex items-center gap-1.5';
+      viewCode.classList.remove('hidden'); viewCode.classList.add('flex'); viewVis.classList.add('hidden'); viewVis.classList.remove('flex');
+      tabCode.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition border border-amber-400/50 bg-amber-400/10 text-amber-400 flex items-center gap-1.5';
+      tabVis.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition border border-transparent text-neutral-400 hover:text-white flex items-center gap-1.5';
     });
-
     tabVis.addEventListener('click', () => {
-      viewVis.classList.remove('hidden'); viewVis.classList.add('flex');
-      viewCode.classList.add('hidden'); viewCode.classList.remove('flex');
-      tabVis.className = 'px-4 py-1.5 rounded-lg text-xs font-bold transition border border-amber-400/50 bg-amber-400/10 text-amber-400 flex items-center gap-1.5';
-      tabCode.className = 'px-4 py-1.5 rounded-lg text-xs font-bold transition border border-transparent text-neutral-400 hover:text-white flex items-center gap-1.5';
+      viewVis.classList.remove('hidden'); viewVis.classList.add('flex'); viewCode.classList.add('hidden'); viewCode.classList.remove('flex');
+      tabVis.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition border border-amber-400/50 bg-amber-400/10 text-amber-400 flex items-center gap-1.5';
+      tabCode.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition border border-transparent text-neutral-400 hover:text-white flex items-center gap-1.5';
       if (outputArea.value) { const ls = outputArea.value.split(/\r\n|\r|\n/); drawVisualizer(ls, lastGen.kinds && lastGen.kinds.length === ls.length ? lastGen.kinds : null, lastGen.org, true); } else renderViz();
     });
 
-    // Правка левого окна вручную отменяет ранее загруженные картинку/файл
     inputArea.addEventListener('input', () => {
       if (loadedImage && !inputArea.value.startsWith('[Загружено изображение')) { loadedImage = null; renderImagePreview(); }
       loadedRawText = null;
     });
-    // Порог яркости и инверсия
+
     const thrEl = $('preview-threshold'), invEl = $('preview-invert');
-    thrEl.addEventListener('input', () => { $('threshold-val').textContent = thrEl.value; });
-    [thrEl, invEl].forEach(el => el.addEventListener('change', () => { if (loadedImage) generateTapFromImage(); }));
+    thrEl.addEventListener('input', () => { $('threshold-val').textContent = thrEl.value; renderImagePreview(); });
+    [thrEl, invEl].forEach(el => el.addEventListener('change', () => { renderImagePreview(); if (loadedImage) generateTapFromImage(); }));
 
     renderImagePreview();
-    distributeDepth(); renderDepthFields(); updateOpenRow(); updateOriginCaption();
+    distributeDepth(); renderDepthFields(); updateOpenRow(); updateOriginCaption(); renderViz();
 
     dropZone.addEventListener('click', () => fileInput.click());
     dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-amber-400'); });
     dropZone.addEventListener('dragleave', () => dropZone.classList.remove('border-amber-400'));
     dropZone.addEventListener('drop', (e) => {
-      e.preventDefault();
-      dropZone.classList.remove('border-amber-400');
-      if (e.dataTransfer.files.length) {
-        fileInput.files = e.dataTransfer.files;
-        fileInput.dispatchEvent(new Event('change'));
-      }
+      e.preventDefault(); dropZone.classList.remove('border-amber-400');
+      if (e.dataTransfer.files.length) { fileInput.files = e.dataTransfer.files; fileInput.dispatchEvent(new Event('change')); }
     });
 
-    // ===================== ГОЛОСОВОЙ ПОМОЩНИК (Web Speech API) =====================
+    // Голосовой помощник
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     const voiceBtn = $('btn-voice'), voiceDot = $('voice-dot'), voiceState = $('voice-state'), voiceText = $('voice-text');
     let voiceOn = false, recog = null, speakBusy = 0, voiceTimer = null, ruVoice = null;
@@ -1389,15 +1494,10 @@
       recog = new SR(); recog.lang = 'ru-RU'; recog.continuous = true; recog.interimResults = false; recog.maxAlternatives = 1;
       recog.onresult = (e) => { for (let i = e.resultIndex; i < e.results.length; i++) if (e.results[i].isFinal) handleVoice(e.results[i][0].transcript); };
       recog.onend = () => { if (voiceOn && !speakBusy) setTimeout(startRecog, 300); };
-      recog.onerror = (e) => {
-        if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { stopVoice(); voiceText.textContent = '⛔ Нет доступа к микрофону (разрешите его в браузере)'; }
-        else if (e.error === 'network') { stopVoice(); voiceText.textContent = '⛔ Нет связи с сервисом распознавания речи'; }
-      };
     }
     function startVoice() {
-      if (!SR) { voiceText.textContent = '⛔ Распознавание речи не поддерживается (нужен Chrome / Edge / Safari)'; alert('Этот браузер не поддерживает распознавание речи. Откройте страницу в Chrome, Edge или Safari.'); return; }
-      voiceOn = true; startRecog();
-      voiceText.textContent = 'Команды: «сгенерировать код», «скачать файл», «очистить всё», «сбросить вид»';
+      if (!SR) { alert('Распознавание речи не поддерживается в этом браузере.'); return; }
+      voiceOn = true; startRecog(); voiceText.textContent = 'Команды: «сгенерировать», «скачать», «очистить»';
       voiceSay('Голосовой помощник включён');
     }
     function stopVoice() {
@@ -1408,28 +1508,26 @@
     voiceBtn.addEventListener('click', () => voiceOn ? (stopVoice(), voiceText.textContent = '') : startVoice());
     setVoiceState('off');
 
-    function triggerGenerate() {
-      if (!loadedImage && !(inputArea.value || loadedRawText || '').trim()) { voiceSay('Нет данных. Загрузите изображение или вставьте G-код'); return; }
-      if (loadedImage) generateTapFromImage(); else generateTapFromText();
-    }
-    function clearAll() {
-      inputArea.value = ''; outputArea.value = ''; loadedImage = null; loadedRawText = null; fileInput.value = ''; sourceBase = '';
-      camLog.className = 'hidden'; statLines.textContent = 'Кадров: 0'; statSize.textContent = 'Вес: 0 KB'; statTime.textContent = 'Время: —';
-      objWidthInput.value = ''; objHeightInput.value = '';
-      previewScale.value = 100; previewRotation.value = 0; previewX.value = 0; previewY.value = 0;
-      viz = null; lastGen = { kinds: null, org: { ox: 0, oy: 0 } }; view = { z: 1, tx: 0, ty: 0 };
-      renderImagePreview(); renderViz(); voiceSay('Проект очищен');
-    }
     function handleVoice(raw) {
       const tx = raw.toLowerCase().replace(/ё/g, 'е').replace(/[^a-zа-я0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
       if (!tx) return;
       setVoiceState('ok'); voiceText.textContent = '🎙 «' + tx + '»';
       clearTimeout(voiceTimer); voiceTimer = setTimeout(() => { if (voiceOn) setVoiceState('listen'); }, 1400);
-      if (/очист/.test(tx)) return clearAll();
+      if (/очист/.test(tx)) {
+        inputArea.value = ''; outputArea.value = ''; loadedImage = null; loadedRawText = null; fileInput.value = ''; sourceBase = '';
+        camLog.className = 'hidden'; statLines.textContent = 'Кадров: 0'; statSize.textContent = '0 KB'; statTime.textContent = 'Время: —';
+        objWidthInput.value = ''; objHeightInput.value = ''; previewScale.value = 100; previewRotation.value = 0; previewX.value = 0; previewY.value = 0;
+        viz = null; lastGen = { kinds: null, org: { ox: 0, oy: 0 } }; view = { z: 1, tx: 0, ty: 0 };
+        renderImagePreview(); renderViz(); voiceSay('Проект очищен');
+        return;
+      }
       if (/скача|сохран/.test(tx)) return downloadFile(true);
       if (/сброс[а-я]* вид|по центру|центр/.test(tx)) { resetView(); if (/центр/.test(tx)) $('preview-center').click(); return voiceSay('Вид сброшен'); }
-      if (/сгенер|старт|запуст|рассчит|посчит/.test(tx)) return triggerGenerate();
-      voiceText.textContent += ' — команда не распознана';
+      if (/сгенер|старт|запуст|рассчит|посчит/.test(tx)) {
+        if (!loadedImage && !(inputArea.value || loadedRawText || '').trim()) { voiceSay('Нет данных для генерации'); return; }
+        if (loadedImage) generateTapFromImage(); else generateTapFromText();
+        return;
+      }
     }
   </script>
 </body>
