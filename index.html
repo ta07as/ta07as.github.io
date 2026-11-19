@@ -266,7 +266,7 @@
             <label class="flex items-center gap-2 text-[11px] text-neutral-300 cursor-pointer">
               <input type="checkbox" id="chk-arcs" checked class="accent-amber-400 rounded"> Аппроксимация дугами G2/G3 (плавные радиусы)
             </label>
-            <div class="text-[10px] text-neutral-500 mt-1 leading-snug">Допуск 0.03 мм · радиус 0.5–500 мм · серия G1 заменяется одной дугой</div>
+            <div class="text-[10px] text-neutral-500 mt-1 leading-snug">Проверка радиуса по округлённым координатам · защита от error:33 в GRBL/Inectra</div>
           </div>
 
           <div class="grid grid-cols-2 gap-2 items-center">
@@ -464,9 +464,8 @@
     let loadedRawText = null;
     let loadedSvgText = null;
     let sourceBase = '';
-    let lastBounds = null; // { minX, minY, maxX, maxY } in machine coordinates
+    let lastBounds = null;
 
-    // Переключение компактных вкладок настроек слева
     document.querySelectorAll('.stab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const target = btn.dataset.stab;
@@ -483,7 +482,6 @@
       });
     });
 
-    // Быстрые пресеты материалов
     const PRESETS = {
       plywood4: { cutz: -4.2, passes: 2, feed: 1500, plunge: 400, tool: 3, spindle: 14000 },
       mdf16:    { cutz: -16.2, passes: 4, feed: 2200, plunge: 600, tool: 6, spindle: 16000 },
@@ -507,7 +505,6 @@
       });
     });
 
-    // Предпросмотр изображения и точных размеров
     const previewCanvas = $('image-preview');
     const previewCtx = previewCanvas.getContext('2d');
     const chkTrimBounds = $('chk-trim-bounds');
@@ -678,7 +675,6 @@
     });
     window.addEventListener('resize', renderImagePreview);
 
-    // Чтение файлов
     fileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -695,12 +691,24 @@
           const blobUrl = URL.createObjectURL(new Blob([loadedSvgText], { type: 'image/svg+xml;charset=utf-8' }));
           const img = new Image();
           img.onload = () => {
-            if (!img.width || !img.height) { img.width = 800; img.height = 800; }
+            URL.revokeObjectURL(blobUrl);
+            if (!img.naturalWidth || !img.naturalHeight) {
+              previewStatus.textContent = 'Ошибка SVG';
+              previewWarning.textContent = 'SVG не содержит корректных размеров изображения.';
+              previewWarning.classList.remove('hidden');
+              return;
+            }
             loadedImage = img;
             loadedRawText = null;
-            inputArea.value = `[Загружен векторный SVG: ${file.name}, ${img.width}x${img.height}px]`;
+            inputArea.value = `[Загружен векторный SVG: ${file.name}, ${img.naturalWidth}x${img.naturalHeight}px]`;
             renderImagePreview();
             generateTapFromImage();
+          };
+          img.onerror = () => {
+            URL.revokeObjectURL(blobUrl);
+            previewStatus.textContent = 'Ошибка SVG';
+            previewWarning.textContent = 'Не удалось открыть SVG. Проверьте файл и его разметку.';
+            previewWarning.classList.remove('hidden');
           };
           img.src = blobUrl;
         };
@@ -711,12 +719,22 @@
         reader.onload = (event) => {
           const img = new Image();
           img.onload = () => {
-            if (!img.width || !img.height) { img.width = 800; img.height = 800; }
+            if (!img.naturalWidth || !img.naturalHeight) {
+              previewStatus.textContent = 'Ошибка изображения';
+              previewWarning.textContent = 'Файл открылся, но браузер не смог определить размеры изображения.';
+              previewWarning.classList.remove('hidden');
+              return;
+            }
             loadedImage = img;
             loadedRawText = null;
-            inputArea.value = `[Загружено изображение: ${file.name}, ${img.width}x${img.height}px]`;
+            inputArea.value = `[Загружено изображение: ${file.name}, ${img.naturalWidth}x${img.naturalHeight}px]`;
             renderImagePreview();
             generateTapFromImage();
+          };
+          img.onerror = () => {
+            previewStatus.textContent = 'Ошибка изображения';
+            previewWarning.textContent = 'Не удалось декодировать изображение. Попробуйте PNG или JPG.';
+            previewWarning.classList.remove('hidden');
           };
           img.src = event.target.result;
         };
@@ -736,14 +754,49 @@
 
     // ===================== ГЕОМЕТРИЯ И УЛЬТРА-СГЛАЖИВАНИЕ =====================
     function edt1d(f, n, d, v, z) {
-      let k = 0; v[0] = 0; z[0] = -1e30; z[1] = 1e30;
-      for (let q = 1; q < n; q++) {
+      const INF = 1e12;
+      let k = -1;
+
+      for (let q = 0; q < n; q++) {
+        if (!Number.isFinite(f[q]) || f[q] >= INF * 0.5) continue;
+
+        if (k < 0) {
+          k = 0;
+          v[0] = q;
+          z[0] = -Infinity;
+          z[1] = Infinity;
+          continue;
+        }
+
         let s = ((f[q] + q * q) - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]);
-        while (s <= z[k]) { k--; s = ((f[q] + q * q) - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]); }
-        k++; v[k] = q; z[k] = s; z[k + 1] = 1e30;
+        while (k > 0 && s <= z[k]) {
+          k--;
+          s = ((f[q] + q * q) - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]);
+        }
+
+        if (s <= z[k]) {
+          v[k] = q;
+          z[k] = -Infinity;
+          z[k + 1] = Infinity;
+        } else {
+          k++;
+          v[k] = q;
+          z[k] = s;
+          z[k + 1] = Infinity;
+        }
       }
-      k = 0;
-      for (let q = 0; q < n; q++) { while (z[k + 1] < q) k++; d[q] = (q - v[k]) * (q - v[k]) + f[v[k]]; }
+
+      if (k < 0) {
+        for (let q = 0; q < n; q++) d[q] = INF;
+        return;
+      }
+
+      let envelope = 0;
+      for (let q = 0; q < n; q++) {
+        while (envelope < k && z[envelope + 1] < q) envelope++;
+        const delta = q - v[envelope];
+        d[q] = delta * delta + f[v[envelope]];
+      }
     }
     function edt(feat, cols, rows) {
       const INF = 1e12, n = Math.max(cols, rows);
@@ -983,7 +1036,6 @@
       return out;
     }
 
-    // ===================== СПЛАЙН CATMULL-ROM (углы сохраняются) =====================
     function catmullRom(p, closed) {
       const n = p.length; if (n < 3) return p;
       const CORNER = 45 * Math.PI / 180, sub = (a, b) => [a[0] - b[0], a[1] - b[1]];
@@ -1021,15 +1073,11 @@
       return out;
     }
 
-    // ===================== ПЛАНИРОВЩИК ПУТИ: жадный NN + 2-Opt =====================
     const dist2 = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
     const isClosedPts = (p) => p.length > 3 && dist2(p[0], p[p.length - 1]) < 1e-3;
-    // поворот замкнутого контура (ring без дубля) так, чтобы врезание было в вершине idx
     function rotateRing(ring, idx) {
       const r = ring.slice(idx).concat(ring.slice(0, idx)); r.push(r[0].slice()); return r;
     }
-    // Узел: { kind, closed, ring?, fwd, rev }. Открытый штрих можно развернуть (fwd<->rev),
-    // замкнутый контур направление не меняет — только точку врезания (rotateRing).
     function planStrokes(list, start, keepDir) {
       const pool = list.map(q => {
         const p = q.pts;
@@ -1064,7 +1112,6 @@
         cur = node.fwd[node.fwd.length - 1];
       }
       if (seq.length >= 3 && seq.length <= 2500) twoOpt(seq, start);
-      // финальный подбор точки врезания замкнутых контуров по соседям (вход + выход)
       for (let k = 0; k < seq.length; k++) {
         const it = seq[k]; if (!it.closed) continue;
         const pv = k === 0 ? start : seq[k - 1].fwd[seq[k - 1].fwd.length - 1];
@@ -1075,7 +1122,6 @@
       }
       return seq.map(it => ({ kind: it.kind, pts: it.fwd }));
     }
-    // 2-Opt: переворот блока переходов; внутренние переходы при этом не меняются по стоимости
     function twoOpt(seq, start) {
       const n = seq.length, E = (it) => it.fwd[0], X = (it) => it.fwd[it.fwd.length - 1];
       for (let sweep = 0; sweep < 8; sweep++) {
@@ -1097,8 +1143,8 @@
       }
     }
 
-    // ===================== ДУГИ G2/G3 (Kasa-фит + допуск) =====================
-    const ARC_TOL = 0.03, ARC_RMIN = 0.5, ARC_RMAX = 500, ARC_MAXSW = 2.8;
+    // ===================== ДУГИ G2/G3 (защита от GRBL/Inectra error:33) =====================
+    const ARC_TOL = 0.025, ARC_RMIN = 1.0, ARC_RMAX = 500, ARC_MAXSW = 2.6;
     function fitCircle(P) {
       const n = P.length; let mx = 0, my = 0;
       for (const p of P) { mx += p[0]; my += p[1]; } mx /= n; my /= n;
@@ -1125,7 +1171,6 @@
       }
       return s;
     }
-    // Жадно заменяет последовательности G1-точек одной дугой (если все точки в пределах ARC_TOL)
     function arcSegs(pts) {
       const out = [], n = pts.length; let i = 0;
       while (i < n - 1) {
@@ -1138,8 +1183,8 @@
           if (!ok) break;
           const sw = sweepOf(seg, c);
           if (!(Math.abs(sw) <= ARC_MAXSW)) break;
-          // прямая в пределах допуска — не дуга: нужна реальная стрела прогиба > ARC_TOL
           const a0 = seg[0], a1 = seg[seg.length - 1], cl = Math.hypot(a1[0] - a0[0], a1[1] - a0[1]) || 1e-9;
+          if (cl < 0.35) continue;
           let sag = 0; for (let k = 1; k < seg.length - 1; k++) sag = Math.max(sag, Math.abs((a1[0] - a0[0]) * (a0[1] - seg[k][1]) - (a0[0] - seg[k][0]) * (a1[1] - a0[1])) / cl);
           if (sag <= ARC_TOL) continue;
           best = { j, c, sw };
@@ -1150,7 +1195,6 @@
       return out;
     }
 
-    // УЛЬТРА-СГЛАЖИВАНИЕ: Усреднение Гаусса + Алгоритм Чайкина
     function ultraSmoothCurve(pts, level, closed) {
       if (level <= 0 || pts.length < 3) return pts;
       let p = pts.map(pt => pt.slice());
@@ -1311,7 +1355,6 @@
       setTimeout(() => { try { runCam({ W, H, safeZ, feed, step, D, z: v.z }); } catch (e) { failGen([e.message]); } }, 20);
     }
 
-    // Нативный парсер векторного SVG в полилинии с точной геометрией
     function parseSvgToPolylines(svgXml, W, H) {
       const host = document.createElement('div');
       host.style.cssText = 'position:fixed;left:-99999px;top:-99999px;visibility:hidden;pointer-events:none;';
@@ -1360,7 +1403,7 @@
       const mapped = rawPaths.map(rp => {
         const pts = rp.pts.map(([x, y]) => {
           const lx = (x - cx0) * sx;
-          const ly = -(y - cy0) * sy; // SVG Y вниз -> ЧПУ Y вверх
+          const ly = -(y - cy0) * sy;
           return [tx + lx * ca - ly * sa, ty + lx * sa + ly * ca];
         });
         if (rp.closed && pts.length > 2) pts[pts.length - 1] = pts[0].slice();
@@ -1369,14 +1412,12 @@
       return { paths: mapped, dims };
     }
 
-    // Проверка знаковой площади (Shoelace): > 0 против часовой (CCW), < 0 по часовой (CW)
     function signedPolyArea(pts) {
       let a = 0;
       for (let i = 0; i < pts.length - 1; i++) a += pts[i][0] * pts[i + 1][1] - pts[i + 1][0] * pts[i][1];
       return a * 0.5;
     }
 
-    // Зарез внутренних углов (Dogbone) на радиус фрезы R
     function applyDogbones(pts, R) {
       if (pts.length < 4 || !(R > 0)) return pts;
       const closed = Math.hypot(pts[0][0] - pts[pts.length - 1][0], pts[0][1] - pts[pts.length - 1][1]) < 1e-3;
@@ -1403,7 +1444,7 @@
           const bl = Math.hypot(bx, by);
           if (bl > 1e-6) {
             bx /= bl; by /= bl;
-            const overcut = R * 0.4142; // (sqrt(2) - 1) * R
+            const overcut = R * 0.4142;
             out.push([curr[0] - bx * overcut, curr[1] - by * overcut]);
             out.push(curr.slice());
           }
@@ -1459,88 +1500,87 @@
         if (!dark.some(q => q)) throw new Error('На изображении не найдено объектов. Проверьте порог яркости или инверсию.');
 
         if (mode === 'center') {
-        skeletonPaths(dark, cols, rows, px, H, smoothLvl > 0).forEach(p => {
-          const n = p.length;
-          const closed = n > 3 && Math.hypot(p[0][0] - p[n - 1][0], p[0][1] - p[n - 1][1]) < px * 1.5;
-          let q = closed ? p.slice(0, -1) : p;
-          if (smoothLvl > 0) {
-            q = resampleLine(q, Math.max(px * 0.8, 0.25));
-            q = ultraSmoothCurve(q, smoothLvl, closed);
-            if (closed) q.push(q[0].slice());
-          }
-          clipAdd(q, stock);
-        });
-      } else if (mode === 'ornament') {
-        const effectiveSmooth = Math.max(4, smoothLvl);
-        const ORN_STEP = Math.max(px * 0.7, 0.2);
-        skeletonPaths(dark, cols, rows, px, H, true).forEach(p => {
-          const n = p.length;
-          const closed = n > 3 && Math.hypot(p[0][0] - p[n - 1][0], p[0][1] - p[n - 1][1]) < px * 1.5;
-          let q = closed ? p.slice(0, -1) : p;
-          q = resampleLine(q, ORN_STEP);
-          q = ultraSmoothCurve(q, effectiveSmooth, closed);
-          if (closed) q.push(q[0].slice());
-          clipAdd(q, stock);
-        });
-      } else if (mode === 'letters') {
-        const sf = signedField(dark, cols, rows, px);
-        const cs = contourLines(sf.c, cols, rows, px, H, R).map(p => {
-          let pts = rdp(p.pts, tol);
-          if (smoothLvl > 0 && pts.length > 4) {
-            const q = p.closed ? pts.slice(0, -1) : pts;
-            const sm = ultraSmoothCurve(resampleLine(q, 0.3), Math.min(4, smoothLvl), p.closed);
-            if (p.closed && sm.length) sm.push(sm[0].slice());
-            pts = sm;
-          }
-          return { pts, closed: p.closed };
-        }).filter(p => p.pts.length >= 3);
-        const inPoly = (pt, poly) => { let ins = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const a = poly[i], b = poly[j]; if ((a[1] > pt[1]) !== (b[1] > pt[1]) && pt[0] < (b[0] - a[0]) * (pt[1] - a[1]) / (b[1] - a[1]) + a[0]) ins = !ins; } return ins; };
-        cs.forEach((c1, i) => {
-          let depth = 0;
-          if (c1.closed) cs.forEach((c2, j) => { if (i !== j && c2.closed && inPoly(c1.pts[0], c2.pts)) depth++; });
-          clipAdd(c1.pts, stock, depth % 2 ? 'in' : 'out');
-        });
-      } else {
-        const F = chkFill.checked ? fillHoles(dark, cols, rows) : dark;
-        const sf = signedField(F, cols, rows, px), tc = thinComps(F, sf.din, cols, rows, D, px);
-        if (mode === 'pocket' || mode === 'clear') {
-          const pocket = mode === 'pocket', L = pocket ? -R : R, c = sf.c, eps = px * 0.35;
-          const reg = pocket ? (x, y) => samp(c, cols, rows, px, H, x, y) <= L + eps
-                             : (x, y) => x >= box.x0 && x <= box.x1 && y >= box.y0 && y <= box.y1 && samp(c, cols, rows, px, H, x, y) >= L - eps;
-          const sp = Math.min(step, D);
-          const segOk = (a, b) => { const n = Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / (px * 0.5)); for (let k = 1; k < n; k++) if (!reg(a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n)) return false; return true; };
-          let cur = null; const chains = [];
-          fillRows(c, cols, rows, px, H, pocket, R, box, sp).forEach(s => {
-            const a = s.pts[0];
-            if (cur) { const e = cur[cur.length - 1]; if (Math.hypot(a[0] - e[0], a[1] - e[1]) <= sp * 1.6 && segOk(e, a)) { cur.push(...s.pts); return; } chains.push(cur); }
-            cur = s.pts.slice();
-          });
-          if (cur) chains.push(cur);
-          chains.forEach(p => strokes.push({ pts: p, kind: pocket ? 'in' : 'out' }));
-          contourLines(c, cols, rows, px, H, L).forEach(p => clipAdd(rdp(p.pts, tol), box, pocket ? 'in' : 'out'));
-        } else {
-          let c = sf.c;
-          if (tc.thinCount) {
-            c = signedField(tc.thick, cols, rows, px).c;
-            const thinSkel = skeletonPaths(tc.thin, cols, rows, px, H);
-            if (paramOpen.value === 'center') {
-              thinSkel.forEach(p => clipAdd(p, stock));
-            } else {
-              thinSkippedCount = tc.thinCount;
-              warnPaths.push(...thinSkel);
+          skeletonPaths(dark, cols, rows, px, H, smoothLvl > 0).forEach(p => {
+            const n = p.length;
+            const closed = n > 3 && Math.hypot(p[0][0] - p[n - 1][0], p[0][1] - p[n - 1][1]) < px * 1.5;
+            let q = closed ? p.slice(0, -1) : p;
+            if (smoothLvl > 0) {
+              q = resampleLine(q, Math.max(px * 0.8, 0.25));
+              q = ultraSmoothCurve(q, smoothLvl, closed);
+              if (closed) q.push(q[0].slice());
             }
+            clipAdd(q, stock);
+          });
+        } else if (mode === 'ornament') {
+          const effectiveSmooth = Math.max(4, smoothLvl);
+          const ORN_STEP = Math.max(px * 0.7, 0.2);
+          skeletonPaths(dark, cols, rows, px, H, true).forEach(p => {
+            const n = p.length;
+            const closed = n > 3 && Math.hypot(p[0][0] - p[n - 1][0], p[0][1] - p[n - 1][1]) < px * 1.5;
+            let q = closed ? p.slice(0, -1) : p;
+            q = resampleLine(q, ORN_STEP);
+            q = ultraSmoothCurve(q, effectiveSmooth, closed);
+            if (closed) q.push(q[0].slice());
+            clipAdd(q, stock);
+          });
+        } else if (mode === 'letters') {
+          const sf = signedField(dark, cols, rows, px);
+          const cs = contourLines(sf.c, cols, rows, px, H, R).map(p => {
+            let pts = rdp(p.pts, tol);
+            if (smoothLvl > 0 && pts.length > 4) {
+              const q = p.closed ? pts.slice(0, -1) : pts;
+              const sm = ultraSmoothCurve(resampleLine(q, 0.3), Math.min(4, smoothLvl), p.closed);
+              if (p.closed && sm.length) sm.push(sm[0].slice());
+              pts = sm;
+            }
+            return { pts, closed: p.closed };
+          }).filter(p => p.pts.length >= 3);
+          const inPoly = (pt, poly) => { let ins = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const a = poly[i], b = poly[j]; if ((a[1] > pt[1]) !== (b[1] > pt[1]) && pt[0] < (b[0] - a[0]) * (pt[1] - a[1]) / (b[1] - a[1]) + a[0]) ins = !ins; } return ins; };
+          cs.forEach((c1, i) => {
+            let depth = 0;
+            if (c1.closed) cs.forEach((c2, j) => { if (i !== j && c2.closed && inPoly(c1.pts[0], c2.pts)) depth++; });
+            clipAdd(c1.pts, stock, depth % 2 ? 'in' : 'out');
+          });
+        } else {
+          const F = chkFill.checked ? fillHoles(dark, cols, rows) : dark;
+          const sf = signedField(F, cols, rows, px), tc = thinComps(F, sf.din, cols, rows, D, px);
+          if (mode === 'pocket' || mode === 'clear') {
+            const pocket = mode === 'pocket', L = pocket ? -R : R, c = sf.c, eps = px * 0.35;
+            const reg = pocket ? (x, y) => samp(c, cols, rows, px, H, x, y) <= L + eps
+                               : (x, y) => x >= box.x0 && x <= box.x1 && y >= box.y0 && y <= box.y1 && samp(c, cols, rows, px, H, x, y) >= L - eps;
+            const sp = Math.min(step, D);
+            const segOk = (a, b) => { const n = Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / (px * 0.5)); for (let k = 1; k < n; k++) if (!reg(a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n)) return false; return true; };
+            let cur = null; const chains = [];
+            fillRows(c, cols, rows, px, H, pocket, R, box, sp).forEach(s => {
+              const a = s.pts[0];
+              if (cur) { const e = cur[cur.length - 1]; if (Math.hypot(a[0] - e[0], a[1] - e[1]) <= sp * 1.6 && segOk(e, a)) { cur.push(...s.pts); return; } chains.push(cur); }
+              cur = s.pts.slice();
+            });
+            if (cur) chains.push(cur);
+            chains.forEach(p => strokes.push({ pts: p, kind: pocket ? 'in' : 'out' }));
+            contourLines(c, cols, rows, px, H, L).forEach(p => clipAdd(rdp(p.pts, tol), box, pocket ? 'in' : 'out'));
+          } else {
+            let c = sf.c;
+            if (tc.thinCount) {
+              c = signedField(tc.thick, cols, rows, px).c;
+              const thinSkel = skeletonPaths(tc.thin, cols, rows, px, H);
+              if (paramOpen.value === 'center') {
+                thinSkel.forEach(p => clipAdd(p, stock));
+              } else {
+                thinSkippedCount = tc.thinCount;
+                warnPaths.push(...thinSkel);
+              }
+            }
+            const L = mode === 'lineout' ? R : -R;
+            contourLines(c, cols, rows, px, H, L).forEach(p => clipAdd(rdp(p.pts, tol), box, mode === 'linein' ? 'in' : 'out'));
           }
-          const L = mode === 'lineout' ? R : -R;
-          contourLines(c, cols, rows, px, H, L).forEach(p => clipAdd(rdp(p.pts, tol), box, mode === 'linein' ? 'in' : 'out'));
         }
       }
-      } // end raster vs vector SVG
 
-      // Применение направления реза (Попутное Climb / Встречное Conventional) для замкнутых контуров
       if (cutDir !== 'auto') {
         strokes.forEach(s => {
           if (!isClosedPts(s.pts)) return;
-          const area = signedPolyArea(s.pts); // >0 CCW, <0 CW
+          const area = signedPolyArea(s.pts);
           const isInner = s.kind === 'in';
           const wantCCW = cutDir === 'climb' ? isInner : !isInner;
           if ((area > 0) !== wantCCW) s.pts.reverse();
@@ -1552,8 +1592,9 @@
 
       const org = getOrigin(), ox = org.fx * W, oy = org.fy * H;
       const sep = chkTabs.checked ? '\t' : ' ', plungeIn = parseFloat($('param-plunge').value), plunge = plungeIn > 0 ? plungeIn : Math.min(300, feed);
-      const f3 = (q) => { const s = q.toFixed(3); return s === '-0.000' ? '0.000' : s; };
-      const fx = (q) => f3(q - ox), fy = (q) => f3(q - oy);
+      const num3 = (q) => { const v = Math.round(q * 1000) / 1000; return Object.is(v, -0) ? 0 : v; };
+      const f3 = (q) => num3(q).toFixed(3);
+      const fx = (q) => num3(q - ox), fy = (q) => num3(q - oy);
       const lines = [], kinds = [], L = (s, k) => { lines.push(s); kinds.push(k || ''); };
       const tw = parseFloat($('tab-w').value), th = parseFloat($('tab-h').value), ts = parseFloat($('tab-step').value);
       const useTabs = mode === 'letters' && $('chk-holdtabs').checked && tw > 0 && th > 0;
@@ -1577,10 +1618,10 @@
       const rampStroke = (s, zFrom, zk, len) => {
         const closed = Math.hypot(s.pts[0][0] - s.pts[s.pts.length - 1][0], s.pts[0][1] - s.pts[s.pts.length - 1][1]) < 1e-3;
         const { h, next } = headOf(s.pts, len);
-        const move = (pt) => L('G1' + sep + 'X' + fx(pt[0]) + sep + 'Y' + fy(pt[1]), s.kind);
+        const move = (pt) => L('G1' + sep + 'X' + f3(fx(pt[0])) + sep + 'Y' + f3(fy(pt[1])), s.kind);
         L('G0' + sep + 'Z' + f3(Math.min(safeZ, zFrom + 1)));
         L('G1' + sep + 'Z' + f3(zFrom) + sep + 'F' + plunge);
-        h.slice(1).forEach((q, i) => L('G1' + sep + 'X' + fx(q.p[0]) + sep + 'Y' + fy(q.p[1]) + sep + 'Z' + f3(zFrom + (zk - zFrom) * q.d / len) + (i === 0 ? sep + 'F' + feed : ''), s.kind));
+        h.slice(1).forEach((q, i) => L('G1' + sep + 'X' + f3(fx(q.p[0])) + sep + 'Y' + f3(fy(q.p[1])) + sep + 'Z' + f3(zFrom + (zk - zFrom) * q.d / len) + (i === 0 ? sep + 'F' + feed : ''), s.kind));
         const last = h[h.length - 1].p;
         if (closed) {
           if (next < s.pts.length && Math.hypot(s.pts[next][0] - last[0], s.pts[next][1] - last[1]) < 1e-6) s.pts.slice(next + 1).forEach(move); else s.pts.slice(next).forEach(move);
@@ -1609,29 +1650,61 @@
         return { e, t };
       };
 
+      // Безопасный вывод дуги G2/G3 с проверкой радиусов после округления (защита от GRBL error:33)
+      function emitArcOrLine(x0, y0, toPt, cxAbs, cyAbs, ccw, kind, feedSuffix) {
+        const sx0 = fx(x0), sy0 = fy(y0);
+        const ex1 = fx(toPt[0]), ey1 = fy(toPt[1]);
+        const ii = num3(cxAbs - x0), jj = num3(cyAbs - y0);
+        const rStart = Math.hypot(ii, jj);
+        const rEnd = Math.hypot((ex1 + ii) - (sx0 + ii), (ey1 + jj) - (sy0 + jj));
+        const dxEnd = ex1 - (sx0 + ii);
+        const dyEnd = ey1 - (sy0 + jj);
+        const rEndActual = Math.hypot(dxEnd, dyEnd);
+        const chord = Math.hypot(ex1 - sx0, ey1 - sy0);
+        const deltaR = Math.abs(rStart - rEndActual);
+        const tolR = Math.max(0.0025, rStart * 0.0005);
+
+        if (rStart >= ARC_RMIN && rStart <= ARC_RMAX && chord >= 0.25 && deltaR <= tolR && Math.abs(rStart - rEndActual) <= 0.003) {
+          L((ccw ? 'G3' : 'G2') + sep + 'X' + f3(ex1) + sep + 'Y' + f3(ey1) +
+            sep + 'I' + f3(ii) + sep + 'J' + f3(jj) + feedSuffix, kind);
+          return [ex1 + ox, ey1 + oy];
+        }
+        L('G1' + sep + 'X' + f3(ex1) + sep + 'Y' + f3(ey1) + feedSuffix, kind);
+        return [ex1 + ox, ey1 + oy];
+      }
+
       const arcsOn = !!($('chk-arcs') && $('chk-arcs').checked);
       const joinMode = mode === 'ornament' || mode === 'center', JOIN_MAX = Math.max(0.8, 0.6 * D);
-      let mpos = [ox, oy]; // текущая позиция фрезы (в координатах заготовки), стартует из нулевой точки
-      // резка по точкам pts (фреза уже в pts[0]); arcs -> G2/G3 с I/J, иначе G1
+      let mpos = [ox, oy];
       const cutPath = (pts, kind, feedFirst) => {
         let fp = feedFirst;
         const fe = () => { const r = fp ? sep + 'F' + feed : ''; fp = false; return r; };
         if (arcsOn) {
           arcSegs(pts).forEach(sg => {
-            if (sg.a) L((sg.ccw ? 'G3' : 'G2') + sep + 'X' + fx(sg.to[0]) + sep + 'Y' + fy(sg.to[1]) +
-                        sep + 'I' + f3(sg.cx - sg.from[0]) + sep + 'J' + f3(sg.cy - sg.from[1]) + fe(), kind);
-            else L('G1' + sep + 'X' + fx(sg.to[0]) + sep + 'Y' + fy(sg.to[1]) + fe(), kind);
+            if (sg.a) {
+              mpos = emitArcOrLine(mpos[0], mpos[1], sg.to, sg.cx, sg.cy, sg.ccw, kind, fe());
+            } else {
+              L('G1' + sep + 'X' + f3(fx(sg.to[0])) + sep + 'Y' + f3(fy(sg.to[1])) + fe(), kind);
+              mpos = sg.to;
+            }
           });
-        } else pts.slice(1).forEach(p => L('G1' + sep + 'X' + fx(p[0]) + sep + 'Y' + fy(p[1]) + fe(), kind));
-        mpos = pts[pts.length - 1];
+        } else {
+          pts.slice(1).forEach(p => {
+            L('G1' + sep + 'X' + f3(fx(p[0])) + sep + 'Y' + f3(fy(p[1])) + fe(), kind);
+            mpos = p;
+          });
+        }
       };
       const doStroke = (s, zk, tabbed, zFrom, joined) => {
         const pts = s.pts;
-        if (joined) {  // сшивка: фреза уже на глубине zk, продолжаем без подъёма
-          L('G1' + sep + 'X' + fx(pts[0][0]) + sep + 'Y' + fy(pts[0][1]) + sep + 'F' + feed, s.kind);
-          cutPath(pts, s.kind, false); return;
+        if (joined) {
+          L('G1' + sep + 'X' + f3(fx(pts[0][0])) + sep + 'Y' + f3(fy(pts[0][1])) + sep + 'F' + feed, s.kind);
+          mpos = pts[0];
+          cutPath(pts, s.kind, false);
+          return;
         }
-        L('G0' + sep + 'X' + fx(pts[0][0]) + sep + 'Y' + fy(pts[0][1]));
+        L('G0' + sep + 'X' + f3(fx(pts[0][0])) + sep + 'Y' + f3(fy(pts[0][1])));
+        mpos = pts[0];
         const lift = Math.min(safeZ, zk + th), tp = tabbed && lift > zk + 1e-6 ? tabSplit(pts, tw, ts) : null;
         const rl = Math.min(rampLen, plen(pts) / 2);
         if (!tp && useRamp && zFrom > zk + 1e-6 && rl > 0.5) { rampStroke(s, zFrom, zk, rl); mpos = pts[pts.length - 1]; return; }
@@ -1642,12 +1715,11 @@
           const tb = tp.t[j];
           if (tb !== inTab) { L('G1' + sep + 'Z' + f3(tb ? lift : zk) + sep + 'F' + plunge); inTab = tb; needF = true; }
           const p = tp.e[j].p;
-          L('G1' + sep + 'X' + fx(p[0]) + sep + 'Y' + fy(p[1]) + (needF ? sep + 'F' + feed : ''), tb ? 'tab' : s.kind);
+          L('G1' + sep + 'X' + f3(fx(p[0])) + sep + 'Y' + f3(fy(p[1])) + (needF ? sep + 'F' + feed : ''), tb ? 'tab' : s.kind);
+          mpos = p;
           needF = false;
         }
-        mpos = pts[pts.length - 1];
       };
-      // один проход по глубине: порядок пересчитывается от текущей позиции фрезы
       const runPass = (base, job, zk, zi) => {
         const list = planStrokes(base, mpos, mode === 'letters');
         const zFrom = zi ? z[zi - 1] : 0;
@@ -1896,7 +1968,6 @@
         ctx.strokeStyle = '#FBBF24'; ctx.stroke(viz.g.out);
         ctx.lineWidth = 2.4 / s; ctx.strokeStyle = '#FB923C'; ctx.stroke(viz.g.tab);
         ctx.save(); ctx.setLineDash([4 / s, 3 / s]); ctx.lineWidth = 2 / s; ctx.strokeStyle = '#EF4444'; ctx.stroke(viz.g.warn); ctx.restore();
-        // Отрисовка прогресса симуляции и текущей позиции фрезы
         if (simSegs.length > 0 && simIdx < simSegs.length) {
           const donePath = new Path2D();
           for (let i = 0; i < simIdx; i++) {
@@ -2006,7 +2077,6 @@
     thrEl.addEventListener('input', () => { $('threshold-val').textContent = thrEl.value; renderImagePreview(); });
     [thrEl, invEl].forEach(el => el.addEventListener('change', () => { renderImagePreview(); if (loadedImage) generateTapFromImage(); }));
 
-    // Интерактивный 2D-симулятор (Play / Pause / Slider)
     function tickSim() {
       if (!simPlaying) return;
       const spd = parseInt($('sim-speed').value) || 5;
@@ -2046,7 +2116,6 @@
       renderViz();
     });
 
-    // Генерация обводки габаритов (Frame Dry Run без шпинделя)
     $('btn-frame-tap').addEventListener('click', () => {
       if (!lastBounds) {
         alert('Сначала сгенерируйте траекторию или загрузите файл, чтобы определить габариты детали!');
@@ -2077,7 +2146,6 @@
       voiceSay('Файл обводки габаритов скачан');
     });
 
-    // Автосохранение настроек в localStorage и пользовательские пресеты
     const LS_SETTINGS_KEY = 'talas_profi_v5_settings';
     const LS_PRESETS_KEY = 'talas_profi_v5_custom_presets';
     const PERSIST_IDS = ['param-width', 'param-height', 'param-feed', 'param-plunge', 'param-safez', 'param-spindle', 'param-step', 'param-rapid', 'param-tool', 'param-mode', 'param-smooth', 'param-cut-dir', 'param-cutz', 'param-passes', 'export-ext'];
@@ -2192,7 +2260,6 @@
       if (e.dataTransfer.files.length) { fileInput.files = e.dataTransfer.files; fileInput.dispatchEvent(new Event('change')); }
     });
 
-    // Голосовой помощник
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     const voiceBtn = $('btn-voice'), voiceDot = $('voice-dot'), voiceState = $('voice-state'), voiceText = $('voice-text');
     let voiceOn = false, recog = null, speakBusy = 0, voiceTimer = null, ruVoice = null;
