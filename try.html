@@ -16,9 +16,6 @@
     ::-webkit-scrollbar-thumb:hover { background: #FBBF24; }
     canvas { background-color: #000000; }
     #cnc-canvas, #cnc-3d-wrap { touch-action: none; cursor: grab; }
-    .vdot { position: relative; width: 9px; height: 9px; border-radius: 50%; background: var(--c, #ef4444); flex-shrink: 0; }
-    .vdot::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: var(--c, #ef4444); animation: vping 1.4s ease-out infinite; }
-    @keyframes vping { 0% { transform: scale(1); opacity: .7; } 100% { transform: scale(2.8); opacity: 0; } }
     input[type="number"], select { padding-top: 0.36rem; padding-bottom: 0.36rem; }
   </style>
 </head>
@@ -49,12 +46,6 @@
     </div>
 
     <div class="flex flex-wrap items-center gap-2">
-      <span id="voice-text" class="hidden 2xl:block max-w-[200px] truncate text-[10px] text-neutral-500 code-font"></span>
-      <button id="btn-voice" type="button" title="Голосовые команды: «сгенерировать», «скачать», «очистить», «сбросить вид»" class="bg-neutral-900 hover:bg-neutral-800 text-neutral-200 border border-neutral-700 font-semibold px-3 py-1.5 rounded-lg text-xs transition active:scale-95 flex items-center gap-2">
-        <span id="voice-dot" class="vdot" style="--c:#ef4444"></span>
-        <span>🎙️ Голос</span>
-        <span id="voice-state" class="code-font text-[10px] uppercase text-neutral-500">Выкл</span>
-      </button>
       <button id="btn-top-generate" class="bg-amber-400 hover:bg-amber-300 text-black font-bold px-4 py-1.5 rounded-lg text-xs transition-all shadow-md shadow-amber-400/20 active:scale-95 flex items-center gap-1.5">
         🚀 Сгенерировать 3D .TAP
       </button>
@@ -718,7 +709,7 @@
       renderImagePreview();
     });
     $('preview-center').addEventListener('click', () => { previewX.value = 0; previewY.value = 0; renderImagePreview(); });
-    window.addEventListener('resize', () => { renderImagePreview(); resize3D(); });
+    window.addEventListener('resize', () => { renderImagePreview(); resize3D(); renderViz(); });
 
     fileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
@@ -1399,7 +1390,6 @@
     function failGen(errs) {
       outputArea.value = ''; statLines.textContent = 'Кадров: 0'; statSize.textContent = '0 KB'; statTime.textContent = 'Время: —';
       setLog(errs.map(e => '⛔ ' + e), 'err');
-      voiceSay('Ошибка генерации. ' + errs[0]);
     }
 
     function buildMask(W, H, px, cols, rows) {
@@ -1827,13 +1817,12 @@
       lastGen = { kinds: kinds || null, org: org || { ox: 0, oy: 0 } };
       drawVisualizer(lines, lastGen.kinds, lastGen.org, false);
       rebuild3DScene();
-      voiceSay('3D траектория рассчитана, кадров: ' + lines.length);
     }
 
     // ===================== THREE.JS 3D ПРОСМОТРЩИК =====================
     const wrap3D = $('cnc-3d-wrap');
     let scene3D, camera3D, renderer3D, worldGroup, reliefMesh, toolMesh, pathGroup;
-    let camSph = { radius: 420, theta: -0.65, phi: 0.92, target: new THREE.Vector3(0, 0, 0) };
+    let camSph = { radius: 420, theta: -0.65, phi: 0.92, target: null };
 
     function init3D() {
       if (typeof THREE === 'undefined') {
@@ -1841,6 +1830,7 @@
         return;
       }
       scene3D = new THREE.Scene();
+      camSph.target = new THREE.Vector3(0, 0, 0);
       scene3D.background = new THREE.Color(0x070709);
 
       const cw = wrap3D.clientWidth || 700, ch = wrap3D.clientHeight || 540;
@@ -2059,6 +2049,7 @@
     }
 
     function set3DViewPreset(preset) {
+      if (!camera3D) return;
       const W = parseFloat(paramWidth.value) || 300;
       const H = parseFloat(paramHeight.value) || 200;
       const o = getOrigin();
@@ -2301,16 +2292,15 @@
     $('btn-process-main').addEventListener('click', () => { if (loadedImage) generateTapFromImage(); else generateTapFromText(); });
     $('btn-top-generate').addEventListener('click', () => { if (loadedImage) generateTapFromImage(); else generateTapFromText(); });
 
-    function downloadFile(fromVoice) {
+    function downloadFile() {
       const text = outputArea.value;
-      if (!text) { voiceSay('Нет кода для скачивания'); if (fromVoice !== true) alert('Нет сгенерированного кода для скачивания!'); return; }
+      if (!text) { alert('Нет сгенерированного кода для скачивания!'); return; }
       const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
       link.download = (sourceBase ? sourceBase + '_3D_talas' : 'Talas_profi_3D_' + Date.now()) + exportExt.value;
       link.click();
       URL.revokeObjectURL(link.href);
-      voiceSay('Файл скачан');
     }
     $('btn-top-download').addEventListener('click', downloadFile);
     $('btn-bottom-download').addEventListener('click', downloadFile);
@@ -2341,7 +2331,7 @@
         const org = document.querySelector('input[name="origin"]:checked');
         if (org) data.origin = org.value;
         localStorage.setItem(LS_SETTINGS_KEY, JSON.stringify(data));
-      } catch (e) {}
+      } catch (e) { console.warn('Talas_profi:', e); }
     }
     function loadSettingsFromLS() {
       try {
@@ -2352,11 +2342,11 @@
         if (data.chks) Object.entries(data.chks).forEach(([id, v]) => { const el = $(id); if (el) el.checked = !!v; });
         if (data.origin) { const r = document.querySelector('input[name="origin"][value="' + data.origin + '"]'); if (r) r.checked = true; }
         smoothSlider.dispatchEvent(new Event('input'));
-      } catch (e) {}
+      } catch (e) { console.warn('Talas_profi:', e); }
     }
     function renderCustomPresets() {
       const wrap = $('custom-presets-wrap'); if (!wrap) return; wrap.innerHTML = '';
-      let list = []; try { list = JSON.parse(localStorage.getItem(LS_PRESETS_KEY) || '[]'); } catch (e) {}
+      let list = []; try { list = JSON.parse(localStorage.getItem(LS_PRESETS_KEY) || '[]'); } catch (e) { console.warn('Talas_profi:', e); }
       list.forEach((pr, idx) => {
         const grp = document.createElement('div');
         grp.className = 'inline-flex items-center rounded bg-neutral-900 border border-neutral-700 overflow-hidden shrink-0';
@@ -2377,13 +2367,14 @@
     }
     $('btn-save-preset').addEventListener('click', () => {
       const name = prompt('Название нового 3D-пресета:'); if (!name || !name.trim()) return;
-      let list = []; try { list = JSON.parse(localStorage.getItem(LS_PRESETS_KEY) || '[]'); } catch (e) {}
+      let list = []; try { list = JSON.parse(localStorage.getItem(LS_PRESETS_KEY) || '[]'); } catch (e) { console.warn('Talas_profi:', e); }
       list.push({ name: name.trim(), mode: paramMode.value, cutz: parseFloat(paramCutZ.value) || -6, passes: parseInt(paramPasses.value) || 3, feed: parseFloat(paramFeed.value) || 1800, plunge: parseFloat($('param-plunge').value) || 400, tool: parseFloat(paramTool.value) || 3, spindle: parseFloat($('param-spindle').value) || 14000 });
       localStorage.setItem(LS_PRESETS_KEY, JSON.stringify(list)); renderCustomPresets();
     });
     $('btn-reset-settings').addEventListener('click', () => { if (confirm('Сбросить все настройки?')) { localStorage.removeItem(LS_SETTINGS_KEY); location.reload(); } });
 
-    [...PERSIST_IDS, ...PERSIST_CHKS].forEach(id => { const el = $(id); if (el) { el.addEventListener('change', saveSettingsToLS); el.addEventListener('input', saveSettingsToLS); } });
+    const saveSettingsDebounced = (() => { let t; return () => { clearTimeout(t); t = setTimeout(saveSettingsToLS, 300); }; })();
+    [...PERSIST_IDS, ...PERSIST_CHKS].forEach(id => { const el = $(id); if (el) { el.addEventListener('change', saveSettingsDebounced); el.addEventListener('input', saveSettingsDebounced); } });
     document.querySelectorAll('input[name="origin"]').forEach(r => r.addEventListener('change', saveSettingsToLS));
 
     const thrEl = $('preview-threshold'), invEl = $('preview-invert');
@@ -2394,41 +2385,6 @@
     dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-amber-400'); });
     dropZone.addEventListener('dragleave', () => dropZone.classList.remove('border-amber-400'));
     dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('border-amber-400'); if (e.dataTransfer.files.length) { fileInput.files = e.dataTransfer.files; fileInput.dispatchEvent(new Event('change')); } });
-
-    // ===================== ГОЛОСОВОЙ ПОМОЩНИК =====================
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const voiceBtn = $('btn-voice'), voiceDot = $('voice-dot'), voiceState = $('voice-state'), voiceText = $('voice-text');
-    let voiceOn = false, recog = null, speakBusy = 0, voiceTimer = null, ruVoice = null;
-    const VSTATES = { off: ['#ef4444', 'Выкл'], listen: ['#FBBF24', 'Слушаю'], ok: ['#22c55e', 'Принято'] };
-    function setVoiceState(st) { voiceDot.style.setProperty('--c', VSTATES[st][0]); voiceState.textContent = VSTATES[st][1]; voiceBtn.classList.toggle('border-amber-400/60', st !== 'off'); }
-    function pickRu() { ruVoice = ('speechSynthesis' in window ? speechSynthesis.getVoices() : []).find(v => /^ru/i.test(v.lang)) || null; }
-    if ('speechSynthesis' in window) { pickRu(); speechSynthesis.onvoiceschanged = pickRu; }
-    function voiceSay(text) {
-      if (!voiceOn || !('speechSynthesis' in window)) return;
-      const u = new SpeechSynthesisUtterance(text); u.lang = 'ru-RU'; u.rate = 1.02; if (ruVoice) u.voice = ruVoice;
-      speakBusy++; try { recog && recog.stop(); } catch (e) {}
-      const done = () => { speakBusy = Math.max(0, speakBusy - 1); if (voiceOn && !speakBusy) startRecog(); };
-      u.onend = done; u.onerror = done; speechSynthesis.speak(u);
-    }
-    function startRecog() { if (!recog || !voiceOn || speakBusy) return; try { recog.start(); } catch (e) {} setVoiceState('listen'); }
-    if (SR) {
-      recog = new SR(); recog.lang = 'ru-RU'; recog.continuous = true; recog.interimResults = false;
-      recog.onresult = (e) => { for (let i = e.resultIndex; i < e.results.length; i++) if (e.results[i].isFinal) handleVoice(e.results[i][0].transcript); };
-      recog.onend = () => { if (voiceOn && !speakBusy) setTimeout(startRecog, 300); };
-    }
-    voiceBtn.addEventListener('click', () => {
-      if (voiceOn) { voiceOn = false; speakBusy = 0; try { recog && recog.abort(); } catch (e) {} setVoiceState('off'); voiceText.textContent = ''; }
-      else if (SR) { voiceOn = true; startRecog(); voiceSay('Голос включён'); }
-    });
-    setVoiceState('off');
-    function handleVoice(raw) {
-      const tx = raw.toLowerCase().replace(/ё/g, 'е').trim(); if (!tx) return;
-      setVoiceState('ok'); voiceText.textContent = '🎙 «' + tx + '»';
-      clearTimeout(voiceTimer); voiceTimer = setTimeout(() => { if (voiceOn) setVoiceState('listen'); }, 1400);
-      if (/скача|сохран/.test(tx)) return downloadFile(true);
-      if (/сброс|центр/.test(tx)) { set3DViewPreset('iso'); resetView(); return voiceSay('Вид сброшен'); }
-      if (/сгенер|старт|рассчит/.test(tx)) { if (loadedImage) generateTapFromImage(); else generateTapFromText(); }
-    }
 
     // Старт
     loadSettingsFromLS();
