@@ -1,1884 +1,1151 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Talas_profi — Pure 3D CNC CAM & .TAP Master v7.0</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap');
-    body { font-family: 'Inter', sans-serif; background-color: #050505; color: #f5f5f5; }
-    .code-font { font-family: 'Fira Code', monospace; }
-    ::-webkit-scrollbar { width: 5px; height: 5px; }
-    ::-webkit-scrollbar-track { background: #0a0a0a; }
-    ::-webkit-scrollbar-thumb { background: #262626; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #FBBF24; }
-    #cnc-3d-wrap { touch-action: none; cursor: grab; }
-    .vdot { position: relative; width: 9px; height: 9px; border-radius: 50%; background: var(--c, #ef4444); flex-shrink: 0; }
-    .vdot::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: var(--c, #ef4444); animation: vping 1.4s ease-out infinite; }
-    @keyframes vping { 0% { transform: scale(1); opacity: .7; } 100% { transform: scale(2.8); opacity: 0; } }
-    input[type="number"], select { padding-top: 0.36rem; padding-bottom: 0.36rem; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Talas_profi — 3D CAM Pro</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap');
+  body { font-family: 'Inter', sans-serif; background:#050505; color:#f5f5f5; }
+  .code-font { font-family: 'Fira Code', monospace; }
+  ::-webkit-scrollbar { width:5px; height:5px; }
+  ::-webkit-scrollbar-track { background:#0a0a0a; }
+  ::-webkit-scrollbar-thumb { background:#262626; border-radius:3px; }
+  ::-webkit-scrollbar-thumb:hover { background:#FBBF24; }
+  #cnc-3d-wrap { touch-action:none; cursor:grab; }
+  input[type="number"], select { padding-top:.36rem; padding-bottom:.36rem; }
+  .fld { font-size:11px; color:#a3a3a3; display:flex; flex-direction:column; gap:.2rem; }
+  .inp { width:100%; background:#000; border:1px solid #404040; color:#fbbf24; font-size:12px; border-radius:.5rem; padding:.3rem .5rem; font-family:'Fira Code',monospace; }
+  .sec { border-top:1px solid #262626; padding-top:.6rem; margin-top:.6rem; }
+  .sec-title { font-size:10px; font-weight:700; color:#a3a3a3; text-transform:uppercase; letter-spacing:.04em; margin-bottom:.4rem; }
+</style>
 </head>
-<body class="min-h-screen flex flex-col justify-between selection:bg-amber-400 selection:text-black text-xs">
+<body class="min-h-screen flex flex-col text-xs">
 
-  <!-- Шапка -->
-  <header class="border-b border-neutral-800 bg-neutral-950/95 backdrop-blur sticky top-0 z-50 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
-    <div class="flex items-center gap-2.5">
-      <div class="bg-amber-400 text-black px-2.5 py-1.5 rounded-lg font-black text-base shadow-md shadow-amber-400/20">⚡</div>
-      <div>
-        <h1 class="text-sm md:text-base font-bold tracking-tight text-white flex items-center gap-2">
-          Talas_profi <span class="text-amber-400 font-mono text-[11px] px-1.5 py-0.5 bg-amber-400/10 border border-amber-400/30 rounded">3D CNC CAM v7.0</span>
-        </h1>
-        <p class="text-[10px] text-neutral-400 hidden sm:block">3D STL & Heightmap • Черновая + Чистовая • Спираль / Растр / Перекрёстный • Inectra / GRBL / NCStudio</p>
+<header class="border-b border-neutral-800 bg-neutral-950/95 sticky top-0 z-50 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+  <div class="flex items-center gap-2.5">
+    <div class="bg-amber-400 text-black px-2.5 py-1.5 rounded-lg font-black text-base">⚡</div>
+    <div>
+      <h1 class="text-sm md:text-base font-bold text-white">Talas_profi <span class="text-amber-400 font-mono text-[11px] px-1.5 py-0.5 bg-amber-400/10 border border-amber-400/30 rounded">3D CAM Pro</span></h1>
+      <p class="text-[10px] text-neutral-400 hidden sm:block">STL / карта высот → 3D траектории · авто-подбор стратегии · внутрь / наружу контура · Inectra / GRBL / NCStudio</p>
+    </div>
+  </div>
+  <div class="flex items-center gap-2">
+    <button id="btn-generate-top" class="bg-amber-400 hover:bg-amber-300 text-black font-bold px-4 py-1.5 rounded-lg text-xs">🚀 Рассчитать</button>
+    <button id="btn-download-top" class="bg-neutral-900 hover:bg-neutral-800 text-amber-400 border border-amber-400/40 font-semibold px-3 py-1.5 rounded-lg text-xs">💾 Скачать</button>
+  </div>
+</header>
+
+<main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 p-3 md:p-4 max-w-[1920px] mx-auto w-full">
+
+  <!-- ЛЕВАЯ ПАНЕЛЬ -->
+  <aside class="lg:col-span-4 flex flex-col gap-3">
+
+    <!-- Файл -->
+    <section class="bg-neutral-900/90 border border-neutral-800 rounded-xl p-3.5">
+      <div class="grid grid-cols-12 gap-3 items-center">
+        <div id="drop-zone" class="col-span-5 border-2 border-dashed border-neutral-700 hover:border-amber-400 bg-neutral-950 rounded-lg p-3 text-center cursor-pointer flex flex-col items-center justify-center gap-1 h-[150px]">
+          <div class="text-2xl">🧊</div>
+          <p class="text-[11px] font-semibold">Загрузить STL / фото</p>
+          <p class="text-[9px] text-neutral-500">.STL, PNG, JPG, WEBP</p>
+          <input type="file" id="file-input" class="hidden" accept=".stl,.png,.jpg,.jpeg,.webp,.gif,.bmp">
+        </div>
+        <div class="col-span-7 flex flex-col gap-1">
+          <div class="flex justify-between"><span class="sec-title">Положение на столе</span><span id="preview-status" class="text-[10px] text-amber-400 font-mono">Нет файла</span></div>
+          <div class="rounded-lg overflow-hidden border border-neutral-800 bg-black">
+            <canvas id="place-canvas" class="block w-full" style="height:130px"></canvas>
+          </div>
+        </div>
       </div>
-    </div>
+      <div id="place-warning" class="hidden mt-2 text-[10px] text-amber-300 bg-amber-400/10 border border-amber-400/30 rounded px-2 py-1"></div>
 
-    <!-- Быстрые 3D пресеты -->
-    <div class="hidden xl:flex items-center gap-1.5 bg-black/60 border border-neutral-800 px-2.5 py-1 rounded-lg max-w-[600px] overflow-x-auto">
-      <span class="text-[10px] text-neutral-500 mr-1 shrink-0">3D Пресет:</span>
-      <button type="button" data-preset="barelief" class="preset-btn shrink-0 px-2 py-1 rounded bg-amber-400/15 border border-amber-400/40 hover:bg-amber-400 hover:text-black text-amber-300 text-[10px] font-bold transition">🏔 Барельеф 8мм (Ball 3)</button>
-      <button type="button" data-preset="deep3d" class="preset-btn shrink-0 px-2 py-1 rounded bg-neutral-900 hover:bg-amber-400 hover:text-black text-neutral-300 text-[10px] font-medium transition">🔨 Глубокий 3D 14мм</button>
-      <button type="button" data-preset="finemini" class="preset-btn shrink-0 px-2 py-1 rounded bg-neutral-900 hover:bg-amber-400 hover:text-black text-neutral-300 text-[10px] font-medium transition">💎 Мелкая детализация (R0.5)</button>
-      <button type="button" data-preset="spiral3d" class="preset-btn shrink-0 px-2 py-1 rounded bg-neutral-900 hover:bg-amber-400 hover:text-black text-neutral-300 text-[10px] font-medium transition">🌀 Спираль медальон</button>
-      <div id="custom-presets-wrap" class="flex items-center gap-1"></div>
-      <button type="button" id="btn-save-preset" title="Сохранить текущие 3D параметры как пресет" class="shrink-0 px-2 py-1 rounded bg-amber-400/15 hover:bg-amber-400 hover:text-black text-amber-300 border border-amber-400/40 text-[10px] font-bold transition">+ Пресет</button>
-    </div>
-
-    <div class="flex flex-wrap items-center gap-2">
-      <span id="voice-text" class="hidden 2xl:block max-w-[180px] truncate text-[10px] text-neutral-500 code-font"></span>
-      <button id="btn-voice" type="button" title="Голосовые команды: «сгенерировать», «скачать», «очистить», «сбросить вид»" class="bg-neutral-900 hover:bg-neutral-800 text-neutral-200 border border-neutral-700 font-semibold px-3 py-1.5 rounded-lg text-xs transition active:scale-95 flex items-center gap-2">
-        <span id="voice-dot" class="vdot" style="--c:#ef4444"></span>
-        <span>🎙️ Голос</span>
-        <span id="voice-state" class="code-font text-[10px] uppercase text-neutral-500">Выкл</span>
-      </button>
-      <button id="btn-top-generate" class="bg-amber-400 hover:bg-amber-300 text-black font-bold px-4 py-1.5 rounded-lg text-xs transition-all shadow-md shadow-amber-400/20 active:scale-95 flex items-center gap-1.5">
-        🚀 Сгенерировать 3D .TAP
-      </button>
-      <button id="btn-top-download" class="bg-neutral-900 hover:bg-neutral-800 text-amber-400 border border-amber-400/40 font-semibold px-3 py-1.5 rounded-lg text-xs transition active:scale-95 flex items-center gap-1.5">
-        💾 Скачать
-      </button>
-    </div>
-  </header>
-
-  <!-- Основной контент -->
-  <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 p-3 md:p-4 max-w-[1920px] mx-auto w-full">
-    
-    <!-- Левая панель управления (4 колонки) -->
-    <div class="lg:col-span-4 flex flex-col gap-3">
-      
-      <!-- 1. Загрузка 3D STL / Карты высот -->
-      <div class="bg-neutral-900/90 border border-neutral-800 rounded-xl p-3.5 shadow-xl">
-        <div class="grid grid-cols-12 gap-3 items-center">
-          <div id="drop-zone" class="col-span-5 border-2 border-dashed border-neutral-700 hover:border-amber-400 bg-neutral-950 rounded-lg p-3 text-center cursor-pointer transition flex flex-col items-center justify-center gap-1 h-[156px] group">
-            <div class="text-2xl text-neutral-500 group-hover:text-amber-400 transition-colors">🧊</div>
-            <p class="text-[11px] text-neutral-200 font-semibold leading-tight">Загрузить STL / Фото</p>
-            <p class="text-[9px] text-neutral-500 leading-tight">.STL, PNG, JPG, SVG, .TAP</p>
-            <input type="file" id="file-input" class="hidden" accept=".stl,.png,.jpg,.jpeg,.webp,.svg,.tap,.nc,.gcode,.txt">
-          </div>
-          <div class="col-span-7 flex flex-col gap-1">
-            <div class="flex items-center justify-between">
-              <span class="text-[10px] font-bold text-neutral-400 uppercase">Карта высот / Модель</span>
-              <span id="preview-status" class="text-[10px] text-amber-400 font-mono truncate max-w-[140px]">Ожидает файл</span>
-            </div>
-            <div class="rounded-lg overflow-hidden border border-neutral-800 bg-black">
-              <canvas id="image-preview" class="block w-full" style="height:136px;background:#080808;"></canvas>
-            </div>
-          </div>
-        </div>
-        <div id="preview-warning" class="hidden mt-2 text-[10px] text-amber-300 bg-amber-400/10 border border-amber-400/30 rounded px-2.5 py-1.5"></div>
+      <div class="grid grid-cols-2 gap-2 mt-3">
+        <label class="fld">Ширина объекта, мм<input id="obj-w" type="number" class="inp" placeholder="авто"></label>
+        <label class="fld">Высота объекта, мм<input id="obj-h" type="number" class="inp" placeholder="авто"></label>
+        <label class="fld">Масштаб %, если мм пусто<input id="obj-scale" type="number" value="88" class="inp"></label>
+        <label class="fld">Поворот, °<input id="obj-rot" type="number" value="0" class="inp"></label>
+        <label class="fld">Сдвиг X, мм<input id="obj-x" type="number" value="0" class="inp"></label>
+        <label class="fld">Сдвиг Y, мм<input id="obj-y" type="number" value="0" class="inp"></label>
       </div>
+      <div class="grid grid-cols-1 gap-2 mt-2 text-[11px] text-neutral-300">
+        <label class="flex items-center gap-2"><input type="checkbox" id="chk-trim" checked class="accent-amber-400"> Обрезать пустые края (для фото)</label>
+        <label class="flex items-center gap-2"><input type="checkbox" id="chk-invert" class="accent-amber-400"> Тёмное = выше (инверсия). Для вывески: выборка фона</label>
+      </div>
+      <div class="grid grid-cols-3 gap-2 mt-2">
+        <label class="fld">Сглаживание<input id="relief-blur" type="range" min="0" max="10" value="1" class="w-full accent-amber-400"></label>
+        <label class="fld">Гамма<input id="relief-gamma" type="range" min="0.3" max="2.5" step="0.05" value="1" class="w-full accent-amber-400"></label>
+        <label class="fld">Спад краёв %<input id="relief-vignette" type="range" min="0" max="40" step="2" value="0" class="w-full accent-amber-400"></label>
+      </div>
+    </section>
 
-      <!-- 2. Вкладки настроек 3D -->
-      <div class="bg-neutral-900/90 border border-neutral-800 rounded-xl p-3.5 shadow-xl flex flex-col gap-3 flex-1">
-        
-        <div class="grid grid-cols-4 gap-1 bg-black p-1 rounded-lg border border-neutral-800">
-          <button type="button" data-stab="relief" class="stab-btn py-1.5 px-1 rounded text-[11px] font-bold bg-amber-400 text-black transition">🏔 Рельеф</button>
-          <button type="button" data-stab="stock" class="stab-btn py-1.5 px-1 rounded text-[11px] font-semibold text-neutral-400 hover:text-white transition">🪵 Стол / 0</button>
-          <button type="button" data-stab="mill" class="stab-btn py-1.5 px-1 rounded text-[11px] font-semibold text-neutral-400 hover:text-white transition">🛠 3D Фреза</button>
-          <button type="button" data-stab="depth" class="stab-btn py-1.5 px-1 rounded text-[11px] font-semibold text-neutral-400 hover:text-white transition">⏬ Слои Z</button>
+    <!-- Заготовка и ноль -->
+    <section class="bg-neutral-900/90 border border-neutral-800 rounded-xl p-3.5">
+      <div class="sec-title">Заготовка и нулевая точка</div>
+      <div class="grid grid-cols-3 gap-2">
+        <label class="fld">Ширина X<input id="stock-w" type="number" value="300" class="inp"></label>
+        <label class="fld">Высота Y<input id="stock-h" type="number" value="200" class="inp"></label>
+        <label class="fld">Толщина Z<input id="stock-t" type="number" value="20" class="inp"></label>
+        <label class="fld">Безопасная Z<input id="safe-z" type="number" value="6" class="inp"></label>
+        <label class="fld">Шпиндель S<input id="spindle" type="number" value="16000" class="inp"></label>
+        <label class="fld">Холостой G0 мм/мин<input id="rapid" type="number" value="3500" class="inp"></label>
+      </div>
+      <div class="flex items-center gap-3 mt-2">
+        <div class="grid grid-cols-3 gap-1" id="origin-grid"></div>
+        <div class="flex-1 text-[11px] text-neutral-300 code-font" id="origin-caption"></div>
+      </div>
+    </section>
+
+    <!-- Инструмент и стратегия -->
+    <section class="bg-neutral-900/90 border border-neutral-800 rounded-xl p-3.5">
+      <div class="sec-title">Инструмент и стратегия</div>
+      <div class="grid grid-cols-2 gap-2">
+        <label class="fld">Геометрия фрезы
+          <select id="tool-type" class="inp">
+            <option value="ball" selected>Сферическая (Ball)</option>
+            <option value="taper_ball">Коническая сферическая</option>
+            <option value="vbit">Гравёр V-bit</option>
+            <option value="flat">Концевая плоская (Flat)</option>
+          </select>
+        </label>
+        <label class="fld">Стратегия
+          <select id="mode" class="inp">
+            <option value="relief_x" selected>Чистовой растр X</option>
+            <option value="relief_y">Чистовой растр Y</option>
+            <option value="relief_cross">Перекрёстный X+Y</option>
+            <option value="relief_spiral">Спираль от центра</option>
+            <option value="relief_rough_fin">Черновой + чистовой</option>
+            <option value="relief_rough_only">Только черновой (слои Z)</option>
+          </select>
+        </label>
+        <label class="fld">Диаметр / кончик D, мм<input id="tool-d" type="number" value="3" step="0.1" class="inp"></label>
+        <label class="fld">Угол конуса, °<input id="tool-angle" type="number" value="15" step="1" class="inp"></label>
+        <label class="fld">Шаг между строками, мм<input id="step" type="number" value="0.4" step="0.05" class="inp"></label>
+        <label class="fld">Шаг точек вдоль, мм<input id="res" type="number" value="0.4" step="0.05" class="inp"></label>
+        <label class="fld">Припуск чернового, мм<input id="allowance" type="number" value="0.5" step="0.1" class="inp"></label>
+        <label class="fld">Контур по периметру
+          <select id="boundary" class="inp">
+            <option value="none">Не делать</option>
+            <option value="inside" selected>Внутрь контура</option>
+            <option value="online">По линии контура</option>
+            <option value="outside">Наружу контура</option>
+          </select>
+        </label>
+      </div>
+      <div class="grid grid-cols-2 gap-1.5 mt-2 text-[11px] text-neutral-300">
+        <label class="flex items-center gap-2"><input type="checkbox" id="chk-skip-top" checked class="accent-amber-400"> Пропускать пустой фон Z=0</label>
+        <label class="flex items-center gap-2"><input type="checkbox" id="chk-opt" checked class="accent-amber-400"> Сжимать плоские участки</label>
+      </div>
+    </section>
+
+    <!-- Глубина -->
+    <section class="bg-neutral-900/90 border border-neutral-800 rounded-xl p-3.5">
+      <div class="sec-title">Глубина и слои Z</div>
+      <div class="grid grid-cols-2 gap-2">
+        <label class="fld">Глубина рельефа Z, мм<input id="cut-z" type="number" value="-8" step="0.5" class="inp"></label>
+        <label class="fld">Число слоёв Z
+          <select id="passes" class="inp"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option><option>8</option></select>
+        </label>
+      </div>
+      <div class="flex justify-between items-center mt-2">
+        <span class="text-[10px] text-neutral-400">Уровни (Z &lt; 0)</span>
+        <button id="btn-distribute" class="text-[10px] text-amber-400 hover:underline">Выровнять</button>
+      </div>
+      <div id="depth-fields" class="grid grid-cols-3 gap-2 mt-1"></div>
+      <div id="depth-status" class="text-[10px] rounded-lg p-2 border mt-2"></div>
+    </section>
+
+    <!-- Скорости и вывод -->
+    <section class="bg-neutral-900/90 border border-neutral-800 rounded-xl p-3.5">
+      <div class="sec-title">Скорости и формат вывода</div>
+      <div class="grid grid-cols-2 gap-2">
+        <label class="fld">Подача F, мм/мин<input id="feed" type="number" value="2400" class="inp"></label>
+        <label class="fld">Врезание, мм/мин<input id="plunge" type="number" value="600" class="inp"></label>
+        <label class="fld">Формат
+          <select id="export-ext" class="inp"><option value=".tap" selected>.TAP (Inectra/NCStudio)</option><option value=".nc">.NC</option><option value=".gcode">.GCODE</option><option value=".txt">.TXT</option></select>
+        </label>
+      </div>
+      <div class="grid grid-cols-2 gap-1.5 mt-2 text-[11px] text-neutral-300">
+        <label class="flex items-center gap-2"><input type="checkbox" id="chk-m30" checked class="accent-amber-400"> M30 в конце</label>
+        <label class="flex items-center gap-2"><input type="checkbox" id="chk-m5" checked class="accent-amber-400"> M5 (стоп шпинделя)</label>
+        <label class="flex items-center gap-2"><input type="checkbox" id="chk-header" class="accent-amber-400"> Шапка G21 G17 G54</label>
+        <label class="flex items-center gap-2"><input type="checkbox" id="chk-return" checked class="accent-amber-400"> Возврат в X0 Y0</label>
+      </div>
+    </section>
+
+    <!-- Авто-подбор -->
+    <section class="bg-neutral-900/90 border border-amber-400/30 rounded-xl p-3.5">
+      <div class="flex items-center justify-between">
+        <div class="sec-title !mb-0 text-amber-400">Авто-подбор стратегии</div>
+        <button id="btn-analyze" class="bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 border border-amber-400/40 text-[11px] font-bold px-2.5 py-1 rounded-lg">🔍 Анализировать</button>
+      </div>
+      <p class="text-[10px] text-neutral-400 mt-1">Программа разбирает рельеф (крутизна, перепад высот) и предлагает варианты. Выбранный вариант подставляется в поля.</p>
+      <div id="reco-box" class="flex flex-col gap-2 mt-2"></div>
+    </section>
+
+    <div id="cam-log" class="hidden text-[10px] rounded-lg p-2 border"></div>
+    <button id="btn-generate" class="w-full bg-amber-400 hover:bg-amber-300 text-black font-bold py-2.5 rounded-xl text-xs">⚙️ Рассчитать 3D траекторию</button>
+  </aside>
+
+  <!-- ПРАВАЯ ПАНЕЛЬ -->
+  <section class="lg:col-span-8 flex flex-col gap-3">
+    <div class="bg-neutral-900/90 border border-neutral-800 rounded-xl p-3.5 flex flex-col flex-1">
+      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-800 pb-2.5">
+        <div class="flex items-center gap-1.5">
+          <button id="tab-3d" class="px-3 py-1.5 rounded-lg text-xs font-bold border border-amber-400/50 bg-amber-400/10 text-amber-400">🧊 3D сцена</button>
+          <button id="tab-code" class="px-3 py-1.5 rounded-lg text-xs font-bold border border-transparent text-neutral-400 hover:text-white">📝 Код</button>
         </div>
-
-        <!-- ВКЛАДКА 1: ГЕОМЕТРИЯ 3D РЕЛЬЕФА И РАЗМЕРЫ -->
-        <div id="stab-relief" class="stab-panel flex flex-col gap-2.5">
-          <label class="flex items-center gap-2 text-[11px] text-amber-300 font-medium cursor-pointer bg-amber-400/10 border border-amber-400/30 px-2.5 py-1.5 rounded-lg">
-            <input type="checkbox" id="chk-trim-bounds" checked class="accent-amber-400 rounded">
-            Авто-обрезка пустых краёв по границам модели
-          </label>
-
-          <div class="grid grid-cols-2 gap-2.5">
-            <label class="text-[11px] text-neutral-300 font-semibold">Ширина рельефа X (мм)
-              <input id="object-width" type="number" step="0.5" min="1" value="" placeholder="Напр. 250" class="mt-1 w-full bg-black border border-amber-400/50 text-amber-400 text-xs rounded-lg px-2.5 font-mono focus:outline-none focus:border-amber-400">
-            </label>
-            <label class="text-[11px] text-neutral-300 font-semibold">Высота рельефа Y (мм)
-              <input id="object-height" type="number" step="0.5" min="1" value="" placeholder="Напр. 160" class="mt-1 w-full bg-black border border-amber-400/50 text-amber-400 text-xs rounded-lg px-2.5 font-mono focus:outline-none focus:border-amber-400">
-            </label>
-            <label class="text-[11px] text-neutral-400">Масштаб (%) если мм пусто
-              <input id="preview-scale" type="number" min="1" max="500" value="88" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2.5 font-mono">
-            </label>
-            <label class="text-[11px] text-neutral-400">Поворот вокруг Z (°)
-              <input id="preview-rotation" type="number" min="-180" max="180" value="0" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2.5 font-mono">
-            </label>
-            <label class="text-[11px] text-neutral-400">Смещение центра X (мм)
-              <input id="preview-x" type="number" step="1" value="0" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2.5 font-mono">
-            </label>
-            <label class="text-[11px] text-neutral-400">Смещение центра Y (мм)
-              <input id="preview-y" type="number" step="1" value="0" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2.5 font-mono">
-            </label>
-          </div>
-
-          <!-- Скульптурные настройки 3D карты высот -->
-          <div class="p-2.5 rounded-lg border border-neutral-800 bg-black/60 flex flex-col gap-2">
-            <div>
-              <div class="flex items-center justify-between text-[11px] text-neutral-300">
-                <span>Сглаживание рельефа (3D Гаусс):</span>
-                <span id="relief-blur-val" class="text-amber-400 font-mono">2 px</span>
-              </div>
-              <input id="relief-blur" type="range" min="0" max="12" value="2" class="w-full accent-amber-400 h-1.5">
-            </div>
-            <div>
-              <div class="flex items-center justify-between text-[11px] text-neutral-300">
-                <span>Объём / Гамма рельефа:</span>
-                <span id="relief-gamma-val" class="text-amber-400 font-mono">1.00</span>
-              </div>
-              <input id="relief-gamma" type="range" min="0.3" max="2.5" step="0.05" value="1.0" class="w-full accent-amber-400 h-1.5">
-            </div>
-            <div>
-              <div class="flex items-center justify-between text-[11px] text-neutral-300">
-                <span>Плавный спад краёв (виньетка %):</span>
-                <span id="relief-vignette-val" class="text-amber-400 font-mono">0%</span>
-              </div>
-              <input id="relief-vignette" type="range" min="0" max="40" step="2" value="0" class="w-full accent-amber-400 h-1.5">
-            </div>
-            <label class="flex items-center gap-2 text-[11px] text-neutral-200 cursor-pointer pt-0.5">
-              <input type="checkbox" id="preview-invert" class="accent-amber-400 rounded"> Инвертировать высоты (тёмное = выше, светлое = глубже)
-            </label>
-          </div>
-
-          <div class="grid grid-cols-2 gap-2">
-            <button id="preview-reset" type="button" class="bg-neutral-800 hover:bg-neutral-700 text-white text-xs font-semibold rounded-lg py-1.5">↺ Сбросить</button>
-            <button id="preview-center" type="button" class="bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 border border-amber-400/40 text-xs font-bold rounded-lg py-1.5">⊙ По центру</button>
-          </div>
+        <div class="flex items-center gap-2 text-[11px] font-mono text-neutral-400">
+          <span id="stat-lines">Кадров: 0</span><span>|</span><span id="stat-size">0 KB</span><span>|</span><span id="stat-time" class="text-amber-400/90">Время: —</span>
         </div>
-
-        <!-- ВКЛАДКА 2: ЗАГОТОВКА, СКОРОСТИ И НУЛЕВАЯ ТОЧКА -->
-        <div id="stab-stock" class="stab-panel hidden flex-col gap-2.5">
-          <div class="grid grid-cols-2 gap-2.5">
-            <label class="text-[11px] text-neutral-400">Ширина заготовки X (мм)
-              <input type="number" id="param-width" value="300" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2.5 font-mono">
-            </label>
-            <label class="text-[11px] text-neutral-400">Высота заготовки Y (мм)
-              <input type="number" id="param-height" value="200" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2.5 font-mono">
-            </label>
-            <label class="text-[11px] text-neutral-400">Толщина заготовки Z (мм)
-              <input type="number" id="param-thickness" value="20" min="1" step="1" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2.5 font-mono">
-            </label>
-            <label class="text-[11px] text-neutral-400">Безопасная Z (мм)
-              <input type="number" id="param-safez" value="6.0" step="1" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2.5 font-mono">
-            </label>
-            <label class="text-[11px] text-neutral-400">Рабочая подача F (мм/мин)
-              <input type="number" id="param-feed" value="2400" step="100" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2.5 font-mono">
-            </label>
-            <label class="text-[11px] text-neutral-400">Подача врезания Z (мм/мин)
-              <input type="number" id="param-plunge" value="600" step="50" min="1" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2.5 font-mono">
-            </label>
-            <label class="text-[11px] text-neutral-400">Шпиндель (S, об/мин)
-              <input type="number" id="param-spindle" value="16000" step="500" min="0" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2.5 font-mono">
-            </label>
-            <label class="text-[11px] text-neutral-400">Холостой G0 (для расчёта)
-              <input type="number" id="param-rapid" value="3500" step="500" min="100" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2.5 font-mono">
-            </label>
-          </div>
-
-          <div class="pt-2 border-t border-neutral-800 flex items-center gap-3.5">
-            <div class="grid grid-cols-3 gap-1 shrink-0">
-              <label class="cursor-pointer"><input type="radio" name="origin" value="0,1" class="peer sr-only"><span class="flex items-center justify-center w-8 h-8 rounded border border-neutral-700 bg-black text-neutral-400 text-xs peer-checked:bg-amber-400 peer-checked:text-black peer-checked:font-bold">↖</span></label>
-              <label class="cursor-pointer"><input type="radio" name="origin" value="0.5,1" class="peer sr-only"><span class="flex items-center justify-center w-8 h-8 rounded border border-neutral-700 bg-black text-neutral-400 text-xs peer-checked:bg-amber-400 peer-checked:text-black peer-checked:font-bold">↑</span></label>
-              <label class="cursor-pointer"><input type="radio" name="origin" value="1,1" class="peer sr-only"><span class="flex items-center justify-center w-8 h-8 rounded border border-neutral-700 bg-black text-neutral-400 text-xs peer-checked:bg-amber-400 peer-checked:text-black peer-checked:font-bold">↗</span></label>
-              <label class="cursor-pointer"><input type="radio" name="origin" value="0,0.5" class="peer sr-only"><span class="flex items-center justify-center w-8 h-8 rounded border border-neutral-700 bg-black text-neutral-400 text-xs peer-checked:bg-amber-400 peer-checked:text-black peer-checked:font-bold">←</span></label>
-              <label class="cursor-pointer"><input type="radio" name="origin" value="0.5,0.5" class="peer sr-only"><span class="flex items-center justify-center w-8 h-8 rounded border border-neutral-700 bg-black text-neutral-400 text-xs peer-checked:bg-amber-400 peer-checked:text-black peer-checked:font-bold">⊙</span></label>
-              <label class="cursor-pointer"><input type="radio" name="origin" value="1,0.5" class="peer sr-only"><span class="flex items-center justify-center w-8 h-8 rounded border border-neutral-700 bg-black text-neutral-400 text-xs peer-checked:bg-amber-400 peer-checked:text-black peer-checked:font-bold">→</span></label>
-              <label class="cursor-pointer"><input type="radio" name="origin" value="0,0" class="peer sr-only" checked><span class="flex items-center justify-center w-8 h-8 rounded border border-neutral-700 bg-black text-neutral-400 text-xs peer-checked:bg-amber-400 peer-checked:text-black peer-checked:font-bold">↙</span></label>
-              <label class="cursor-pointer"><input type="radio" name="origin" value="0.5,0" class="peer sr-only"><span class="flex items-center justify-center w-8 h-8 rounded border border-neutral-700 bg-black text-neutral-400 text-xs peer-checked:bg-amber-400 peer-checked:text-black peer-checked:font-bold">↓</span></label>
-              <label class="cursor-pointer"><input type="radio" name="origin" value="1,0" class="peer sr-only"><span class="flex items-center justify-center w-8 h-8 rounded border border-neutral-700 bg-black text-neutral-400 text-xs peer-checked:bg-amber-400 peer-checked:text-black peer-checked:font-bold">↘</span></label>
-            </div>
-            <div class="flex flex-col gap-1 flex-1">
-              <span class="text-[10px] font-bold text-neutral-400 uppercase">Нулевая точка станка (верх = Z0):</span>
-              <div id="origin-caption" class="text-[11px] text-neutral-300 code-font leading-snug"></div>
-              <div class="flex flex-wrap gap-1.5 mt-1">
-                <button type="button" id="btn-frame-tap" title="Обводка габаритов 3D-рельефа на безопасной высоте" class="bg-neutral-800 hover:bg-amber-400 hover:text-black text-amber-300 border border-amber-400/40 text-[10px] font-semibold px-2 py-1 rounded transition">🔲 Обводка габаритов (.TAP)</button>
-                <button type="button" id="btn-reset-settings" class="bg-neutral-950 hover:bg-red-500/20 text-neutral-400 hover:text-red-300 border border-neutral-800 text-[10px] px-2 py-1 rounded transition">↺ Сброс</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ВКЛАДКА 3: 3D СТРАТЕГИЯ И ИНСТРУМЕНТ -->
-        <div id="stab-mill" class="stab-panel hidden flex-col gap-2.5">
-          <div class="grid grid-cols-2 gap-2.5">
-            <label class="text-[11px] text-neutral-300 font-semibold">3D Стратегия фрезерования
-              <select id="param-mode" class="mt-1 w-full bg-black border border-amber-400/50 text-amber-400 text-xs rounded-lg px-2 font-mono">
-                <option value="relief_x" selected>🏔 3D Чистовой: Растр X</option>
-                <option value="relief_y">🏔 3D Чистовой: Растр Y</option>
-                <option value="relief_cross">🔄 3D Чистовой: Перекрёстный X+Y</option>
-                <option value="relief_spiral">🌀 3D Чистовой: Спираль от центра</option>
-                <option value="relief_rough_fin">⚡ 3D Комплекс: Черновой + Чистовой</option>
-                <option value="relief_rough_only">🔨 Только 3D Черновой (слоями Z)</option>
-              </select>
-            </label>
-            <label class="text-[11px] text-neutral-300 font-semibold">Геометрия 3D фрезы
-              <select id="param-tool-type" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2 font-mono">
-                <option value="ball" selected>🔵 Сферическая (Ball-Nose)</option>
-                <option value="taper_ball">📍 Коническая сферическая</option>
-                <option value="vbit">🔻 Конический гравёр (V-Bit)</option>
-                <option value="flat"> цилиндр Концевая плоская (Flat)</option>
-              </select>
-            </label>
-          </div>
-
-          <div class="grid grid-cols-3 gap-2">
-            <label class="text-[10px] text-neutral-400">Диаметр / Кончик D (мм)
-              <input type="number" id="param-tool" value="3.0" min="0.1" step="0.1" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2 font-mono">
-            </label>
-            <label class="text-[10px] text-neutral-400">Шаг между строками (мм)
-              <input type="number" id="param-step" value="0.4" min="0.05" step="0.05" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2 font-mono">
-            </label>
-            <label class="text-[10px] text-neutral-400">Угол конуса / V (°)
-              <input type="number" id="param-vangle" value="15" min="2" max="120" step="1" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2 font-mono">
-            </label>
-          </div>
-
-          <div class="grid grid-cols-2 gap-2.5">
-            <label class="text-[10px] text-neutral-400">Шаг точек вдоль траектории (мм)
-              <input type="number" id="param-res-x" value="0.4" min="0.1" max="5" step="0.1" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2 font-mono">
-            </label>
-            <label class="text-[10px] text-neutral-400">Припуск под чистовую (мм)
-              <input type="number" id="param-allowance" value="0.5" min="0" max="5" step="0.1" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2 font-mono">
-            </label>
-          </div>
-
-          <div class="p-2.5 rounded-lg border border-amber-400/30 bg-amber-400/5 flex flex-col gap-1.5 text-[11px] text-neutral-200">
-            <label class="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" id="chk-skip-top" checked class="accent-amber-400 rounded">
-              Пропускать пустой фон на поверхности Z = 0
-            </label>
-            <label class="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" id="chk-boundary-pass" checked class="accent-amber-400 rounded">
-              Финишный контурный проход по периметру барельефа
-            </label>
-            <label class="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" id="chk-opt-lines" checked class="accent-amber-400 rounded">
-              Сжатие плоских участков (оптимизация размера .TAP)
-            </label>
-          </div>
-        </div>
-
-        <!-- ВКЛАДКА 4: ГЛУБИНА И СЛОИ Z -->
-        <div id="stab-depth" class="stab-panel hidden flex-col gap-2.5">
-          <div class="grid grid-cols-2 gap-2.5">
-            <label class="text-[11px] text-neutral-400">Макс. глубина 3D рельефа Z (мм)
-              <input type="number" id="param-cutz" value="-8.0" step="0.5" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2.5 font-mono">
-            </label>
-            <label class="text-[11px] text-neutral-400">Черновых слоёв по Z
-              <select id="param-passes" class="mt-1 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded-lg px-2.5 font-mono">
-                <option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option><option>8</option>
-              </select>
-            </label>
-          </div>
-
-          <div>
-            <div class="flex items-center justify-between mb-1">
-              <span class="text-[10px] text-neutral-400">Уровни черновых слоёв (Z &lt; 0):</span>
-              <button id="btn-distribute" type="button" class="text-[10px] text-amber-400 hover:underline">📏 Выровнять</button>
-            </div>
-            <div id="depth-fields" class="grid grid-cols-3 gap-2"></div>
-          </div>
-          <div id="depth-status" class="text-[10px] rounded-lg p-2 border"></div>
-
-          <div class="grid grid-cols-2 gap-1.5 pt-2 border-t border-neutral-800 text-[11px] text-neutral-300">
-            <label class="flex items-center gap-1.5 cursor-pointer" title="Для Inectra и GRBL должно быть выключено"><input type="checkbox" id="chk-tabs" class="accent-amber-400"> Табуляция <code class="text-amber-400">\t</code></label>
-            <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="chk-m30" checked class="accent-amber-400"> Авто <code class="text-amber-400">M30</code></label>
-            <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="chk-m5" checked class="accent-amber-400"> Стоп <code class="text-amber-400">M5</code></label>
-            <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="chk-header" class="accent-amber-400"> Шапка <code class="text-amber-400">G21 G54</code></label>
-            <label class="flex items-center gap-1.5 cursor-pointer col-span-2"><input type="checkbox" id="chk-return-zero" checked class="accent-amber-400"> Возврат в <code class="text-amber-400">G0 X0 Y0</code> в конце программы</label>
-          </div>
-        </div>
-
-        <div id="cam-log" class="hidden"></div>
-
-        <!-- Главная кнопка генерации -->
-        <button id="btn-process-main" class="mt-auto w-full bg-amber-400 hover:bg-amber-300 text-black font-bold py-2.5 rounded-xl transition text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-400/15 active:scale-[0.98]">
-          ⚙️ Рассчитать 3D траекторию ЧПУ
-        </button>
       </div>
 
-    </div>
-
-    <!-- Правая панель: 3D Сцена и Код .TAP (8 колонок) -->
-    <div class="lg:col-span-8 flex flex-col">
-
-      <div class="bg-neutral-900/90 border border-neutral-800 rounded-xl p-3.5 shadow-xl flex flex-col flex-1">
-        
-        <!-- Верхняя полоса вкладок и статистики -->
-        <div class="flex flex-wrap items-center justify-between border-b border-neutral-800 pb-2.5 gap-2">
-          <div class="flex items-center gap-1.5">
-            <button id="tab-btn-3d" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition border border-amber-400/50 bg-amber-400/10 text-amber-400 flex items-center gap-1.5">
-              🧊 3D Сцена и Симуляция
-            </button>
-            <button id="tab-btn-code" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition border border-transparent text-neutral-400 hover:text-white flex items-center gap-1.5">
-              📝 Код 3D .TAP
-            </button>
-          </div>
-
-          <div class="flex items-center gap-2.5 text-[11px] font-mono text-neutral-400">
-            <span id="stat-lines">Кадров: 0</span>
-            <span>|</span>
-            <span id="stat-size">0 KB</span>
-            <span>|</span>
-            <span id="stat-time" class="text-amber-400/90">Время: —</span>
-          </div>
-        </div>
-
-        <!-- ОКНО 1: 3D ПРОСМОТРЩИК (THREE.JS) -->
-        <div id="view-3d" class="mt-3 flex-1 flex flex-col gap-2">
-          <div id="cnc-3d-wrap" class="relative w-full h-[550px] border border-neutral-800 rounded-xl overflow-hidden bg-[#070709]">
-            
-            <!-- Ракурсы и слои 3D -->
-            <div class="absolute top-2.5 right-2.5 z-10 flex flex-wrap items-center gap-1.5 text-[10px] font-mono">
-              <button type="button" id="btn-3d-iso" class="bg-black/85 border border-neutral-700 hover:border-amber-400 text-amber-400 rounded px-2 py-1">🧊 3D</button>
-              <button type="button" id="btn-3d-top" class="bg-black/85 border border-neutral-700 hover:border-amber-400 text-neutral-300 rounded px-2 py-1">⬇ Сверху</button>
-              <button type="button" id="btn-3d-front" class="bg-black/85 border border-neutral-700 hover:border-amber-400 text-neutral-300 rounded px-2 py-1">➡ Сбоку</button>
-              <select id="sel-3d-shading" class="bg-black/85 border border-neutral-700 text-amber-300 rounded px-1.5 py-1 text-[10px]">
-                <option value="wood" selected>🪵 Дерево / Орех</option>
-                <option value="gold">🏆 Бронза / Золото</option>
-                <option value="heatmap">🌈 Карта высот Z</option>
-                <option value="wire">🕸 Сетка (Wireframe)</option>
-              </select>
-              <label class="bg-black/85 border border-neutral-700 text-neutral-300 rounded px-2 py-1 flex items-center gap-1 cursor-pointer">
-                <input type="checkbox" id="chk-3d-mesh" checked class="accent-amber-400"> Рельеф
-              </label>
-              <label class="bg-black/85 border border-neutral-700 text-neutral-300 rounded px-2 py-1 flex items-center gap-1 cursor-pointer">
-                <input type="checkbox" id="chk-3d-paths" checked class="accent-amber-400"> Траектория
-              </label>
-            </div>
-
-            <!-- Панель покадровой 3D симуляции -->
-            <div class="absolute top-2.5 left-2.5 z-10 bg-black/90 backdrop-blur border border-neutral-800 px-2.5 py-1.5 rounded-lg text-[10px] font-mono flex flex-wrap items-center gap-2 shadow-xl max-w-[56%]">
-              <button type="button" id="btn-sim-play" class="bg-amber-400 hover:bg-amber-300 text-black font-bold px-2 py-0.5 rounded transition">▶ Симуляция</button>
-              <button type="button" id="btn-sim-stop" title="Сбросить симуляцию" class="bg-neutral-800 hover:bg-neutral-700 text-neutral-300 px-1.5 py-0.5 rounded transition">⏹</button>
-              <input type="range" id="sim-slider" min="0" max="100" value="100" class="w-24 md:w-32 accent-emerald-400 h-1.5 cursor-pointer">
-              <select id="sim-speed" class="bg-neutral-900 border border-neutral-700 text-amber-400 rounded px-1 py-0.5 text-[10px]">
-                <option value="5">5x</option>
-                <option value="25" selected>25x</option>
-                <option value="100">100x</option>
-                <option value="400">400x</option>
-              </select>
-              <span id="sim-readout" class="text-emerald-400 hidden sm:inline">Кадр: 0/0</span>
-            </div>
-
-            <div class="absolute bottom-2.5 left-2.5 z-10 bg-black/90 backdrop-blur border border-neutral-800 px-3 py-2 rounded-lg text-[11px] font-mono space-y-0.5 shadow-xl pointer-events-none">
-              <div class="flex flex-wrap gap-3">
-                <span class="flex items-center gap-1.5 text-amber-400"><span class="w-2 h-2 rounded-full bg-amber-400"></span> 3D Чистовая</span>
-                <span class="flex items-center gap-1.5 text-sky-400"><span class="w-2 h-2 rounded-full bg-sky-400"></span> 3D Черновая</span>
-                <span class="flex items-center gap-1.5 text-neutral-500"><span class="w-2 h-2 rounded-full bg-neutral-500"></span> Холостой G0</span>
-                <span class="text-neutral-400">ЛКМ — вращение · ПКМ — сдвиг · Колесо — зум</span>
-              </div>
-              <div id="canvas-3d-info" class="text-neutral-400 pt-0.5 text-[10px]">3D-сцена готова. Загрузите STL-модель или карту высот.</div>
-            </div>
-
-          </div>
-        </div>
-
-        <!-- ОКНО 2: КОД 3D .TAP -->
-        <div id="view-code" class="mt-3 hidden flex-1 flex-col gap-3">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1 min-h-[550px]">
-            <div class="flex flex-col gap-1">
-              <div class="flex items-center justify-between">
-                <span class="text-[11px] font-bold text-neutral-400 uppercase">Информация / Входной G-код:</span>
-                <button id="btn-clear-in" class="text-[11px] text-neutral-500 hover:text-red-400 transition">Очистить всё</button>
-              </div>
-              <textarea id="code-input" class="code-font flex-1 w-full bg-black border border-neutral-800 rounded-xl p-3 text-xs text-neutral-300 resize-none focus:outline-none focus:border-amber-400/50" placeholder="Здесь отображается информация о 3D-модели или вставленный вручную G-код..."></textarea>
-            </div>
-
-            <div class="flex flex-col gap-1">
-              <div class="flex items-center justify-between">
-                <span class="text-[11px] font-bold text-amber-400 uppercase">Готовый 3D .TAP файл (чистые пробелы):</span>
-                <button id="btn-copy-code" class="text-[11px] text-amber-400 hover:underline transition">📋 Копировать</button>
-              </div>
-              <textarea id="code-output" readonly class="code-font flex-1 w-full bg-black border border-neutral-800 rounded-xl p-3 text-xs text-emerald-400 resize-none focus:outline-none" placeholder="Результат 3D генерации .TAP появится здесь..."></textarea>
-            </div>
-          </div>
-        </div>
-
-        <!-- Нижняя панель экспорта -->
-        <div class="mt-3 pt-2.5 border-t border-neutral-800 flex flex-wrap items-center justify-between gap-2">
-          <div class="flex items-center gap-2 text-xs text-neutral-400 font-mono">
-            <span>Формат файла:</span>
-            <select id="export-ext" class="bg-black border border-neutral-700 text-amber-400 text-xs rounded px-2 py-1 focus:outline-none font-mono">
-              <option value=".tap" selected>.TAP (Inectra / NCStudio)</option>
-              <option value=".nc">.NC</option>
-              <option value=".gcode">.GCODE</option>
-              <option value=".txt">.TXT</option>
+      <div id="view-3d" class="mt-3 flex-1 flex flex-col">
+        <div id="cnc-3d-wrap" class="relative w-full h-[560px] border border-neutral-800 rounded-xl overflow-hidden bg-[#070709]">
+          <div class="absolute top-2.5 right-2.5 z-10 flex flex-wrap items-center gap-1.5 text-[10px] font-mono">
+            <button id="btn-iso" class="bg-black/85 border border-neutral-700 hover:border-amber-400 text-amber-400 rounded px-2 py-1">🧊 3D</button>
+            <button id="btn-top" class="bg-black/85 border border-neutral-700 hover:border-amber-400 text-neutral-300 rounded px-2 py-1">⬇ Сверху</button>
+            <button id="btn-front" class="bg-black/85 border border-neutral-700 hover:border-amber-400 text-neutral-300 rounded px-2 py-1">➡ Сбоку</button>
+            <select id="sel-shading" class="bg-black/85 border border-neutral-700 text-amber-300 rounded px-1.5 py-1 text-[10px]">
+              <option value="wood" selected>Дерево</option>
+              <option value="gold">Бронза</option>
+              <option value="heatmap">Карта высот</option>
+              <option value="wire">Сетка</option>
             </select>
+            <label class="bg-black/85 border border-neutral-700 text-neutral-300 rounded px-2 py-1 flex items-center gap-1"><input type="checkbox" id="chk-mesh" checked class="accent-amber-400"> Рельеф</label>
+            <label class="bg-black/85 border border-neutral-700 text-neutral-300 rounded px-2 py-1 flex items-center gap-1"><input type="checkbox" id="chk-paths" checked class="accent-amber-400"> Траектория</label>
           </div>
-
-          <button id="btn-bottom-download" class="bg-amber-400 hover:bg-amber-300 text-black font-bold px-5 py-2 rounded-xl transition shadow-md shadow-amber-400/20 text-xs active:scale-95 flex items-center gap-1.5">
-            💾 Скачать готовый 3D .TAP файл
-          </button>
+          <div class="absolute top-2.5 left-2.5 z-10 bg-black/90 border border-neutral-800 px-2.5 py-1.5 rounded-lg text-[10px] font-mono flex flex-wrap items-center gap-2 max-w-[56%]">
+            <button id="btn-sim-play" class="bg-amber-400 hover:bg-amber-300 text-black font-bold px-2 py-0.5 rounded">▶ Симуляция</button>
+            <button id="btn-sim-stop" class="bg-neutral-800 hover:bg-neutral-700 text-neutral-300 px-1.5 py-0.5 rounded">⏹</button>
+            <input type="range" id="sim-slider" min="0" max="100" value="100" class="w-24 md:w-32 accent-emerald-400">
+            <select id="sim-speed" class="bg-neutral-900 border border-neutral-700 text-amber-400 rounded px-1 py-0.5 text-[10px]">
+              <option value="5">5x</option><option value="25" selected>25x</option><option value="100">100x</option><option value="400">400x</option>
+            </select>
+            <span id="sim-readout" class="text-emerald-400 hidden sm:inline">Кадр: 0/0</span>
+          </div>
+          <div class="absolute bottom-2.5 left-2.5 z-10 bg-black/90 border border-neutral-800 px-3 py-2 rounded-lg text-[11px] font-mono pointer-events-none">
+            <div class="flex flex-wrap gap-3">
+              <span class="text-amber-400">■ Чистовая</span>
+              <span class="text-sky-400">■ Черновая</span>
+              <span class="text-neutral-500">■ Холостой G0</span>
+              <span class="text-neutral-400">ЛКМ — вращение · ПКМ — сдвиг · Колесо — зум</span>
+            </div>
+            <div id="info-3d" class="text-neutral-400 pt-0.5 text-[10px]">Загрузите STL-модель или карту высот.</div>
+          </div>
         </div>
-
       </div>
 
+      <div id="view-code" class="mt-3 hidden flex-1 flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold text-amber-400 uppercase">Готовая программа</span>
+          <div class="flex gap-3">
+            <button id="btn-copy" class="text-[11px] text-amber-400 hover:underline">📋 Копировать</button>
+            <button id="btn-frame" class="text-[11px] text-amber-300 hover:underline">🔲 Обводка габаритов</button>
+          </div>
+        </div>
+        <textarea id="code-output" readonly class="code-font w-full min-h-[520px] bg-black border border-neutral-800 rounded-xl p-3 text-xs text-emerald-400 resize-none focus:outline-none" placeholder="Программа появится здесь после расчёта."></textarea>
+      </div>
+
+      <div class="mt-3 pt-2.5 border-t border-neutral-800 flex flex-wrap items-center justify-end gap-2">
+        <button id="btn-download" class="bg-amber-400 hover:bg-amber-300 text-black font-bold px-5 py-2 rounded-xl text-xs">💾 Скачать программу</button>
+      </div>
     </div>
+  </section>
+</main>
 
-  </main>
+<script>
+const $ = (id) => document.getElementById(id);
+const num = (id, d) => { const v = parseFloat($(id).value); return isFinite(v) ? v : d; };
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const r3 = (v) => Math.round(v * 1000) / 1000;
 
-  <script>
-    const $ = (id) => document.getElementById(id);
-    const inputArea = $('code-input');
-    const outputArea = $('code-output');
-    const fileInput = $('file-input');
-    const dropZone = $('drop-zone');
+let stl = null;            // { tris, count, minX..maxZ, sx, sy, sz }
+let img = null;            // HTMLImageElement
+let srcBase = '';
+let field = null;          // { zGrid, cols, rows, px, W, H, maxD, dims, ox, oy }
+let lastBounds = null;
+let simSegs = [], simIdx = 0, simPlaying = false, simRaf = null;
+let lastEst = { cut: 0, minutes: 0, rapidLen: 0 };
 
-    const paramWidth = $('param-width');
-    const paramHeight = $('param-height');
-    const paramThickness = $('param-thickness');
-    const paramCutZ = $('param-cutz');
-    const paramSafeZ = $('param-safez');
-    const paramFeed = $('param-feed');
-    const paramStep = $('param-step');
-    const paramTool = $('param-tool');
-    const paramMode = $('param-mode');
-    const paramPasses = $('param-passes');
-    const chkTabs = $('chk-tabs');
-    const chkM30 = $('chk-m30');
-    const exportExt = $('export-ext');
+const has3DSource = () => !!(stl || img);
 
-    const statLines = $('stat-lines');
-    const statSize = $('stat-size');
-    const statTime = $('stat-time');
-    const canvas3dInfo = $('canvas-3d-info');
+/* ===================== ORIGIN ===================== */
+const ORIGINS = [
+  ['0,1','↖','Левый верхний'],['0.5,1','↑','Верх по центру'],['1,1','↗','Правый верхний'],
+  ['0,0.5','←','Левый центр'],['0.5,0.5','⊙','Центр'],['1,0.5','→','Правый центр'],
+  ['0,0','↙','Левый нижний (X0 Y0)'],['0.5,0','↓','Низ по центру'],['1,0','↘','Правый нижний']
+];
+(function buildOriginGrid() {
+  const g = $('origin-grid');
+  ORIGINS.forEach(([v, sym], k) => {
+    const l = document.createElement('label'); l.className = 'cursor-pointer';
+    l.innerHTML = `<input type="radio" name="origin" value="${v}" class="peer sr-only" ${v === '0,0' ? 'checked' : ''}><span class="flex items-center justify-center w-8 h-8 rounded border border-neutral-700 bg-black text-neutral-400 peer-checked:bg-amber-400 peer-checked:text-black">${sym}</span>`;
+    g.appendChild(l);
+  });
+})();
+function getOrigin() {
+  const r = document.querySelector('input[name="origin"]:checked');
+  const [fx, fy] = (r ? r.value : '0,0').split(',').map(Number);
+  return { fx, fy };
+}
+function updateOriginCaption() {
+  const o = getOrigin(), W = num('stock-w', 300), H = num('stock-h', 200);
+  const lab = ORIGINS.find(x => x[0] === `${o.fx},${o.fy}`);
+  $('origin-caption').innerHTML = `<span class="text-amber-400">${lab ? lab[2] : ''}</span><br>Смещение: (${r3(o.fx * W)}; ${r3(o.fy * H)}) мм`;
+}
 
-    let loadedImage = null;
-    let loadedStlMesh = null; // { tris: Float32Array, minX, maxX, minY, maxY, minZ, maxZ, count }
-    let loadedRawText = null;
-    let sourceBase = '';
-    let lastBounds = null;
-    let lastHeightField = null; // { grid: Float32Array, cols, rows, W, H, ox, oy, maxDepth }
+/* ===================== ВХОДНЫЕ ФАЙЛЫ ===================== */
+function parseSTLBuffer(buffer) {
+  const view = new DataView(buffer);
+  let isBinary = false;
+  if (buffer.byteLength >= 84) {
+    const n = view.getUint32(80, true);
+    if (84 + n * 50 === buffer.byteLength) isBinary = true;
+  }
+  let tris;
+  if (isBinary) {
+    const count = view.getUint32(80, true);
+    tris = new Float32Array(count * 9);
+    let off = 84;
+    for (let i = 0; i < count; i++) {
+      off += 12;
+      for (let v = 0; v < 9; v++) { tris[i * 9 + v] = view.getFloat32(off, true); off += 4; }
+      off += 2;
+    }
+  } else {
+    const text = new TextDecoder().decode(buffer);
+    const re = /vertex\s+([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s+([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s+([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)/gi;
+    const v = []; let m;
+    while ((m = re.exec(text)) !== null) v.push(parseFloat(m[1]), parseFloat(m[2]), parseFloat(m[3]));
+    tris = new Float32Array(v);
+  }
+  if (tris.length < 9) throw new Error('STL не содержит треугольников.');
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity, minZ = Infinity, maxZ = -Infinity;
+  for (let i = 0; i < tris.length; i += 3) {
+    const x = tris[i], y = tris[i + 1], z = tris[i + 2];
+    if (x < minX) minX = x; if (x > maxX) maxX = x;
+    if (y < minY) minY = y; if (y > maxY) maxY = y;
+    if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
+  }
+  if (!isFinite(minX)) throw new Error('Не удалось прочитать STL.');
+  return { tris, count: tris.length / 9, minX, maxX, minY, maxY, minZ, maxZ,
+           sx: Math.max(0.01, maxX - minX), sy: Math.max(0.01, maxY - minY), sz: Math.max(0.01, maxZ - minZ) };
+}
 
-    // ===================== ВКЛАДКИ ЛЕВОЙ ПАНЕЛИ =====================
-    document.querySelectorAll('.stab-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const target = btn.dataset.stab;
-        document.querySelectorAll('.stab-btn').forEach(b => {
-          b.className = b === btn
-            ? 'stab-btn py-1.5 px-1 rounded text-[11px] font-bold bg-amber-400 text-black transition'
-            : 'stab-btn py-1.5 px-1 rounded text-[11px] font-semibold text-neutral-400 hover:text-white transition';
-        });
-        document.querySelectorAll('.stab-panel').forEach(p => {
-          if (p.id === 'stab-' + target) { p.classList.remove('hidden'); p.classList.add('flex'); }
-          else { p.classList.add('hidden'); p.classList.remove('flex'); }
-        });
-        if (target === 'relief') renderHeightPreview();
-      });
-    });
+/* Обрезка пустых краёв фото */
+function cropBox(im) {
+  const full = { sx: 0, sy: 0, sw: im.width, sh: im.height };
+  if (!$('chk-trim').checked) return full;
+  const scale = Math.min(1, 400 / Math.max(im.width, im.height));
+  const cw = Math.max(1, Math.round(im.width * scale)), ch = Math.max(1, Math.round(im.height * scale));
+  const tmp = document.createElement('canvas'); tmp.width = cw; tmp.height = ch;
+  const g = tmp.getContext('2d', { willReadFrequently: true });
+  const inv = $('chk-invert').checked;
+  g.fillStyle = inv ? '#000' : '#fff'; g.fillRect(0, 0, cw, ch);
+  g.drawImage(im, 0, 0, cw, ch);
+  const d = g.getImageData(0, 0, cw, ch).data;
+  let x0 = cw, y0 = ch, x1 = -1, y1 = -1;
+  for (let y = 0; y < ch; y++) for (let x = 0; x < cw; x++) {
+    const k = (y * cw + x) * 4, l = (d[k] + d[k + 1] + d[k + 2]) / 3;
+    if (inv ? l > 15 : l < 240) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  }
+  if (x1 < x0) return full;
+  x0 = Math.max(0, x0 - 2); y0 = Math.max(0, y0 - 2); x1 = Math.min(cw - 1, x1 + 2); y1 = Math.min(ch - 1, y1 + 2);
+  return { sx: x0 / cw * im.width, sy: y0 / ch * im.height,
+           sw: Math.max(1, (x1 - x0 + 1) / cw * im.width), sh: Math.max(1, (y1 - y0 + 1) / ch * im.height) };
+}
 
-    // ===================== БЫСТРЫЕ 3D ПРЕСЕТЫ =====================
-    const PRESETS = {
-      barelief: { mode: 'relief_x', toolType: 'ball', cutz: -8.0, passes: 3, feed: 2400, plunge: 600, tool: 3.0, step: 0.4, resX: 0.4, spindle: 16000 },
-      deep3d:   { mode: 'relief_rough_fin', toolType: 'taper_ball', cutz: -14.0, passes: 4, feed: 2800, plunge: 700, tool: 2.0, step: 0.35, resX: 0.4, spindle: 18000 },
-      finemini: { mode: 'relief_cross', toolType: 'taper_ball', cutz: -5.0, passes: 2, feed: 1800, plunge: 450, tool: 1.0, step: 0.2, resX: 0.25, spindle: 18000 },
-      spiral3d: { mode: 'relief_spiral', toolType: 'ball', cutz: -6.0, passes: 2, feed: 2200, plunge: 500, tool: 3.0, step: 0.45, resX: 0.4, spindle: 16000 }
-    };
-    document.querySelectorAll('.preset-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const p = PRESETS[btn.dataset.preset];
-        if (!p) return;
-        paramMode.value = p.mode;
-        $('param-tool-type').value = p.toolType;
-        paramCutZ.value = p.cutz;
-        paramPasses.value = p.passes;
-        paramFeed.value = p.feed;
-        $('param-plunge').value = p.plunge;
-        paramTool.value = p.tool;
-        paramStep.value = p.step;
-        $('param-res-x').value = p.resX;
-        $('param-spindle').value = p.spindle;
-        depthTouched = false;
-        distributeDepth();
-        renderDepthFields();
-        if (has3DSource()) generate3DTap();
-      });
-    });
+/* Размер объекта на столе (мм) */
+function dimsFor(srcW, srcH, stockW, stockH) {
+  const uw = num('obj-w', 0), uh = num('obj-h', 0), asp = srcW / srcH;
+  if (uw > 0 || uh > 0) {
+    if (uw > 0 && !(uh > 0)) return { w: uw, h: uw / asp };
+    if (uh > 0 && !(uw > 0)) return { w: uh * asp, h: uh };
+    return { w: uw, h: uh };
+  }
+  const pct = clamp(num('obj-scale', 88), 1, 500) / 100;
+  const base = Math.min(stockW / srcW, stockH / srcH);
+  return { w: srcW * base * pct, h: srcH * base * pct };
+}
 
-    const has3DSource = () => !!(loadedImage || loadedStlMesh);
-
-    // ===================== ПАРСЕР 3D STL (BINARY & ASCII) =====================
-    function parseSTLBuffer(buffer) {
-      const view = new DataView(buffer);
-      let isBinary = false;
-      if (buffer.byteLength >= 84) {
-        const triCount = view.getUint32(80, true);
-        if (84 + triCount * 50 === buffer.byteLength) isBinary = true;
+/* ===================== КАРТА ВЫСОТ ===================== */
+// Соглашение: Z = 0 — верх заготовки, Z = -maxD — дно рельефа.
+// Обычный режим: светлое / высокое место STL = выше. Инверсия меняет смысл.
+function fieldFromSTL(W, H, px, cols, rows, maxD, inv) {
+  const d = dimsFor(stl.sx, stl.sy, W, H);
+  const sx = d.w / stl.sx, sy = d.h / stl.sy;
+  const rot = num('obj-rot', 0) * Math.PI / 180, cs = Math.cos(rot), sn = Math.sin(rot);
+  const cx = W / 2 + num('obj-x', 0), cy = H / 2 + num('obj-y', 0);
+  const mx = (stl.minX + stl.maxX) / 2, my = (stl.minY + stl.maxY) / 2;
+  const z = new Float32Array(cols * rows).fill(inv ? 0 : -maxD);
+  const T = stl.tris;
+  for (let t = 0; t < stl.count; t++) {
+    const b = t * 9, X = [0, 0, 0], Y = [0, 0, 0], Zt = [0, 0, 0];
+    for (let k = 0; k < 3; k++) {
+      const lx = (T[b + k * 3] - mx) * sx, ly = (T[b + k * 3 + 1] - my) * sy;
+      X[k] = cx + lx * cs - ly * sn;
+      Y[k] = cy + lx * sn + ly * cs;
+      const nz = (T[b + k * 3 + 2] - stl.minZ) / stl.sz;
+      Zt[k] = inv ? -(nz * maxD) : -((1 - nz) * maxD);
+    }
+    const minC = Math.max(0, Math.floor(Math.min(X[0], X[1], X[2]) / px));
+    const maxC = Math.min(cols - 1, Math.ceil(Math.max(X[0], X[1], X[2]) / px));
+    const minR = Math.max(0, Math.floor((H - Math.max(Y[0], Y[1], Y[2])) / px));
+    const maxR = Math.min(rows - 1, Math.ceil((H - Math.min(Y[0], Y[1], Y[2])) / px));
+    if (maxC < minC || maxR < minR) continue;
+    const den = (Y[1] - Y[2]) * (X[0] - X[2]) + (X[2] - X[1]) * (Y[0] - Y[2]);
+    if (Math.abs(den) < 1e-12) continue;
+    const inD = 1 / den;
+    for (let j = minR; j <= maxR; j++) {
+      const py = H - (j + 0.5) * px;
+      for (let i = minC; i <= maxC; i++) {
+        const pxx = (i + 0.5) * px;
+        const w0 = ((Y[1] - Y[2]) * (pxx - X[2]) + (X[2] - X[1]) * (py - Y[2])) * inD;
+        if (w0 < -1e-4) continue;
+        const w1 = ((Y[2] - Y[0]) * (pxx - X[2]) + (X[0] - X[2]) * (py - Y[2])) * inD;
+        if (w1 < -1e-4) continue;
+        const w2 = 1 - w0 - w1;
+        if (w2 < -1e-4) continue;
+        const zh = w0 * Zt[0] + w1 * Zt[1] + w2 * Zt[2];
+        const idx = j * cols + i;
+        if (inv ? zh < z[idx] : zh > z[idx]) z[idx] = zh;
       }
-      let tris;
-      if (isBinary) {
-        const count = view.getUint32(80, true);
-        tris = new Float32Array(count * 9);
-        let offset = 84;
-        for (let i = 0; i < count; i++) {
-          offset += 12; // нормаль
-          for (let v = 0; v < 9; v++) {
-            tris[i * 9 + v] = view.getFloat32(offset, true);
-            offset += 4;
-          }
-          offset += 2; // атрибуты
+    }
+  }
+  return { zGrid: z, dims: d };
+}
+
+function fieldFromImage(W, H, px, cols, rows, maxD, inv) {
+  const c = cropBox(img);
+  const d = dimsFor(c.sw, c.sh, W, H);
+  const cv = document.createElement('canvas'); cv.width = cols; cv.height = rows;
+  const g = cv.getContext('2d', { willReadFrequently: true });
+  g.fillStyle = inv ? '#000' : '#fff'; g.fillRect(0, 0, cols, rows);
+  const dwp = d.w / px, dhp = d.h / px;
+  const cxp = (W / 2 + num('obj-x', 0)) / px, cyp = (H / 2 - num('obj-y', 0)) / px;
+  g.save(); g.translate(cxp, cyp); g.rotate(num('obj-rot', 0) * Math.PI / 180);
+  const blur = clamp(num('relief-blur', 1), 0, 10);
+  if (blur > 0) g.filter = `blur(${blur}px)`;
+  g.imageSmoothingQuality = 'high';
+  g.drawImage(img, c.sx, c.sy, c.sw, c.sh, -dwp / 2, -dhp / 2, dwp, dhp);
+  g.restore();
+  const data = g.getImageData(0, 0, cols, rows).data;
+  const gamma = clamp(num('relief-gamma', 1), 0.3, 2.5);
+  const vig = clamp(num('relief-vignette', 0), 0, 40) / 100;
+  const hw = Math.max(1, dwp / 2), hh = Math.max(1, dhp / 2);
+  const z = new Float32Array(cols * rows);
+  for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+    const idx = j * cols + i, k = idx * 4;
+    let l = (0.299 * data[k] + 0.587 * data[k + 1] + 0.114 * data[k + 2]) / 255;
+    if (inv) l = 1 - l;
+    let hn = Math.pow(clamp(l, 0, 1), gamma);
+    if (vig > 0.001) {
+      const ed = Math.max(Math.abs(i - cxp) / hw, Math.abs(j - cyp) / hh);
+      if (ed > 1 - vig) {
+        const t = clamp((1 - ed) / vig, 0, 1), s = t * t * (3 - 2 * t);
+        hn = 1 - (1 - hn) * s;
+      }
+    }
+    z[idx] = -(1 - hn) * maxD;
+  }
+  return { zGrid: z, dims: d };
+}
+
+function buildCurrentField() {
+  const W = num('stock-w', 300), H = num('stock-h', 200);
+  const D = num('tool-d', 3), step = num('step', 0.4), res = num('res', 0.4);
+  const maxD = Math.abs(num('cut-z', -8)) || 8;
+  const inv = $('chk-invert').checked;
+  let px = clamp(Math.min(step, res) * 0.45, 0.12, 0.6);
+  while ((W / px) * (H / px) > 6e5) px *= 1.15;
+  const cols = Math.max(16, Math.ceil(W / px)), rows = Math.max(16, Math.ceil(H / px));
+  const b = stl ? fieldFromSTL(W, H, px, cols, rows, maxD, inv) : fieldFromImage(W, H, px, cols, rows, maxD, inv);
+  return { zGrid: b.zGrid, dims: b.dims, cols, rows, px, W, H, maxD, D };
+}
+
+/* ===================== ПРЕВЬЮ РАЗМЕЩЕНИЯ ===================== */
+function renderPlacement() {
+  const cv = $('place-canvas');
+  const cssW = Math.max(180, cv.clientWidth || 240), cssH = 130, dpr = window.devicePixelRatio || 1;
+  cv.width = Math.round(cssW * dpr); cv.height = Math.round(cssH * dpr);
+  const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.fillStyle = '#080808'; g.fillRect(0, 0, cssW, cssH);
+  const SW = num('stock-w', 300), SH = num('stock-h', 200);
+  const m = 10, fit = Math.min((cssW - 2 * m) / SW, (cssH - 2 * m) / SH);
+  const bw = SW * fit, bh = SH * fit, L = (cssW - bw) / 2, T = (cssH - bh) / 2;
+  g.fillStyle = '#5c462c'; g.fillRect(L, T, bw, bh);
+  g.strokeStyle = '#FBBF24'; g.strokeRect(L, T, bw, bh);
+  if (!has3DSource()) { $('preview-status').textContent = 'Нет файла'; $('place-warning').classList.add('hidden'); return; }
+
+  const sw = stl ? stl.sx : cropBox(img).sw, sh = stl ? stl.sy : cropBox(img).sh;
+  const d = dimsFor(sw, sh, SW, SH);
+  const dw = d.w * fit, dh = d.h * fit, ang = num('obj-rot', 0) * Math.PI / 180;
+  const cx = L + bw / 2 + num('obj-x', 0) * fit, cy = T + bh / 2 - num('obj-y', 0) * fit;
+  g.save(); g.beginPath(); g.rect(L, T, bw, bh); g.clip();
+  g.translate(cx, cy); g.rotate(ang);
+  if (img) g.drawImage(img, 0, 0, img.width, img.height, -dw / 2, -dh / 2, dw, dh);
+  else { g.fillStyle = 'rgba(251,191,36,.25)'; g.fillRect(-dw / 2, -dh / 2, dw, dh); g.fillStyle = '#FBBF24'; g.font = 'bold 10px monospace'; g.textAlign = 'center'; g.fillText('STL', 0, 3); }
+  g.strokeStyle = '#ef4444'; g.setLineDash([2, 2]); g.strokeRect(-dw / 2, -dh / 2, dw, dh);
+  g.restore();
+
+  const hw = d.w / 2, hh = d.h / 2, ca = Math.abs(Math.cos(ang)), sa = Math.abs(Math.sin(ang));
+  const ex = hw * ca + hh * sa, ey = hw * sa + hh * ca;
+  const out = Math.abs(num('obj-x', 0)) + ex > SW / 2 + 1e-6 || Math.abs(num('obj-y', 0)) + ey > SH / 2 + 1e-6;
+  $('place-warning').classList.toggle('hidden', !out);
+  $('place-warning').textContent = out ? `⚠ Объект выходит за пределы заготовки ${SW}×${SH} мм` : '';
+  $('preview-status').textContent = `${r3(d.w)}×${r3(d.h)} мм`;
+}
+
+/* ===================== ГЛУБИНА ===================== */
+let depthTouched = false;
+function distributeDepth() {
+  const n = parseInt($('passes').value), total = num('cut-z', -8);
+  const out = [];
+  for (let k = 1; k <= n; k++) out.push(r3(total * k / n));
+  return out;
+}
+function renderDepth(fromDefault) {
+  const n = parseInt($('passes').value);
+  const cur = [...$('depth-fields').querySelectorAll('input')].map(i => parseFloat(i.value));
+  const def = distributeDepth();
+  $('depth-fields').innerHTML = '';
+  for (let k = 0; k < n; k++) {
+    const l = document.createElement('label'); l.className = 'text-[10px] text-neutral-400'; l.textContent = `Слой ${k + 1}`;
+    const inp = document.createElement('input'); inp.type = 'number'; inp.step = '0.1'; inp.className = 'inp mt-0.5';
+    const keep = !fromDefault && depthTouched && isFinite(cur[k]);
+    inp.value = keep ? cur[k] : def[k];
+    inp.addEventListener('input', () => { depthTouched = true; showDepthStatus(); });
+    l.appendChild(inp); $('depth-fields').appendChild(l);
+  }
+  showDepthStatus();
+}
+function readDepths() {
+  return [...$('depth-fields').querySelectorAll('input')].map(i => parseFloat(i.value));
+}
+function validateDepths() {
+  const z = readDepths(), total = num('cut-z', -8), errs = [];
+  if (!(total < 0)) errs.push('Глубина рельефа должна быть отрицательной.');
+  z.forEach((v, k) => {
+    if (!isFinite(v)) errs.push(`Слой ${k + 1}: не задан.`);
+    else if (v >= 0) errs.push(`Слой ${k + 1}: должен быть < 0.`);
+    else if (k > 0 && isFinite(z[k - 1]) && v > z[k - 1] + 1e-9) errs.push(`Слой ${k + 1} мельче предыдущего.`);
+  });
+  return { errs, z };
+}
+function showDepthStatus() {
+  const { errs, z } = validateDepths();
+  const el = $('depth-status');
+  el.className = 'text-[10px] rounded-lg p-2 border mt-2 ' + (errs.length ? 'text-red-300 bg-red-500/10 border-red-500/30' : 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30');
+  el.innerHTML = errs.length ? errs.map(e => '⚠ ' + e).join('<br>') : '✓ Уровни Z: ' + z.map(v => r3(v)).join(' → ') + ' мм';
+}
+
+/* ===================== ФРЕЗА: СМЕЩЕНИЯ ===================== */
+// Для каждой точки вокруг центра фрезы задаётся смещение кончика относительно поверхности.
+function toolOffsets(type, R, angleDeg, px, maxD) {
+  const tanH = Math.max(0.03, Math.tan(angleDeg * Math.PI / 360));
+  let reach;
+  if (type === 'vbit') reach = Math.min(8, maxD * tanH);
+  else if (type === 'taper_ball') reach = Math.min(8, R + maxD * tanH);
+  else reach = R;
+  const rp = Math.min(30, Math.ceil(reach / px));
+  const offs = [];
+  for (let dj = -rp; dj <= rp; dj++) for (let di = -rp; di <= rp; di++) {
+    const dist = Math.hypot(di * px, dj * px);
+    if (dist > reach + 1e-9) continue;
+    let off;
+    if (type === 'ball') off = R - Math.sqrt(Math.max(0, R * R - dist * dist));
+    else if (type === 'taper_ball') off = dist <= R ? R - Math.sqrt(Math.max(0, R * R - dist * dist)) : R + (dist - R) / tanH;
+    else if (type === 'vbit') off = dist / tanH;
+    else off = 0;
+    offs.push({ di, dj, off });
+  }
+  return offs;
+}
+function toolTipZ(f, offs, i, j, maxD) {
+  const { zGrid, cols, rows } = f;
+  let best = -maxD;
+  for (let k = 0; k < offs.length; k++) {
+    const o = offs[k];
+    const ii = Math.max(0, Math.min(cols - 1, i + o.di)), jj = Math.max(0, Math.min(rows - 1, j + o.dj));
+    const v = zGrid[jj * cols + ii] - o.off;
+    if (v > best) best = v;
+  }
+  return best > 0 ? 0 : (best < -maxD ? -maxD : best);
+}
+function sampleTip(f, offs, x, y, maxD) {
+  const i = Math.round(x / f.px - 0.5), j = Math.round((f.H - y) / f.px - 0.5);
+  return toolTipZ(f, offs, i, j, maxD);
+}
+
+/* ===================== ГЕНЕРАЦИЯ ТРАЕКТОРИЙ ===================== */
+function generate() {
+  if (!has3DSource()) { setLog(['⛔ Сначала загрузите STL или фото.'], 'err'); return; }
+  const v = validateDepths();
+  const W = num('stock-w', 300), H = num('stock-h', 200), safeZ = num('safe-z', 6);
+  const feed = num('feed', 2400), D = num('tool-d', 3), step = num('step', 0.4), res = num('res', 0.4);
+  const errs = v.errs.slice();
+  if (!(W > 0 && H > 0)) errs.push('Размер заготовки должен быть больше 0.');
+  if (!(D > 0)) errs.push('Диаметр фрезы должен быть больше 0.');
+  if (!(safeZ > 0)) errs.push('Безопасная Z должна быть больше 0.');
+  if (!(feed > 0)) errs.push('Подача должна быть больше 0.');
+  if (!(step > 0) || !(res > 0)) errs.push('Шаги должны быть больше 0.');
+  if (errs.length) { failGen(errs); return; }
+  setLog(['⏳ Построение рельефа и расчёт траектории…'], 'warn');
+  setTimeout(() => {
+    try { run(v.z); } catch (e) { failGen([e.message]); }
+  }, 20);
+}
+
+function failGen(errs) {
+  $('code-output').value = '';
+  $('stat-lines').textContent = 'Кадров: 0'; $('stat-size').textContent = '0 KB'; $('stat-time').textContent = 'Время: —';
+  setLog(errs.map(e => '⛔ ' + e), 'err');
+}
+function setLog(msgs, kind) {
+  const cls = { err: 'text-red-300 bg-red-500/10 border-red-500/30', warn: 'text-amber-300 bg-amber-400/10 border-amber-400/30', ok: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30' }[kind];
+  const el = $('cam-log'); el.className = 'text-[10px] rounded-lg p-2 border ' + cls;
+  el.innerHTML = msgs.map(m => '<div>' + m + '</div>').join('');
+}
+
+function run(zLayers) {
+  const built = buildCurrentField();
+  const { W, H, D, maxD } = built;
+  const R = D / 2;
+  const type = $('tool-type').value, angle = num('tool-angle', 15), mode = $('mode').value;
+  const feed = num('feed', 2400), plungeIn = num('plunge', 600), plunge = plungeIn > 0 ? plungeIn : Math.min(600, feed);
+  const safeZ = num('safe-z', 6), step = num('step', 0.4), res = clamp(num('res', 0.4), 0.1, 5);
+  const allowance = Math.max(0, num('allowance', 0.5));
+  const skipTop = $('chk-skip-top').checked, optLines = $('chk-opt').checked;
+  const sep = '\u0020';
+  const org = getOrigin(), ox = org.fx * W, oy = org.fy * H;
+  const fx = (q) => r3(q - ox), fy = (q) => r3(q - oy);
+  const f3 = (q) => (Object.is(r3(q), -0) ? 0 : r3(q)).toFixed(3);
+
+  const f = { zGrid: built.zGrid, cols: built.cols, rows: built.rows, px: built.px, H };
+  const offs = toolOffsets(type, R, angle, built.px, maxD);
+  const dims = built.dims;
+
+  const cxObj = W / 2 + num('obj-x', 0), cyObj = H / 2 + num('obj-y', 0);
+  const margin = R + 0.5;
+  const xMin = Math.max(R, cxObj - dims.w / 2 - margin), xMax = Math.min(W - R, cxObj + dims.w / 2 + margin);
+  const yMin = Math.max(R, cyObj - dims.h / 2 - margin), yMax = Math.min(H - R, cyObj + dims.h / 2 + margin);
+  if (xMax <= xMin || yMax <= yMin) throw new Error('Область обработки пуста или выходит за пределы заготовки.');
+  lastBounds = { minX: fx(xMin), minY: fy(yMin), maxX: fx(xMax), maxY: fy(yMax) };
+  field = built;
+
+  const lines = [], kinds = [];
+  const L = (s, k) => { lines.push(s); kinds.push(k || 'out'); };
+
+  if ($('chk-header').checked) ['G21', 'G17', 'G40', 'G49', 'G54'].forEach(c => L(c));
+  const S = num('spindle', 16000);
+  L('G90'); L('G0' + sep + 'Z' + f3(safeZ));
+  L('M3' + (S > 0 ? sep + 'S' + Math.round(S) : ''));
+
+  // Растровый проход. zFloor — нижний предел для чернового слоя, extra — припуск
+  function raster(alongX, pStep, pRes, zFloor, extra, kind) {
+    const oMin = alongX ? yMin : xMin, oMax = alongX ? yMax : xMax;
+    const iMin = alongX ? xMin : yMin, iMax = alongX ? xMax : yMax;
+    const nL = Math.max(1, Math.ceil((oMax - oMin) / pStep)), dO = (oMax - oMin) / nL;
+    const nP = Math.max(2, Math.ceil((iMax - iMin) / pRes)), dI = (iMax - iMin) / nP;
+    let flip = false, inCut = false, lastZ = safeZ;
+    for (let row = 0; row <= nL; row++) {
+      const uO = oMin + row * dO, pts = [];
+      for (let c = 0; c <= nP; c++) {
+        const idx = flip ? nP - c : c, uI = iMin + idx * dI;
+        const x = alongX ? uI : uO, y = alongX ? uO : uI;
+        let z = sampleTip(f, offs, x, y, maxD);
+        z = Math.min(0, Math.max(zFloor, z + extra));
+        pts.push({ x, y, z });
+      }
+      let emit = pts;
+      if (optLines && pts.length > 3) {
+        emit = [pts[0]];
+        for (let k = 1; k < pts.length - 1; k++) {
+          const prev = emit[emit.length - 1], cur = pts[k], nx = pts[k + 1];
+          if (Math.abs(cur.z - prev.z) < 0.0025 && Math.abs(nx.z - cur.z) < 0.0025) continue;
+          emit.push(cur);
         }
-      } else {
-        const text = new TextDecoder().decode(buffer);
-        const verts = [];
-        const re = /vertex\s+([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s+([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s+([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)/gi;
-        let m;
-        while ((m = re.exec(text)) !== null) {
-          verts.push(parseFloat(m[1]), parseFloat(m[2]), parseFloat(m[3]));
-        }
-        tris = new Float32Array(verts);
+        emit.push(pts[pts.length - 1]);
       }
-
-      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity, minZ = Infinity, maxZ = -Infinity;
-      for (let i = 0; i < tris.length; i += 3) {
-        const x = tris[i], y = tris[i + 1], z = tris[i + 2];
-        if (x < minX) minX = x; if (x > maxX) maxX = x;
-        if (y < minY) minY = y; if (y > maxY) maxY = y;
-        if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
-      }
-      if (!isFinite(minX) || tris.length < 9) throw new Error('Не удалось прочитать треугольники из STL файла.');
-      return {
-        tris,
-        count: Math.floor(tris.length / 9),
-        minX, maxX, minY, maxY, minZ, maxZ,
-        sizeX: Math.max(0.01, maxX - minX),
-        sizeY: Math.max(0.01, maxY - minY),
-        sizeZ: Math.max(0.01, maxZ - minZ)
-      };
-    }
-
-    // Растеризация 3D STL в высокоточную карту высот Z(x, y) с пространственным ускорением
-    function rasterizeSTLToHeightMap(stl, W, H, px, cols, rows, maxDepthAbs) {
-      const dims = getTargetDimensionsMM({ sw: stl.sizeX, sh: stl.sizeY }, W, H);
-      const sx = dims.wMM / stl.sizeX;
-      const sy = dims.hMM / stl.sizeY;
-      const sz = maxDepthAbs / stl.sizeZ;
-      const rot = (Number(previewRotation.value) || 0) * Math.PI / 180;
-      const cosR = Math.cos(rot), sinR = Math.sin(rot);
-      const cxWorld = W / 2 + (Number(previewX.value) || 0);
-      const cyWorld = H / 2 + (Number(previewY.value) || 0);
-      const midX = (stl.minX + stl.maxX) * 0.5;
-      const midY = (stl.minY + stl.maxY) * 0.5;
-      const inv = $('preview-invert').checked;
-
-      // По умолчанию дно модели = -maxDepthAbs, вершина = 0
-      const zGrid = new Float32Array(cols * rows);
-      zGrid.fill(inv ? 0 : -maxDepthAbs);
-
-      const tris = stl.tris;
-      const nTris = stl.count;
-      for (let t = 0; t < nTris; t++) {
-        const b = t * 9;
-        // Переводим вершины треугольника в координаты стола (мм) и высоту Z (0..1)
-        const tx = [0, 0, 0], ty = [0, 0, 0], tz = [0, 0, 0];
-        for (let k = 0; k < 3; k++) {
-          const lx = (tris[b + k * 3] - midX) * sx;
-          const ly = (tris[b + k * 3 + 1] - midY) * sy;
-          const rx = lx * cosR - ly * sinR;
-          const ry = lx * sinR + ly * cosR;
-          tx[k] = cxWorld + rx;
-          ty[k] = cyWorld + ry;
-          const normZ = (tris[b + k * 3 + 2] - stl.minZ) / stl.sizeZ;
-          tz[k] = inv ? -(normZ * maxDepthAbs) : -((1 - normZ) * maxDepthAbs);
-        }
-
-        // Ограничивающий прямоугольник треугольника в ячейках сетки
-        const minC = Math.max(0, Math.floor(Math.min(tx[0], tx[1], tx[2]) / px));
-        const maxC = Math.min(cols - 1, Math.ceil(Math.max(tx[0], tx[1], tx[2]) / px));
-        const minR = Math.max(0, Math.floor((H - Math.max(ty[0], ty[1], ty[2])) / px));
-        const maxR = Math.min(rows - 1, Math.ceil((H - Math.min(ty[0], ty[1], ty[2])) / px));
-        if (maxC < minC || maxR < minR) continue;
-
-        const denom = (ty[1] - ty[2]) * (tx[0] - tx[2]) + (tx[2] - tx[1]) * (ty[0] - ty[2]);
-        if (Math.abs(denom) < 1e-9) continue;
-        const invDenom = 1 / denom;
-
-        for (let j = minR; j <= maxR; j++) {
-          const pyWorld = H - (j + 0.5) * px;
-          for (let i = minC; i <= maxC; i++) {
-            const pxWorld = (i + 0.5) * px;
-            const w0 = ((ty[1] - ty[2]) * (pxWorld - tx[2]) + (tx[2] - tx[1]) * (pyWorld - ty[2])) * invDenom;
-            if (w0 < -1e-4) continue;
-            const w1 = ((ty[2] - ty[0]) * (pxWorld - tx[2]) + (tx[0] - tx[2]) * (pyWorld - ty[2])) * invDenom;
-            if (w1 < -1e-4) continue;
-            const w2 = 1 - w0 - w1;
-            if (w2 < -1e-4) continue;
-            const zHit = w0 * tz[0] + w1 * tz[1] + w2 * tz[2];
-            const idx = j * cols + i;
-            if (!inv) {
-              if (zHit > zGrid[idx]) zGrid[idx] = zHit;
-            } else {
-              if (zHit < zGrid[idx]) zGrid[idx] = zHit;
-            }
-          }
-        }
-      }
-      return { zGrid, dims };
-    }
-
-    // ===================== ПРЕДПРОСМОТР 3D КАРТЫ НА СТОЛЕ =====================
-    const previewCanvas = $('image-preview');
-    const previewCtx = previewCanvas.getContext('2d');
-    const chkTrimBounds = $('chk-trim-bounds');
-    const objWidthInput = $('object-width');
-    const objHeightInput = $('object-height');
-    const previewScale = $('preview-scale');
-    const previewRotation = $('preview-rotation');
-    const previewX = $('preview-x');
-    const previewY = $('preview-y');
-    const previewStatus = $('preview-status');
-    const previewWarning = $('preview-warning');
-
-    const getReliefBlur = () => Math.min(12, Math.max(0, parseInt($('relief-blur').value) || 0));
-    const getReliefGamma = () => Math.min(2.5, Math.max(0.3, parseFloat($('relief-gamma').value) || 1.0));
-    const getReliefVignette = () => Math.min(40, Math.max(0, parseFloat($('relief-vignette').value) || 0)) / 100;
-
-    function getContentCropBox(img) {
-      if (!chkTrimBounds.checked) return { sx: 0, sy: 0, sw: img.width, sh: img.height };
-      const maxDim = 400;
-      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
-      const cw = Math.max(1, Math.round(img.width * scale));
-      const ch = Math.max(1, Math.round(img.height * scale));
-      const tmp = document.createElement('canvas');
-      tmp.width = cw; tmp.height = ch;
-      const g = tmp.getContext('2d', { willReadFrequently: true });
-      const inv = $('preview-invert').checked;
-      g.fillStyle = inv ? '#000' : '#fff';
-      g.fillRect(0, 0, cw, ch);
-      g.drawImage(img, 0, 0, cw, ch);
-      const d = g.getImageData(0, 0, cw, ch).data;
-
-      let minX = cw, minY = ch, maxX = -1, maxY = -1;
-      for (let y = 0; y < ch; y++) {
-        for (let x = 0; x < cw; x++) {
-          const idx = (y * cw + x) * 4;
-          const lum = (d[idx] + d[idx + 1] + d[idx + 2]) / 3;
-          const active = inv ? (lum > 15) : (lum < 240);
-          if (active) {
-            if (x < minX) minX = x; if (x > maxX) maxX = x;
-            if (y < minY) minY = y; if (y > maxY) maxY = y;
-          }
-        }
-      }
-      if (maxX < minX || maxY < minY) return { sx: 0, sy: 0, sw: img.width, sh: img.height };
-      const pad = 2;
-      minX = Math.max(0, minX - pad); minY = Math.max(0, minY - pad);
-      maxX = Math.min(cw - 1, maxX + pad); maxY = Math.min(ch - 1, maxY + pad);
-      return {
-        sx: (minX / cw) * img.width,
-        sy: (minY / ch) * img.height,
-        sw: Math.max(1, ((maxX - minX + 1) / cw) * img.width),
-        sh: Math.max(1, ((maxY - minY + 1) / ch) * img.height)
-      };
-    }
-
-    function getTargetDimensionsMM(cropBox, stockW, stockH) {
-      const userW = parseFloat(objWidthInput.value);
-      const userH = parseFloat(objHeightInput.value);
-      const aspect = cropBox.sw / cropBox.sh;
-      if (userW > 0 || userH > 0) {
-        if (userW > 0 && !(userH > 0)) return { wMM: userW, hMM: userW / aspect };
-        if (!(userW > 0) && userH > 0) return { wMM: userH * aspect, hMM: userH };
-        return { wMM: userW, hMM: userH };
-      }
-      const pct = Math.min(500, Math.max(1, Number(previewScale.value) || 88)) / 100;
-      const base = Math.min(stockW / cropBox.sw, stockH / cropBox.sh);
-      return { wMM: cropBox.sw * base * pct, hMM: cropBox.sh * base * pct };
-    }
-
-    function renderHeightPreview() {
-      const cssW = Math.max(180, Math.floor(previewCanvas.getBoundingClientRect().width || 240));
-      const cssH = 136;
-      const dpr = Math.max(1, window.devicePixelRatio || 1);
-      previewCanvas.width = Math.round(cssW * dpr);
-      previewCanvas.height = Math.round(cssH * dpr);
-      previewCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      previewCtx.fillStyle = '#080808';
-      previewCtx.fillRect(0, 0, cssW, cssH);
-
-      const stockW = Math.max(1, Number(paramWidth.value) || 300);
-      const stockH = Math.max(1, Number(paramHeight.value) || 200);
-      const margin = 10;
-      const fit = Math.min((cssW - margin * 2) / stockW, (cssH - margin * 2) / stockH);
-      const boardW = stockW * fit;
-      const boardH = stockH * fit;
-      const left = (cssW - boardW) / 2;
-      const top = (cssH - boardH) / 2;
-
-      previewCtx.fillStyle = '#5c462c';
-      previewCtx.fillRect(left, top, boardW, boardH);
-      previewCtx.strokeStyle = '#FBBF24';
-      previewCtx.lineWidth = 1;
-      previewCtx.strokeRect(left, top, boardW, boardH);
-
-      if (!has3DSource()) {
-        previewStatus.textContent = 'Нет 3D файла';
-        previewWarning.classList.add('hidden');
-        return;
-      }
-
-      const crop = loadedStlMesh
-        ? { sx: 0, sy: 0, sw: loadedStlMesh.sizeX, sh: loadedStlMesh.sizeY }
-        : getContentCropBox(loadedImage);
-      const dims = getTargetDimensionsMM(crop, stockW, stockH);
-      const drawW = dims.wMM * fit;
-      const drawH = dims.hMM * fit;
-      const angle = (Number(previewRotation.value) || 0) * Math.PI / 180;
-      const dx = (Number(previewX.value) || 0) * fit;
-      const dy = (Number(previewY.value) || 0) * fit;
-      const cx = left + boardW / 2 + dx;
-      const cy = top + boardH / 2 - dy;
-
-      previewCtx.save();
-      previewCtx.beginPath();
-      previewCtx.rect(left, top, boardW, boardH);
-      previewCtx.clip();
-      previewCtx.translate(cx, cy);
-      previewCtx.rotate(angle);
-      if (loadedImage) {
-        previewCtx.drawImage(loadedImage, crop.sx, crop.sy, crop.sw, crop.sh, -drawW / 2, -drawH / 2, drawW, drawH);
-      } else if (loadedStlMesh) {
-        previewCtx.fillStyle = 'rgba(251, 191, 36, 0.25)';
-        previewCtx.fillRect(-drawW / 2, -drawH / 2, drawW, drawH);
-        previewCtx.fillStyle = '#FBBF24';
-        previewCtx.font = 'bold 10px "Fira Code", monospace';
-        previewCtx.textAlign = 'center';
-        previewCtx.fillText('STL 3D MODEL', 0, 3);
-      }
-      previewCtx.strokeStyle = '#ef4444';
-      previewCtx.lineWidth = 1;
-      previewCtx.setLineDash([2, 2]);
-      previewCtx.strokeRect(-drawW / 2, -drawH / 2, drawW, drawH);
-      previewCtx.restore();
-
-      const hw = dims.wMM / 2, hh = dims.hMM / 2, ca = Math.abs(Math.cos(angle)), sa = Math.abs(Math.sin(angle));
-      const ex = hw * ca + hh * sa, ey = hw * sa + hh * ca;
-      const outside = Math.abs(Number(previewX.value) || 0) + ex > stockW / 2 + 1e-6 ||
-                      Math.abs(Number(previewY.value) || 0) + ey > stockH / 2 + 1e-6;
-      previewWarning.classList.toggle('hidden', !outside);
-      previewWarning.textContent = outside ? '⚠ 3D рельеф выходит за пределы заготовки (' + stockW + '×' + stockH + ' мм)!' : '';
-      previewStatus.textContent = (Math.round(dims.wMM * 10) / 10) + '×' + (Math.round(dims.hMM * 10) / 10) + ' мм';
-    }
-
-    [objWidthInput, objHeightInput, previewScale, previewRotation, previewX, previewY, paramWidth, paramHeight, chkTrimBounds].forEach(el => {
-      el.addEventListener('input', renderHeightPreview);
-      el.addEventListener('change', renderHeightPreview);
-    });
-    $('preview-reset').addEventListener('click', () => {
-      objWidthInput.value = ''; objHeightInput.value = ''; previewScale.value = 88;
-      previewRotation.value = 0; previewX.value = 0; previewY.value = 0;
-      renderHeightPreview();
-    });
-    $('preview-center').addEventListener('click', () => { previewX.value = 0; previewY.value = 0; renderHeightPreview(); });
-    window.addEventListener('resize', () => { renderHeightPreview(); resize3D(); });
-
-    fileInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      sourceBase = file.name.replace(/\.[^.]+$/, '').replace(/[^\w\-а-яА-ЯёЁ ]+/g, '_').trim();
-      fileInput.value = '';
-      const isStl = /\.stl$/i.test(file.name);
-      const isSvg = file.type === 'image/svg+xml' || /\.svg$/i.test(file.name);
-
-      if (isStl) {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          try {
-            loadedStlMesh = parseSTLBuffer(ev.target.result);
-            loadedImage = null; loadedRawText = null;
-            inputArea.value = `[Загружена 3D STL-модель: ${file.name}]\nТреугольников: ${loadedStlMesh.count}\nИсходные габариты: ${loadedStlMesh.sizeX.toFixed(2)} × ${loadedStlMesh.sizeY.toFixed(2)} × ${loadedStlMesh.sizeZ.toFixed(2)} мм`;
-            renderHeightPreview();
-            generate3DTap();
-          } catch (err) {
-            failGen([err.message]);
-          }
-        };
-        reader.readAsArrayBuffer(file);
-      } else if (isSvg) {
-        const textReader = new FileReader();
-        textReader.onload = (evText) => {
-          const blobUrl = URL.createObjectURL(new Blob([evText.target.result], { type: 'image/svg+xml;charset=utf-8' }));
-          const img = new Image();
-          img.onload = () => {
-            URL.revokeObjectURL(blobUrl);
-            loadedImage = img; loadedStlMesh = null; loadedRawText = null;
-            inputArea.value = `[Загружен векторный рельеф SVG: ${file.name}, ${img.naturalWidth}×${img.naturalHeight}px]`;
-            renderHeightPreview();
-            generate3DTap();
-          };
-          img.src = blobUrl;
-        };
-        textReader.readAsText(file);
-      } else if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const img = new Image();
-          img.onload = () => {
-            loadedImage = img; loadedStlMesh = null; loadedRawText = null;
-            inputArea.value = `[Загружена карта высот: ${file.name}, ${img.naturalWidth}×${img.naturalHeight}px]`;
-            renderHeightPreview();
-            generate3DTap();
-          };
-          img.src = event.target.result;
-        };
-        reader.readAsDataURL(file);
-      } else {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          loadedRawText = event.target.result;
-          loadedImage = null; loadedStlMesh = null; lastHeightField = null;
-          inputArea.value = loadedRawText;
-          generateTapFromText();
-        };
-        reader.readAsText(file);
-      }
-    });
-
-    // ===================== ПОСТРОЕНИЕ 3D КАРТЫ ВЫСОТ =====================
-    function build3DHeightField(W, H, px, cols, rows, maxDepthAbs) {
-      if (loadedStlMesh) {
-        return rasterizeSTLToHeightMap(loadedStlMesh, W, H, px, cols, rows, maxDepthAbs);
-      }
-      const cv = document.createElement('canvas');
-      cv.width = cols; cv.height = rows;
-      const g = cv.getContext('2d', { willReadFrequently: true });
-      const inv = $('preview-invert').checked;
-      const blurPx = getReliefBlur();
-      const gamma = getReliefGamma();
-      const vig = getReliefVignette();
-
-      g.fillStyle = inv ? '#000000' : '#ffffff';
-      g.fillRect(0, 0, cols, rows);
-
-      const crop = getContentCropBox(loadedImage);
-      const dims = getTargetDimensionsMM(crop, W, H);
-      const drawWpx = dims.wMM / px;
-      const drawHpx = dims.hMM / px;
-      const cxPx = (W / 2 + (Number(previewX.value) || 0)) / px;
-      const cyPx = (H / 2 - (Number(previewY.value) || 0)) / px;
-
-      g.save();
-      g.translate(cxPx, cyPx);
-      g.rotate((Number(previewRotation.value) || 0) * Math.PI / 180);
-      if (blurPx > 0) g.filter = `blur(${blurPx}px)`;
-      g.imageSmoothingQuality = 'high';
-      g.drawImage(loadedImage, crop.sx, crop.sy, crop.sw, crop.sh, -drawWpx / 2, -drawHpx / 2, drawWpx, drawHpx);
-      g.restore();
-
-      const d = g.getImageData(0, 0, cols, rows).data;
-      const zGrid = new Float32Array(cols * rows);
-      const halfW = Math.max(1, drawWpx * 0.5);
-      const halfH = Math.max(1, drawHpx * 0.5);
-
-      for (let j = 0; j < rows; j++) {
-        for (let i = 0; i < cols; i++) {
-          const idx = j * cols + i;
-          let lum = (0.299 * d[idx * 4] + 0.587 * d[idx * 4 + 1] + 0.114 * d[idx * 4 + 2]) / 255;
-          if (inv) lum = 1 - lum; // при инверсии тёмное становится высоким (Z -> 0)
-          // Применяем гамма-кривую объёма
-          let hNorm = Math.pow(Math.max(0, Math.min(1, lum)), gamma);
-
-          // Плавное затухание краёв барельефа (виньетирование в поверхность Z=0)
-          if (vig > 0.001) {
-            const nx = Math.abs(i - cxPx) / halfW;
-            const ny = Math.abs(j - cyPx) / halfH;
-            const edgeDist = Math.max(nx, ny);
-            if (edgeDist > 1 - vig) {
-              const t = Math.max(0, Math.min(1, (1 - edgeDist) / vig));
-              const smoothEdge = t * t * (3 - 2 * t);
-              hNorm = 1 - (1 - hNorm) * smoothEdge;
-            }
-          }
-          zGrid[idx] = -(1 - hNorm) * maxDepthAbs;
-        }
-      }
-      return { zGrid, dims };
-    }
-
-    // Расчёт Z кончика фрезы с учётом её 3D формы (Ball-Nose / Tapered Ball / V-Bit / Flat)
-    function sampleToolZ(zGrid, cols, rows, px, H, x, y, R, toolType, vAngleDeg, maxDepthAbs) {
-      const fx = x / px - 0.5;
-      const fy = (H - y) / px - 0.5;
-      const ci = Math.round(fx), cj = Math.round(fy);
-      const getZ = (i, j) => {
-        const ii = Math.max(0, Math.min(cols - 1, i));
-        const jj = Math.max(0, Math.min(rows - 1, j));
-        return zGrid[jj * cols + ii];
-      };
-
-      if (R <= px * 0.55) {
-        const i0 = Math.max(0, Math.min(cols - 2, Math.floor(fx)));
-        const j0 = Math.max(0, Math.min(rows - 2, Math.floor(fy)));
-        const tx = Math.max(0, Math.min(1, fx - i0));
-        const ty = Math.max(0, Math.min(1, fy - j0));
-        const z00 = getZ(i0, j0), z10 = getZ(i0 + 1, j0), z01 = getZ(i0, j0 + 1), z11 = getZ(i0 + 1, j0 + 1);
-        return (z00 * (1 - tx) + z10 * tx) * (1 - ty) + (z01 * (1 - tx) + z11 * tx) * ty;
-      }
-
-      const halfAngRad = ((vAngleDeg || 15) * 0.5) * Math.PI / 180;
-      const tanHalf = Math.max(0.03, Math.tan(halfAngRad));
-      // Для конической сферической фрезы учитываем также конусную юбку выше сферического кончика
-      const effRadius = (toolType === 'taper_ball' || toolType === 'vbit')
-        ? Math.min(R + maxDepthAbs * tanHalf, Math.max(R * 2.5, 4.0))
-        : R;
-      const radPx = Math.min(20, Math.ceil(effRadius / px));
-      let reqTipZ = -maxDepthAbs;
-
-      for (let dj = -radPx; dj <= radPx; dj++) {
-        for (let di = -radPx; di <= radPx; di++) {
-          const dist = Math.hypot(di * px, dj * px);
-          if (dist > effRadius) continue;
-          const surfZ = getZ(ci + di, cj + dj);
-          let tipZForSample = surfZ;
-
-          if (toolType === 'ball') {
-            const dzSphere = R - Math.sqrt(Math.max(0, R * R - dist * dist));
-            tipZForSample = surfZ - dzSphere;
-          } else if (toolType === 'taper_ball') {
-            if (dist <= R) {
-              const dzSphere = R - Math.sqrt(Math.max(0, R * R - dist * dist));
-              tipZForSample = surfZ - dzSphere;
-            } else {
-              const dzCone = R + (dist - R) / tanHalf;
-              tipZForSample = surfZ - dzCone;
-            }
-          } else if (toolType === 'vbit') {
-            const dzCone = dist / tanHalf;
-            tipZForSample = surfZ - dzCone;
-          } else {
-            tipZForSample = surfZ;
-          }
-
-          if (tipZForSample > reqTipZ) reqTipZ = tipZForSample;
-        }
-      }
-      return Math.min(0, Math.max(-maxDepthAbs, reqTipZ));
-    }
-
-    // ===================== УПРАВЛЕНИЕ СЛОЯМИ Z =====================
-    const paramPasses = $('param-passes'), depthBox = $('depth-fields'), depthStatus = $('depth-status'), camLog = $('cam-log');
-    let depthVals = [], depthTouched = false;
-    const r3 = (v) => Math.round(v * 1000) / 1000;
-    const MODE_NAMES = {
-      relief_x: '3D Чистовой: Растр X',
-      relief_y: '3D Чистовой: Растр Y',
-      relief_cross: '3D Чистовой: Перекрёстный X+Y',
-      relief_spiral: '3D Чистовой: Спираль от центра',
-      relief_rough_fin: '3D Комплекс: Черновой + Чистовой',
-      relief_rough_only: '3D Черновой послойный'
-    };
-
-    $('relief-blur').addEventListener('input', (e) => { $('relief-blur-val').textContent = e.target.value + ' px'; });
-    $('relief-gamma').addEventListener('input', (e) => { $('relief-gamma-val').textContent = parseFloat(e.target.value).toFixed(2); });
-    $('relief-vignette').addEventListener('input', (e) => { $('relief-vignette-val').textContent = e.target.value + '%'; });
-
-    function distributeDepth() {
-      const n = parseInt(paramPasses.value), total = parseFloat(paramCutZ.value);
-      depthVals = [];
-      for (let k = 1; k <= n; k++) depthVals.push(isFinite(total) ? String(k === n ? r3(total) : r3(total * k / n)) : '');
-    }
-    function validateDepths() {
-      const errs = [], n = parseInt(paramPasses.value), total = parseFloat(paramCutZ.value), z = [];
-      if (!isFinite(total) || total >= 0) errs.push('Макс. глубина рельефа должна быть отрицательной (Z < 0).');
-      for (let k = 0; k < n; k++) {
-        const v = parseFloat(depthVals[k]); z.push(v);
-        if (!isFinite(v)) errs.push('Слой ' + (k + 1) + ': глубина не задана.');
-        else if (v >= 0) errs.push('Слой ' + (k + 1) + ': глубина должна быть < 0.');
-        else if (k > 0 && isFinite(z[k - 1]) && v > z[k - 1] + 1e-9) errs.push('Слой ' + (k + 1) + ' мельче предыдущего.');
-      }
-      if (isFinite(total) && isFinite(z[n - 1]) && Math.abs(z[n - 1] - total) > 1e-6)
-        errs.push('Последний слой (' + z[n - 1] + ') должен совпадать с макс. глубиной (' + total + ').');
-      return { errs, z };
-    }
-    function showDepthStatus() {
-      const e = validateDepths().errs;
-      depthStatus.className = 'text-[10px] rounded-lg p-2 border ' + (e.length ? 'text-red-300 bg-red-500/10 border-red-500/30' : 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30');
-      depthStatus.innerHTML = e.length ? e.map(x => '⚠ ' + x).join('<br>') : '✓ Черновые уровни Z: ' + depthVals.join(' → ') + ' мм';
-    }
-    function renderDepthFields() {
-      const n = parseInt(paramPasses.value);
-      depthBox.innerHTML = '';
-      for (let k = 0; k < n; k++) {
-        const lb = document.createElement('label'); lb.className = 'text-[10px] text-neutral-400'; lb.textContent = 'Слой ' + (k + 1) + ' (мм)';
-        const inp = document.createElement('input'); inp.type = 'number'; inp.step = '0.1'; inp.value = depthVals[k] !== undefined ? depthVals[k] : '';
-        inp.className = 'mt-0.5 w-full bg-black border border-neutral-700 text-amber-400 text-xs rounded px-2 font-mono';
-        inp.addEventListener('input', () => { depthVals[k] = inp.value; depthTouched = true; showDepthStatus(); });
-        lb.appendChild(inp); depthBox.appendChild(lb);
-      }
-      showDepthStatus();
-    }
-    paramPasses.addEventListener('change', () => {
-      const n = parseInt(paramPasses.value);
-      if (!depthTouched) distributeDepth();
-      else {
-        depthVals.length = Math.min(depthVals.length, n);
-        while (depthVals.length < n) { const p = parseFloat(depthVals[depthVals.length - 1]); depthVals.push(String(r3((isFinite(p) ? p : 0) - 1))); }
-      }
-      renderDepthFields();
-    });
-    paramCutZ.addEventListener('input', () => { if (!depthTouched) { distributeDepth(); renderDepthFields(); } else showDepthStatus(); });
-    $('btn-distribute').addEventListener('click', () => { distributeDepth(); depthTouched = false; renderDepthFields(); });
-
-    function setLog(msgs, kind) {
-      const cls = { err: 'text-red-300 bg-red-500/10 border-red-500/30', warn: 'text-amber-300 bg-amber-400/10 border-amber-400/30', ok: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30' }[kind];
-      camLog.className = 'text-[10px] rounded-lg p-2 border space-y-0.5 ' + cls;
-      camLog.innerHTML = msgs.map(m => '<div>' + m + '</div>').join('');
-    }
-    function failGen(errs) {
-      outputArea.value = ''; statLines.textContent = 'Кадров: 0'; statSize.textContent = '0 KB'; statTime.textContent = 'Время: —';
-      setLog(errs.map(e => '⛔ ' + e), 'err');
-      voiceSay('Ошибка генерации. ' + errs[0]);
-    }
-
-    // ===================== ГЛАВНЫЙ 3D CAM ДВИЖОК =====================
-    function generate3DTap() {
-      if (!has3DSource()) return;
-      const v = validateDepths(), errs = v.errs.slice();
-      const W = parseFloat(paramWidth.value), H = parseFloat(paramHeight.value), safeZ = parseFloat(paramSafeZ.value),
-            feed = parseFloat(paramFeed.value), step = parseFloat(paramStep.value), D = parseFloat(paramTool.value);
-      if (!(W > 0 && H > 0)) errs.push('Размер заготовки X и Y должен быть больше 0.');
-      if (!(D > 0)) errs.push('Диаметр фрезы должен быть больше 0.');
-      if (!(safeZ > 0)) errs.push('Безопасная Z должна быть больше 0.');
-      if (!(feed > 0)) errs.push('Рабочая подача F должна быть больше 0.');
-      if (!(step > 0)) errs.push('Шаг между строками должен быть больше 0.');
-      if (errs.length) { failGen(errs); return; }
-      setLog(['⏳ Построение 3D рельефа и расчёт траектории ЧПУ…'], 'warn');
-      setTimeout(() => { try { run3DCam({ W, H, safeZ, feed, step, D, z: v.z }); } catch (e) { failGen([e.message]); } }, 20);
-    }
-
-    function run3DCam(o) {
-      const { W, H, safeZ, feed, step, D, z } = o;
-      const R = D / 2;
-      const mode = paramMode.value;
-      const toolType = $('param-tool-type').value;
-      const vAngle = parseFloat($('param-vangle').value) || 15;
-      const maxDepthAbs = Math.abs(parseFloat(paramCutZ.value) || 8);
-      const org = getOrigin(), ox = org.fx * W, oy = org.fy * H;
-      const sep = chkTabs.checked ? '\t' : ' ';
-      const plungeIn = parseFloat($('param-plunge').value);
-      const plunge = plungeIn > 0 ? plungeIn : Math.min(600, feed);
-      const optLines = $('chk-opt-lines').checked;
-      const skipTop = $('chk-skip-top').checked;
-
-      const num3 = (q) => { const v = Math.round(q * 1000) / 1000; return Object.is(v, -0) ? 0 : v; };
-      const f3 = (q) => num3(q).toFixed(3);
-      const fx = (q) => num3(q - ox), fy = (q) => num3(q - oy);
-      const lines = [], kinds = [], L = (s, k) => { lines.push(s); kinds.push(k || ''); };
-
-      // 1. Строим высокоточную 3D карту высот Z(x, y)
-      let rPx = Math.min(Math.max(step * 0.45, 0.2), 0.65);
-      while ((W / rPx) * (H / rPx) > 4.5e5) rPx *= 1.15;
-      const rCols = Math.max(16, Math.ceil(W / rPx));
-      const rRows = Math.max(16, Math.ceil(H / rPx));
-      const hMap = build3DHeightField(W, H, rPx, rCols, rRows, maxDepthAbs);
-      lastHeightField = { grid: hMap.zGrid, cols: rCols, rows: rRows, W, H, ox, oy, maxDepth: maxDepthAbs };
-
-      const dims = hMap.dims;
-      const cxObj = W / 2 + (Number(previewX.value) || 0);
-      const cyObj = H / 2 + (Number(previewY.value) || 0);
-      const margin = R + 0.5;
-      const xMin = Math.max(R, cxObj - dims.wMM / 2 - margin);
-      const xMax = Math.min(W - R, cxObj + dims.wMM / 2 + margin);
-      const yMin = Math.max(R, cyObj - dims.hMM / 2 - margin);
-      const yMax = Math.min(H - R, cyObj + dims.hMM / 2 + margin);
-
-      if (xMax <= xMin || yMax <= yMin) throw new Error('Область 3D-обработки пуста или выходит за пределы заготовки.');
-      lastBounds = { minX: fx(xMin), minY: fy(yMin), maxX: fx(xMax), maxY: fy(yMax) };
-
-      if ($('chk-header').checked) { ['G21', 'G17', 'G40', 'G49', 'G54'].forEach(c => L(c)); }
-      const spindle = parseFloat($('param-spindle').value);
-      L('G90');
-      L('G0' + sep + 'Z' + f3(safeZ));
-      L('M3' + (spindle > 0 ? sep + 'S' + Math.round(spindle) : ''));
-
-      const resAlong = Math.max(0.15, parseFloat($('param-res-x').value) || 0.4);
-      const allowance = (mode === 'relief_rough_fin' || mode === 'relief_rough_only')
-        ? Math.max(0, parseFloat($('param-allowance').value) || 0.5)
-        : 0;
-
-      // Вспомогательная функция: один 3D растровый проход (вдоль X или Y)
-      function emitRasterPass(alongX, passStep, passRes, zFloorLimit, extraAllowance, kindTag) {
-        const outerMin = alongX ? yMin : xMin;
-        const outerMax = alongX ? yMax : xMax;
-        const innerMin = alongX ? xMin : yMin;
-        const innerMax = alongX ? xMax : yMax;
-        const nLines = Math.max(1, Math.ceil((outerMax - outerMin) / passStep));
-        const dOuter = (outerMax - outerMin) / nLines;
-        const nPts = Math.max(2, Math.ceil((innerMax - innerMin) / passRes));
-        const dInner = (innerMax - innerMin) / nPts;
-
-        let flip = false;
-        let inCut = false;
-        let lastZ = safeZ;
-
-        for (let row = 0; row <= nLines; row++) {
-          const uOuter = outerMin + row * dOuter;
-          const rowPts = [];
-          for (let col = 0; col <= nPts; col++) {
-            const idx = flip ? (nPts - col) : col;
-            const uInner = innerMin + idx * dInner;
-            const x = alongX ? uInner : uOuter;
-            const y = alongX ? uOuter : uInner;
-            let tz = sampleToolZ(hMap.zGrid, rCols, rRows, rPx, H, x, y, R, toolType, vAngle, maxDepthAbs);
-            tz = Math.min(0, Math.max(zFloorLimit, tz + extraAllowance));
-            rowPts.push({ x, y, z: tz });
-          }
-
-          let ptsToEmit = rowPts;
-          if (optLines && rowPts.length > 3) {
-            ptsToEmit = [rowPts[0]];
-            for (let k = 1; k < rowPts.length - 1; k++) {
-              const prev = ptsToEmit[ptsToEmit.length - 1];
-              const curr = rowPts[k];
-              const next = rowPts[k + 1];
-              if (Math.abs(curr.z - prev.z) < 0.0025 && Math.abs(next.z - curr.z) < 0.0025) continue;
-              ptsToEmit.push(curr);
-            }
-            ptsToEmit.push(rowPts[rowPts.length - 1]);
-          }
-
-          for (let k = 0; k < ptsToEmit.length; k++) {
-            const pt = ptsToEmit[k];
-            const isFlatZero = skipTop && pt.z > -0.015;
-            if (isFlatZero) {
-              if (inCut) {
-                L('G0' + sep + 'Z' + f3(safeZ));
-                inCut = false;
-              }
-              continue;
-            }
-            if (!inCut) {
-              L('G0' + sep + 'X' + f3(fx(pt.x)) + sep + 'Y' + f3(fy(pt.y)));
-              L('G1' + sep + 'Z' + f3(pt.z) + sep + 'F' + plunge, kindTag);
-              inCut = true;
-              lastZ = pt.z;
-            } else {
-              const zPart = Math.abs(pt.z - lastZ) >= 0.001 ? sep + 'Z' + f3(pt.z) : '';
-              L('G1' + sep + 'X' + f3(fx(pt.x)) + sep + 'Y' + f3(fy(pt.y)) + zPart + sep + 'F' + feed, kindTag);
-              lastZ = pt.z;
-            }
-          }
-          flip = !flip;
-        }
-        if (inCut) L('G0' + sep + 'Z' + f3(safeZ));
-      }
-
-      // 2. Черновой 3D проход по слоям Z (если выбрано)
-      if (mode === 'relief_rough_fin' || mode === 'relief_rough_only') {
-        const roughStep = Math.max(step * 2.2, D * 0.45);
-        const roughRes = Math.max(resAlong * 2.0, D * 0.35);
-        const roughLayers = mode === 'relief_rough_only' ? z : (z.length > 1 ? z.slice(0, -1) : [r3(-maxDepthAbs * 0.5)]);
-        roughLayers.forEach(zLayer => {
-          emitRasterPass(true, roughStep, roughRes, zLayer, allowance, 'in');
-        });
-      }
-
-      // 3. Чистовой 3D проход
-      if (mode === 'relief_x') {
-        emitRasterPass(true, step, resAlong, -maxDepthAbs, 0, 'out');
-      } else if (mode === 'relief_y') {
-        emitRasterPass(false, step, resAlong, -maxDepthAbs, 0, 'out');
-      } else if (mode === 'relief_cross') {
-        emitRasterPass(true, step, resAlong, -maxDepthAbs, 0, 'out');
-        emitRasterPass(false, step, resAlong, -maxDepthAbs, 0, 'out');
-      } else if (mode === 'relief_rough_fin') {
-        emitRasterPass(true, step, resAlong, -maxDepthAbs, 0, 'out');
-      } else if (mode === 'relief_spiral') {
-        // Непрерывная архимедова 3D-спираль от центра барельефа к краям
-        const cx = (xMin + xMax) * 0.5;
-        const cy = (yMin + yMax) * 0.5;
-        const rxMax = (xMax - xMin) * 0.5;
-        const ryMax = (yMax - yMin) * 0.5;
-        const maxR = Math.hypot(rxMax, ryMax);
-        const bPitch = step / (2 * Math.PI);
-        let theta = 0;
-        let inCut = false;
-        let lastZ = safeZ;
-
-        while (true) {
-          const rCur = bPitch * theta;
-          if (rCur > maxR + step) break;
-          const x = cx + rCur * Math.cos(theta);
-          const y = cy + rCur * Math.sin(theta);
-          const insideBox = x >= xMin && x <= xMax && y >= yMin && y <= yMax;
-
-          if (insideBox) {
-            const tz = sampleToolZ(hMap.zGrid, rCols, rRows, rPx, H, x, y, R, toolType, vAngle, maxDepthAbs);
-            const isFlatZero = skipTop && tz > -0.015;
-            if (isFlatZero) {
-              if (inCut) { L('G0' + sep + 'Z' + f3(safeZ)); inCut = false; }
-            } else if (!inCut) {
-              L('G0' + sep + 'X' + f3(fx(x)) + sep + 'Y' + f3(fy(y)));
-              L('G1' + sep + 'Z' + f3(tz) + sep + 'F' + plunge, 'out');
-              inCut = true;
-              lastZ = tz;
-            } else {
-              const zPart = Math.abs(tz - lastZ) >= 0.001 ? sep + 'Z' + f3(tz) : '';
-              L('G1' + sep + 'X' + f3(fx(x)) + sep + 'Y' + f3(fy(y)) + zPart + sep + 'F' + feed, 'out');
-              lastZ = tz;
-            }
-          } else if (inCut) {
-            L('G0' + sep + 'Z' + f3(safeZ));
-            inCut = false;
-          }
-
-          const dTheta = Math.min(0.35, resAlong / Math.max(rCur, step * 0.5));
-          theta += dTheta;
-        }
-        if (inCut) L('G0' + sep + 'Z' + f3(safeZ));
-      }
-
-      // 4. Финишный проход по периметру барельефа (срезает ступеньки на границе)
-      if ($('chk-boundary-pass').checked && mode !== 'relief_rough_only') {
-        const perimPts = [];
-        const nx = Math.max(2, Math.ceil((xMax - xMin) / resAlong));
-        const ny = Math.max(2, Math.ceil((yMax - yMin) / resAlong));
-        for (let i = 0; i <= nx; i++) perimPts.push([xMin + (xMax - xMin) * (i / nx), yMin]);
-        for (let j = 1; j <= ny; j++) perimPts.push([xMax, yMin + (yMax - yMin) * (j / ny)]);
-        for (let i = nx - 1; i >= 0; i--) perimPts.push([xMin + (xMax - xMin) * (i / nx), yMax]);
-        for (let j = ny - 1; j >= 0; j--) perimPts.push([xMin, yMin + (yMax - yMin) * (j / ny)]);
-
-        let started = false;
-        let lastZ = safeZ;
-        for (const [pxPt, pyPt] of perimPts) {
-          const tz = sampleToolZ(hMap.zGrid, rCols, rRows, rPx, H, pxPt, pyPt, R, toolType, vAngle, maxDepthAbs);
-          if (skipTop && tz > -0.015) {
-            if (started) { L('G0' + sep + 'Z' + f3(safeZ)); started = false; }
-            continue;
-          }
-          if (!started) {
-            L('G0' + sep + 'X' + f3(fx(pxPt)) + sep + 'Y' + f3(fy(pyPt)));
-            L('G1' + sep + 'Z' + f3(tz) + sep + 'F' + plunge, 'out');
-            started = true;
-            lastZ = tz;
-          } else {
-            const zPart = Math.abs(tz - lastZ) >= 0.001 ? sep + 'Z' + f3(tz) : '';
-            L('G1' + sep + 'X' + f3(fx(pxPt)) + sep + 'Y' + f3(fy(pyPt)) + zPart + sep + 'F' + feed, 'out');
-            lastZ = tz;
-          }
-        }
-        if (started) L('G0' + sep + 'Z' + f3(safeZ));
-      }
-
-      if ($('chk-m5').checked) L('M5');
-      if ($('chk-return-zero').checked) {
-        L('G0' + sep + 'Z' + f3(safeZ));
-        L('G0' + sep + 'X0.000' + sep + 'Y0.000');
-      }
-      if (chkM30.checked) L('M30');
-
-      if (lines.some(l => /NaN|undefined|Infinity/.test(l))) throw new Error('Внутренняя ошибка координат (NaN).');
-      finalizeOutput(lines, kinds);
-      setLog(['✓ Готово! Стратегия: ' + (MODE_NAMES[mode] || mode) + ' · 3D рез: ' + (lastEst.cut / 1000).toFixed(2) + ' м · G0: ' + (lastEst.rapidLen / 1000).toFixed(2) + ' м'], 'ok');
-    }
-
-    // Загрузка готового G-кода в 3D-просмотрщик
-    function generateTapFromText() {
-      let raw = inputArea.value || loadedRawText || '';
-      if (!raw.trim()) return;
-      const sep = chkTabs.checked ? '\t' : ' ';
-      const lines = [], kinds = [];
-      let curZ = 0, minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-      raw.split(/\r\n|\r|\n/).forEach(l => {
-        let line = l.trim().toUpperCase().replace(/\(.*?\)/g, '').replace(/;.*/g, '');
-        if (!line) return;
-        line = line.replace(/\s+/g, sep).replace(/([0-9.])(?=[A-Z])/g, `$1${sep}`);
-        for (const m of line.matchAll(/([XYZ])\s*([-+]?\d*\.?\d+)/g)) {
-          const val = parseFloat(m[2]);
-          if (m[1] === 'X') { if (val < minX) minX = val; if (val > maxX) maxX = val; }
-          else if (m[1] === 'Y') { if (val < minY) minY = val; if (val > maxY) maxY = val; }
-          else if (m[1] === 'Z') curZ = val;
-        }
-        lines.push(line);
-        kinds.push(curZ < -0.001 ? 'out' : 'out');
-      });
-      if (chkM30.checked && !lines.some(l => l.includes('M30') || l.includes('M02'))) { lines.push('M30'); kinds.push(''); }
-      if (isFinite(minX) && isFinite(maxX)) lastBounds = { minX, minY, maxX, maxY };
-      finalizeOutput(lines, kinds);
-      if (lastBounds) {
-        setLog(['✓ 3D УП загружена! Габариты: ' + (maxX - minX).toFixed(1) + '×' + (maxY - minY).toFixed(1) + ' мм'], 'ok');
-      }
-    }
-
-    const ORIGIN_NAMES = { '0,0': 'Левый нижний (X0 Y0)', '0.5,0': 'Низ по центру', '1,0': 'Правый нижний', '0,0.5': 'Левый край центр', '0.5,0.5': 'Центр заготовки', '1,0.5': 'Правый край центр', '0,1': 'Левый верхний', '0.5,1': 'Верх по центру', '1,1': 'Правый верхний' };
-    function getOrigin() {
-      const r = document.querySelector('input[name="origin"]:checked'), v = r ? r.value : '0,0', [fx, fy] = v.split(',').map(Number);
-      return { fx, fy, label: ORIGIN_NAMES[v] };
-    }
-    function updateOriginCaption() {
-      const o = getOrigin(), W = parseFloat(paramWidth.value) || 0, H = parseFloat(paramHeight.value) || 0, f = (v) => Math.round(v * 100) / 100;
-      $('origin-caption').innerHTML = '<span class="text-amber-400">' + o.label + '</span><br>Смещение: (' + f(o.fx * W) + '; ' + f(o.fy * H) + ') мм';
-    }
-    document.querySelectorAll('input[name="origin"]').forEach(r => r.addEventListener('change', () => { updateOriginCaption(); if (has3DSource()) generate3DTap(); else rebuild3DScene(); }));
-    [paramWidth, paramHeight, paramThickness].forEach(el => el.addEventListener('input', () => { updateOriginCaption(); rebuild3DScene(); }));
-
-    function estimateJob(lines, rapid) {
-      let x = 0, y = 0, z = 0, f = 0, gm = 0, cut = 0, minutes = 0, rapidLen = 0;
-      lines.forEach(line => {
-        const t = line.replace(/\(.*?\)/g, '').replace(/;.*/, '').toUpperCase();
-        let nx = x, ny = y, nz = z;
-        for (const m of t.matchAll(/([GXYZF])\s*([-+]?\d*\.?\d+)/g)) {
-          const v = parseFloat(m[2]);
-          if (m[1] === 'G') { if (v === 0) gm = 0; else if (v >= 1 && v <= 3) gm = 1; }
-          else if (m[1] === 'X') nx = v; else if (m[1] === 'Y') ny = v; else if (m[1] === 'Z') nz = v;
-          else if (m[1] === 'F') f = v;
-        }
-        const d3 = Math.hypot(nx - x, ny - y, nz - z);
-        if (gm === 0) { if (d3 > 0) { minutes += d3 / rapid; rapidLen += Math.hypot(nx - x, ny - y); } }
-        else { if (d3 > 0) { cut += d3; minutes += d3 / (f > 0 ? f : 1500); } }
-        x = nx; y = ny; z = nz;
-      });
-      return { cut, minutes, rapidLen };
-    }
-    function fmtTime(m) {
-      const s = Math.round(m * 60), h = Math.floor(s / 3600), mi = Math.floor((s % 3600) / 60), se = s % 60;
-      return h ? h + ' ч ' + mi + ' мин' : mi ? mi + ' мин ' + se + ' с' : se + ' с';
-    }
-    function updateStats(lines) {
-      const rapid = parseFloat($('param-rapid').value), est = estimateJob(lines, rapid > 0 ? rapid : 3500);
-      statTime.textContent = '~' + fmtTime(est.minutes) + ' · рез ' + (est.cut / 1000).toFixed(2) + ' м';
-      return est;
-    }
-
-    let lastEst = { cut: 0, minutes: 0, rapidLen: 0 };
-    let simSegs = [], simPlaying = false, simIdx = 0, simRaf = null;
-
-    function parse3DSegments(lines, kinds) {
-      let x = 0, y = 0, z = 0, gm = 0;
-      const segs = [];
-      lines.forEach((line, idx) => {
-        const tx = line.replace(/\(.*?\)/g, '').replace(/;.*/, '').toUpperCase();
-        let nx = x, ny = y, nz = z, has = false;
-        for (const m of tx.matchAll(/([GXYZ])\s*([-+]?\d*\.?\d+)/g)) {
-          const v = parseFloat(m[2]);
-          if (m[1] === 'G') { if (v === 0) gm = 0; else if (v >= 1 && v <= 3) gm = 1; }
-          else if (m[1] === 'X') { nx = v; has = true; }
-          else if (m[1] === 'Y') { ny = v; has = true; }
-          else if (m[1] === 'Z') { nz = v; has = true; }
-        }
-        if (has) {
-          const knd = (kinds && kinds[idx]) || 'out';
-          segs.push({ x0: x, y0: y, z0: z, x1: nx, y1: ny, z1: nz, gm, kind: knd, lineNo: idx + 1 });
-          x = nx; y = ny; z = nz;
-        }
-      });
-      simSegs = segs;
-      simIdx = segs.length;
-      const sl = $('sim-slider');
-      if (sl) { sl.max = Math.max(1, segs.length); sl.value = segs.length; }
-      const ro = $('sim-readout');
-      if (ro) ro.textContent = 'Кадр: ' + segs.length + '/' + segs.length;
-    }
-
-    function finalizeOutput(lines, kinds) {
-      const result = lines.join('\r\n');
-      outputArea.value = result;
-      statLines.textContent = `Кадров: ${lines.length}`;
-      statSize.textContent = `${(new Blob([result]).size / 1024).toFixed(1)} KB`;
-      lastEst = updateStats(lines);
-      stopSim(false);
-      parse3DSegments(lines, kinds);
-      rebuild3DScene();
-      voiceSay('3D траектория рассчитана, кадров: ' + lines.length);
-    }
-
-    // ===================== THREE.JS 3D СЦЕНА =====================
-    const wrap3D = $('cnc-3d-wrap');
-    let scene3D, camera3D, renderer3D, worldGroup, reliefMesh, toolMesh, pathGroup;
-    let camSph = { radius: 420, theta: -0.65, phi: 0.92, target: new THREE.Vector3(0, 0, 0) };
-
-    function init3D() {
-      if (typeof THREE === 'undefined') {
-        canvas3dInfo.textContent = '⚠ Three.js не загрузился (проверьте подключение к интернету).';
-        return;
-      }
-      scene3D = new THREE.Scene();
-      scene3D.background = new THREE.Color(0x070709);
-
-      const cw = wrap3D.clientWidth || 700, ch = wrap3D.clientHeight || 550;
-      camera3D = new THREE.PerspectiveCamera(42, cw / ch, 1, 20000);
-
-      renderer3D = new THREE.WebGLRenderer({ antialias: true });
-      renderer3D.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-      renderer3D.setSize(cw, ch);
-      wrap3D.insertBefore(renderer3D.domElement, wrap3D.firstChild);
-
-      scene3D.add(new THREE.AmbientLight(0xffffff, 0.5));
-      const dir1 = new THREE.DirectionalLight(0xfff5db, 0.95);
-      dir1.position.set(280, 420, 320);
-      scene3D.add(dir1);
-      const dir2 = new THREE.DirectionalLight(0x60a5fa, 0.35);
-      dir2.position.set(-300, 180, -250);
-      scene3D.add(dir2);
-
-      worldGroup = new THREE.Group();
-      scene3D.add(worldGroup);
-
-      // 3D модель фрезы с конусным кончиком
-      const toolGroup = new THREE.Group();
-      const shank = new THREE.Mesh(
-        new THREE.CylinderGeometry(1.5, 1.5, 22, 16),
-        new THREE.MeshStandardMaterial({ color: 0xe5e7eb, metalness: 0.8, roughness: 0.25 })
-      );
-      shank.position.y = 14;
-      const tip = new THREE.Mesh(
-        new THREE.ConeGeometry(1.5, 6, 16),
-        new THREE.MeshStandardMaterial({ color: 0xef4444, emissive: 0x7f1d1d, metalness: 0.5, roughness: 0.3 })
-      );
-      tip.rotation.x = Math.PI;
-      tip.position.y = 3;
-      toolGroup.add(shank, tip);
-      toolMesh = toolGroup;
-      toolMesh.visible = false;
-      scene3D.add(toolMesh);
-
-      updateCamera3D();
-      setup3DControls();
-      rebuild3DScene();
-      animate3D();
-    }
-
-    function updateCamera3D() {
-      if (!camera3D) return;
-      const sinPhi = Math.sin(camSph.phi);
-      camera3D.position.set(
-        camSph.target.x + camSph.radius * sinPhi * Math.sin(camSph.theta),
-        camSph.target.y + camSph.radius * Math.cos(camSph.phi),
-        camSph.target.z + camSph.radius * sinPhi * Math.cos(camSph.theta)
-      );
-      camera3D.lookAt(camSph.target);
-    }
-
-    function setup3DControls() {
-      const dom = renderer3D.domElement;
-      let dragMode = 0, prevX = 0, prevY = 0;
-      dom.addEventListener('contextmenu', e => e.preventDefault());
-      dom.addEventListener('pointerdown', e => {
-        dom.setPointerCapture(e.pointerId);
-        dragMode = e.button === 2 || e.shiftKey ? 2 : 1;
-        prevX = e.clientX; prevY = e.clientY;
-        dom.style.cursor = 'grabbing';
-      });
-      dom.addEventListener('pointermove', e => {
-        if (!dragMode) return;
-        const dx = e.clientX - prevX, dy = e.clientY - prevY;
-        prevX = e.clientX; prevY = e.clientY;
-        if (dragMode === 1) {
-          camSph.theta -= dx * 0.007;
-          camSph.phi = Math.max(0.05, Math.min(Math.PI * 0.49, camSph.phi - dy * 0.007));
+      for (const p of emit) {
+        const flat = skipTop && p.z > -0.015;
+        if (flat) { if (inCut) { L('G0' + sep + 'Z' + f3(safeZ), kind); inCut = false; } continue; }
+        if (!inCut) {
+          L('G0' + sep + 'X' + f3(fx(p.x)) + sep + 'Y' + f3(fy(p.y)), kind);
+          L('G1' + sep + 'Z' + f3(p.z) + sep + 'F' + plunge, kind);
+          inCut = true; lastZ = p.z;
         } else {
-          const panScale = camSph.radius * 0.0014;
-          const right = new THREE.Vector3(Math.cos(camSph.theta), 0, -Math.sin(camSph.theta));
-          const fwd = new THREE.Vector3(-Math.sin(camSph.theta), 0, -Math.cos(camSph.theta));
-          camSph.target.addScaledVector(right, -dx * panScale);
-          camSph.target.addScaledVector(fwd, dy * panScale);
+          const zp = Math.abs(p.z - lastZ) >= 0.001 ? sep + 'Z' + f3(p.z) : '';
+          L('G1' + sep + 'X' + f3(fx(p.x)) + sep + 'Y' + f3(fy(p.y)) + zp + sep + 'F' + feed, kind);
+          lastZ = p.z;
         }
-        updateCamera3D();
-      });
-      const stopDrag = () => { dragMode = 0; dom.style.cursor = 'grab'; };
-      dom.addEventListener('pointerup', stopDrag);
-      dom.addEventListener('pointercancel', stopDrag);
-      dom.addEventListener('wheel', e => {
-        e.preventDefault();
-        camSph.radius = Math.max(15, Math.min(5000, camSph.radius * Math.exp(e.deltaY * 0.0012)));
-        updateCamera3D();
-      }, { passive: false });
-    }
-
-    function resize3D() {
-      if (!renderer3D || !camera3D) return;
-      const cw = wrap3D.clientWidth || 700, ch = wrap3D.clientHeight || 550;
-      camera3D.aspect = cw / ch;
-      camera3D.updateProjectionMatrix();
-      renderer3D.setSize(cw, ch);
-    }
-
-    const cncTo3D = (x, y, z) => new THREE.Vector3(x, z, -y);
-
-    function rebuild3DScene() {
-      if (!worldGroup) return;
-      while (worldGroup.children.length) worldGroup.remove(worldGroup.children[0]);
-
-      const W = parseFloat(paramWidth.value) || 300;
-      const H = parseFloat(paramHeight.value) || 200;
-      const T = parseFloat(paramThickness.value) || 20;
-      const o = getOrigin();
-      const ox = o.fx * W, oy = o.fy * H;
-
-      // Сетка рабочего стола станка
-      const gridSize = Math.max(W, H) * 1.6;
-      const grid = new THREE.GridHelper(gridSize, 20, 0x333333, 0x161616);
-      grid.position.set(W / 2 - ox, -T, -(H / 2 - oy));
-      worldGroup.add(grid);
-
-      // Заготовка
-      const stockGeo = new THREE.BoxGeometry(W, T, H);
-      const stockMat = new THREE.MeshStandardMaterial({
-        color: 0x5c4227,
-        roughness: 0.85,
-        metalness: 0.05,
-        transparent: true,
-        opacity: lastHeightField ? 0.28 : 0.75
-      });
-      const stockMesh = new THREE.Mesh(stockGeo, stockMat);
-      stockMesh.position.set(W / 2 - ox, -T / 2, -(H / 2 - oy));
-      worldGroup.add(stockMesh);
-
-      const lineBox = new THREE.LineSegments(
-        new THREE.EdgesGeometry(stockGeo),
-        new THREE.LineBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0.45 })
-      );
-      lineBox.position.copy(stockMesh.position);
-      worldGroup.add(lineBox);
-
-      // Оси нулевой точки X0 Y0 Z0
-      const axes = new THREE.AxesHelper(Math.max(24, Math.min(W, H) * 0.18));
-      worldGroup.add(axes);
-
-      // 3D поверхность рельефа
-      if (lastHeightField && $('chk-3d-mesh').checked) {
-        const hf = lastHeightField;
-        const segX = Math.min(260, hf.cols - 1);
-        const segY = Math.min(260, hf.rows - 1);
-        const geo = new THREE.PlaneGeometry(hf.W, hf.H, segX, segY);
-        geo.rotateX(-Math.PI / 2);
-        const pos = geo.attributes.position;
-        const colors = new Float32Array(pos.count * 3);
-        const maxD = Math.max(0.01, hf.maxDepth);
-        const shadeMode = $('sel-3d-shading').value;
-
-        for (let i = 0; i < pos.count; i++) {
-          const lx = pos.getX(i) + hf.W / 2;
-          const lz = pos.getZ(i) + hf.H / 2;
-          const ci = Math.max(0, Math.min(hf.cols - 1, Math.round((lx / hf.W) * (hf.cols - 1))));
-          const cj = Math.max(0, Math.min(hf.rows - 1, Math.round((lz / hf.H) * (hf.rows - 1))));
-          const zVal = hf.grid[cj * hf.cols + ci];
-          pos.setY(i, zVal);
-
-          const t = Math.max(0, Math.min(1, 1 + zVal / maxD)); // 1 = верх Z0, 0 = дно -maxD
-          if (shadeMode === 'heatmap') {
-            colors[i * 3]     = Math.min(1, Math.max(0, 1.5 - Math.abs(4 * t - 3)));
-            colors[i * 3 + 1] = Math.min(1, Math.max(0, 1.5 - Math.abs(4 * t - 2)));
-            colors[i * 3 + 2] = Math.min(1, Math.max(0, 1.5 - Math.abs(4 * t - 1)));
-          } else if (shadeMode === 'gold') {
-            colors[i * 3]     = 0.35 + 0.62 * t;
-            colors[i * 3 + 1] = 0.24 + 0.52 * t;
-            colors[i * 3 + 2] = 0.06 + 0.14 * t;
-          } else {
-            colors[i * 3]     = 0.22 + 0.64 * t;
-            colors[i * 3 + 1] = 0.14 + 0.46 * t;
-            colors[i * 3 + 2] = 0.07 + 0.24 * t;
-          }
-        }
-        geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-        geo.computeVertexNormals();
-        const mat = new THREE.MeshStandardMaterial({
-          vertexColors: true,
-          roughness: shadeMode === 'gold' ? 0.35 : 0.62,
-          metalness: shadeMode === 'gold' ? 0.45 : 0.06,
-          wireframe: shadeMode === 'wire',
-          side: THREE.DoubleSide
-        });
-        reliefMesh = new THREE.Mesh(geo, mat);
-        reliefMesh.position.set(hf.W / 2 - hf.ox, 0.02, -(hf.H / 2 - hf.oy));
-        worldGroup.add(reliefMesh);
       }
+      flip = !flip;
+    }
+    if (inCut) L('G0' + sep + 'Z' + f3(safeZ), kind);
+  }
 
-      // 3D траектории фрезы
-      if (simSegs.length > 0 && $('chk-3d-paths').checked) {
-        pathGroup = new THREE.Group();
-        const rapidPts = [], cutPts = [], roughPts = [];
-        const limit = Math.min(simIdx, simSegs.length);
-        for (let i = 0; i < limit; i++) {
-          const s = simSegs[i];
-          const p0 = cncTo3D(s.x0, s.y0, s.z0);
-          const p1 = cncTo3D(s.x1, s.y1, s.z1);
-          if (s.gm === 0) rapidPts.push(p0, p1);
-          else if (s.kind === 'in') roughPts.push(p0, p1);
-          else cutPts.push(p0, p1);
-        }
-        if (rapidPts.length) {
-          pathGroup.add(new THREE.LineSegments(
-            new THREE.BufferGeometry().setFromPoints(rapidPts),
-            new THREE.LineBasicMaterial({ color: 0x525252, transparent: true, opacity: 0.4 })
-          ));
-        }
-        if (roughPts.length) {
-          pathGroup.add(new THREE.LineSegments(
-            new THREE.BufferGeometry().setFromPoints(roughPts),
-            new THREE.LineBasicMaterial({ color: 0x38bdf8 })
-          ));
-        }
-        if (cutPts.length) {
-          pathGroup.add(new THREE.LineSegments(
-            new THREE.BufferGeometry().setFromPoints(cutPts),
-            new THREE.LineBasicMaterial({ color: 0xfbbf24 })
-          ));
-        }
-        worldGroup.add(pathGroup);
+  // Черновой: слои по Z
+  if (mode === 'relief_rough_fin' || mode === 'relief_rough_only') {
+    const rStep = Math.max(step * 2.2, D * 0.45), rRes = Math.max(res * 2, D * 0.35);
+    const layers = mode === 'relief_rough_only' ? zLayers : (zLayers.length > 1 ? zLayers.slice(0, -1) : [r3(-maxD * 0.5)]);
+    layers.forEach(zl => raster(true, rStep, rRes, zl, allowance, 'in'));
+  }
 
-        const cur = simSegs[Math.max(0, limit - 1)];
-        if (cur && toolMesh) {
-          const D = parseFloat(paramTool.value) || 3;
-          toolMesh.scale.set(D / 3, 1, D / 3);
-          toolMesh.position.set(cur.x1, cur.z1, -cur.y1);
-          toolMesh.visible = true;
-        }
-      } else if (toolMesh) {
-        toolMesh.visible = false;
+  // Чистовой
+  if (mode === 'relief_x' || mode === 'relief_rough_fin') raster(true, step, res, -maxD, 0, 'out');
+  else if (mode === 'relief_y') raster(false, step, res, -maxD, 0, 'out');
+  else if (mode === 'relief_cross') { raster(true, step, res, -maxD, 0, 'out'); raster(false, step, res, -maxD, 0, 'out'); }
+  else if (mode === 'relief_spiral') {
+    const cx = (xMin + xMax) / 2, cy = (yMin + yMax) / 2;
+    const maxRad = Math.hypot((xMax - xMin) / 2, (yMax - yMin) / 2);
+    const pitch = step / (2 * Math.PI);
+    let th = 0, inCut = false, lastZ = safeZ;
+    while (true) {
+      const rc = pitch * th;
+      if (rc > maxRad + step) break;
+      const x = cx + rc * Math.cos(th), y = cy + rc * Math.sin(th);
+      const inside = x >= xMin && x <= xMax && y >= yMin && y <= yMax;
+      if (inside) {
+        const z = sampleTip(f, offs, x, y, maxD);
+        if (skipTop && z > -0.015) { if (inCut) { L('G0' + sep + 'Z' + f3(safeZ)); inCut = false; } }
+        else if (!inCut) { L('G0' + sep + 'X' + f3(fx(x)) + sep + 'Y' + f3(fy(y))); L('G1' + sep + 'Z' + f3(z) + sep + 'F' + plunge); inCut = true; lastZ = z; }
+        else { const zp = Math.abs(z - lastZ) >= 0.001 ? sep + 'Z' + f3(z) : ''; L('G1' + sep + 'X' + f3(fx(x)) + sep + 'Y' + f3(fy(y)) + zp + sep + 'F' + feed); lastZ = z; }
+      } else if (inCut) { L('G0' + sep + 'Z' + f3(safeZ)); inCut = false; }
+      th += Math.min(0.35, res / Math.max(rc, step * 0.5));
+    }
+    if (inCut) L('G0' + sep + 'Z' + f3(safeZ));
+  }
+
+  // Контур: внутрь / по линии / наружу. Смещение = радиус фрезы
+  const bnd = $('boundary').value;
+  if (bnd !== 'none' && mode !== 'relief_rough_only') {
+    const off = bnd === 'inside' ? -R : bnd === 'outside' ? R : 0;
+    const x0 = clamp(cxObj - dims.w / 2 - off, R, W - R), x1 = clamp(cxObj + dims.w / 2 + off, R, W - R);
+    const y0 = clamp(cyObj - dims.h / 2 - off, R, H - R), y1 = clamp(cyObj + dims.h / 2 + off, R, H - R);
+    const perim = [];
+    const nx = Math.max(2, Math.ceil((x1 - x0) / res)), ny = Math.max(2, Math.ceil((y1 - y0) / res));
+    for (let i = 0; i <= nx; i++) perim.push([x0 + (x1 - x0) * i / nx, y0]);
+    for (let j = 1; j <= ny; j++) perim.push([x1, y0 + (y1 - y0) * j / ny]);
+    for (let i = nx - 1; i >= 0; i--) perim.push([x0 + (x1 - x0) * i / nx, y1]);
+    for (let j = ny - 1; j >= 0; j--) perim.push([x0, y0 + (y1 - y0) * j / ny]);
+    let started = false, lastZ = safeZ;
+    for (const [x, y] of perim) {
+      const z = sampleTip(f, offs, x, y, maxD);
+      if (skipTop && z > -0.015) { if (started) { L('G0' + sep + 'Z' + f3(safeZ)); started = false; } continue; }
+      if (!started) { L('G0' + sep + 'X' + f3(fx(x)) + sep + 'Y' + f3(fy(y))); L('G1' + sep + 'Z' + f3(z) + sep + 'F' + plunge); started = true; lastZ = z; }
+      else { const zp = Math.abs(z - lastZ) >= 0.001 ? sep + 'Z' + f3(z) : ''; L('G1' + sep + 'X' + f3(fx(x)) + sep + 'Y' + f3(fy(y)) + zp + sep + 'F' + feed); lastZ = z; }
+    }
+    if (started) L('G0' + sep + 'Z' + f3(safeZ));
+  }
+
+  if ($('chk-m5').checked) L('M5');
+  if ($('chk-return').checked) { L('G0' + sep + 'Z' + f3(safeZ)); L('G0' + sep + 'X0.000' + sep + 'Y0.000'); }
+  if ($('chk-m30').checked) L('M30');
+
+  if (lines.some(l => /NaN|undefined|Infinity/.test(l))) throw new Error('Внутренняя ошибка координат.');
+  finalize(lines, kinds);
+  setLog([`✓ Готово. Стратегия: ${$('mode').selectedOptions[0].textContent} · рез ${(lastEst.cut / 1000).toFixed(2)} м · холостой ход ${(lastEst.rapidLen / 1000).toFixed(2)} м`], 'ok');
+}
+
+/* ===================== ВЫВОД, СТАТИСТИКА, СИМУЛЯЦИЯ ===================== */
+function finalize(lines, kinds) {
+  const text = lines.join('\r\n');
+  $('code-output').value = text;
+  $('stat-lines').textContent = `Кадров: ${lines.length}`;
+  $('stat-size').textContent = `${(new Blob([text]).size / 1024).toFixed(1)} KB`;
+  stopSim(false);
+  parseSegments(lines, kinds);
+  lastEst = estimate(lines, Math.max(1, num('rapid', 3500)));
+  $('stat-time').textContent = `~${fmtTime(lastEst.minutes)} · рез ${(lastEst.cut / 1000).toFixed(2)} м`;
+  rebuild3DScene();
+}
+function estimate(lines, rapid) {
+  let x = 0, y = 0, z = 0, f = 0, gm = 0, cut = 0, minutes = 0, rapidLen = 0;
+  for (const line of lines) {
+    const t = line.replace(/\(.*?\)/g, '').replace(/;.*/, '').toUpperCase();
+    let nx = x, ny = y, nz = z;
+    for (const m of t.matchAll(/([GXYZF])\s*([-+]?\d*\.?\d+)/g)) {
+      const v = parseFloat(m[2]);
+      if (m[1] === 'G') { if (v === 0) gm = 0; else if (v >= 1 && v <= 3) gm = 1; }
+      else if (m[1] === 'X') nx = v; else if (m[1] === 'Y') ny = v; else if (m[1] === 'Z') nz = v;
+      else if (m[1] === 'F') f = v;
+    }
+    const d = Math.hypot(nx - x, ny - y, nz - z);
+    if (d > 0) {
+      if (gm === 0) { minutes += d / rapid; rapidLen += Math.hypot(nx - x, ny - y); }
+      else { cut += d; minutes += d / (f > 0 ? f : 1500); }
+    }
+    x = nx; y = ny; z = nz;
+  }
+  return { cut, minutes, rapidLen };
+}
+function fmtTime(m) {
+  const s = Math.round(m * 60), h = Math.floor(s / 3600), mi = Math.floor((s % 3600) / 60), se = s % 60;
+  return h ? `${h} ч ${mi} мин` : mi ? `${mi} мин ${se} с` : `${se} с`;
+}
+function parseSegments(lines, kinds) {
+  let x = 0, y = 0, z = 0, gm = 0; const segs = [];
+  lines.forEach((line, idx) => {
+    const t = line.replace(/\(.*?\)/g, '').replace(/;.*/, '').toUpperCase();
+    let nx = x, ny = y, nz = z, has = false;
+    for (const m of t.matchAll(/([GXYZ])\s*([-+]?\d*\.?\d+)/g)) {
+      const v = parseFloat(m[2]);
+      if (m[1] === 'G') { if (v === 0) gm = 0; else if (v >= 1 && v <= 3) gm = 1; }
+      else if (m[1] === 'X') { nx = v; has = true; }
+      else if (m[1] === 'Y') { ny = v; has = true; }
+      else if (m[1] === 'Z') { nz = v; has = true; }
+    }
+    if (has) { segs.push({ x0: x, y0: y, z0: z, x1: nx, y1: ny, z1: nz, gm, kind: kinds[idx] || 'out', lineNo: idx + 1 }); x = nx; y = ny; z = nz; }
+  });
+  simSegs = segs; simIdx = segs.length;
+  $('sim-slider').max = Math.max(1, segs.length); $('sim-slider').value = segs.length;
+  $('sim-readout').textContent = `Кадр: ${segs.length}/${segs.length}`;
+}
+function stopSim(toEnd) {
+  simPlaying = false; if (simRaf) cancelAnimationFrame(simRaf);
+  $('btn-sim-play').textContent = '▶ Симуляция';
+  if (toEnd) { simIdx = simSegs.length; $('sim-slider').value = simIdx; $('sim-readout').textContent = `Кадр: ${simIdx}/${simSegs.length}`; updateOverlay(); }
+}
+function readoutFor(i) {
+  const cur = simSegs[Math.max(0, i - 1)];
+  return cur ? `Кадр ${cur.lineNo}/${simSegs.length} · X${cur.x1.toFixed(1)} Y${cur.y1.toFixed(1)} Z${cur.z1.toFixed(2)}`
+             : `Кадр ${i}/${simSegs.length}`;
+}
+function tickSim() {
+  if (!simPlaying) return;
+  simIdx = Math.min(simSegs.length, simIdx + (parseInt($('sim-speed').value) || 25));
+  $('sim-slider').value = simIdx; $('sim-readout').textContent = readoutFor(simIdx);
+  updateOverlay();
+  if (simIdx >= simSegs.length) stopSim(false); else simRaf = requestAnimationFrame(tickSim);
+}
+$('btn-sim-play').addEventListener('click', () => {
+  if (!simSegs.length) return;
+  if (simPlaying) { stopSim(false); return; }
+  if (simIdx >= simSegs.length) simIdx = 0;
+  simPlaying = true; $('btn-sim-play').textContent = '⏸ Пауза';
+  simRaf = requestAnimationFrame(tickSim);
+});
+$('btn-sim-stop').addEventListener('click', () => stopSim(true));
+$('sim-slider').addEventListener('input', (e) => {
+  simPlaying = false; $('btn-sim-play').textContent = '▶ Симуляция';
+  simIdx = parseInt(e.target.value) || 0; $('sim-readout').textContent = readoutFor(simIdx); updateOverlay();
+});
+
+/* ===================== АВТО-ПОДБОР ===================== */
+function analyze() {
+  if (!has3DSource()) { $('reco-box').innerHTML = '<div class="text-[11px] text-neutral-400">Сначала загрузите файл.</div>'; return; }
+  const b = buildCurrentField();
+  const z = b.zGrid, cols = b.cols, rows = b.rows, px = b.px;
+  const slopes = [];
+  for (let j = 2; j < rows - 2; j += 3) for (let i = 2; i < cols - 2; i += 3) {
+    const k = j * cols + i;
+    const gx = (z[k + 1] - z[k - 1]) / (2 * px), gy = (z[k + cols] - z[k - cols]) / (2 * px);
+    slopes.push(Math.hypot(gx, gy));
+  }
+  slopes.sort((a, c) => a - c);
+  const p95 = slopes[Math.floor(slopes.length * 0.95)] || 0;
+  const maxD = b.maxD;
+  const pCount = clamp(Math.ceil(maxD / 2.5), 2, 6);
+  const steep = p95 > 2;
+
+  const cards = [
+    { id: 'fast', title: '⚡ Быстро (черновик)', why: `Крупная фреза ${6} мм для съёма объёма, потом чистовой. Подходит для декора и плоских рельефов.`,
+      set: { 'tool-d': 6, 'tool-type': 'ball', 'tool-angle': 15, step: 0.9, res: 0.8, feed: 3500, plunge: 800, allowance: 0.4, mode: 'relief_rough_fin', passes: pCount, boundary: 'inside' } },
+    { id: 'balance', title: '⚖️ Баланс', why: `Фреза 3 мм, шаг 0.4 мм. Хорошее качество за разумное время. Крутизна p95 = ${r3(p95)}.`,
+      set: { 'tool-d': 3, 'tool-type': 'ball', 'tool-angle': 15, step: 0.4, res: 0.4, feed: 2400, plunge: 600, allowance: 0.5, mode: 'relief_rough_fin', passes: Math.min(pCount, 4), boundary: 'inside' } },
+    { id: 'detail', title: '🔬 Детализация', why: steep
+        ? `Крутые склоны (p95 = ${r3(p95)}): коническая фреза 1.5 мм с малым шагом снижает ступенчатость.`
+        : `Мелкие детали: коническая фреза 1.5 мм, шаг 0.18 мм. Очень долго, но гладко.`,
+      set: { 'tool-d': 1.5, 'tool-type': 'taper_ball', 'tool-angle': 12, step: 0.18, res: 0.18, feed: 1500, plunge: 400, allowance: 0.1, mode: 'relief_cross', passes: Math.min(pCount, 3), boundary: 'online' } }
+  ];
+  window.__cards = cards;
+  $('reco-box').innerHTML = `
+    <div class="text-[11px] text-neutral-300">Высота рельефа: ${r3(maxD)} мм · крутизна p95: ${r3(p95)} мм/мм${steep ? ' · <span class="text-amber-300">есть крутые участки</span>' : ''}</div>
+    ${cards.map((c, k) => `
+      <div class="border border-neutral-800 rounded-lg p-2 bg-black/40">
+        <div class="flex items-center justify-between"><span class="font-bold text-[11px]">${c.title}</span>
+          <button data-card="${k}" class="text-[10px] bg-amber-400 hover:bg-amber-300 text-black font-bold px-2 py-0.5 rounded">Применить</button></div>
+        <div class="text-[10px] text-neutral-400 mt-1">${c.why}</div>
+      </div>`).join('')}`;
+}
+$('reco-box').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-card]'); if (!btn) return;
+  const card = window.__cards[+btn.dataset.card];
+  Object.entries(card.set).forEach(([id, v]) => {
+    if (id === 'mode' || id === 'tool-type' || id === 'boundary') $(id).value = v;
+    else $(id).value = v;
+  });
+  depthTouched = false; renderDepth(true);
+  generate();
+});
+
+/* ===================== 3D СЦЕНА ===================== */
+let scene3D = null, camera3D = null, renderer3D = null, worldGroup = null, staticGroup = null, overlayGroup = null, toolMesh = null;
+let camSph = { radius: 420, theta: -0.65, phi: 0.92, target: null };
+const wrap3D = $('cnc-3d-wrap');
+
+function init3D() {
+  if (typeof THREE === 'undefined') { $('info-3d').textContent = '⚠ Three.js не загрузился. Проверьте интернет.'; return; }
+  scene3D = new THREE.Scene(); scene3D.background = new THREE.Color(0x070709);
+  camSph.target = new THREE.Vector3(0, 0, 0);
+  const cw = wrap3D.clientWidth || 700, ch = wrap3D.clientHeight || 560;
+  camera3D = new THREE.PerspectiveCamera(42, cw / ch, 1, 20000);
+  renderer3D = new THREE.WebGLRenderer({ antialias: true });
+  renderer3D.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer3D.setSize(cw, ch);
+  wrap3D.insertBefore(renderer3D.domElement, wrap3D.firstChild);
+  scene3D.add(new THREE.AmbientLight(0xffffff, 0.5));
+  const d1 = new THREE.DirectionalLight(0xfff5db, 0.95); d1.position.set(280, 420, 320); scene3D.add(d1);
+  const d2 = new THREE.DirectionalLight(0x60a5fa, 0.35); d2.position.set(-300, 180, -250); scene3D.add(d2);
+  worldGroup = new THREE.Group(); scene3D.add(worldGroup);
+
+  toolMesh = new THREE.Group();
+  const shank = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 22, 16), new THREE.MeshStandardMaterial({ color: 0xe5e7eb, metalness: 0.8, roughness: 0.25 }));
+  shank.position.y = 14;
+  const tip = new THREE.Mesh(new THREE.ConeGeometry(1.5, 6, 16), new THREE.MeshStandardMaterial({ color: 0xef4444, emissive: 0x7f1d1d, metalness: 0.5, roughness: 0.3 }));
+  tip.rotation.x = Math.PI; tip.position.y = 3;
+  toolMesh.add(shank, tip); toolMesh.visible = false; scene3D.add(toolMesh);
+
+  updateCamera3D(); setup3DControls(); rebuild3DScene(); animate3D();
+}
+function updateCamera3D() {
+  if (!camera3D) return;
+  const s = Math.sin(camSph.phi);
+  camera3D.position.set(camSph.target.x + camSph.radius * s * Math.sin(camSph.theta),
+                        camSph.target.y + camSph.radius * Math.cos(camSph.phi),
+                        camSph.target.z + camSph.radius * s * Math.cos(camSph.theta));
+  camera3D.lookAt(camSph.target);
+}
+function setup3DControls() {
+  const dom = renderer3D.domElement;
+  let mode = 0, px = 0, py = 0;
+  dom.addEventListener('contextmenu', e => e.preventDefault());
+  dom.addEventListener('pointerdown', e => { dom.setPointerCapture(e.pointerId); mode = (e.button === 2 || e.shiftKey) ? 2 : 1; px = e.clientX; py = e.clientY; dom.style.cursor = 'grabbing'; });
+  dom.addEventListener('pointermove', e => {
+    if (!mode) return;
+    const dx = e.clientX - px, dy = e.clientY - py; px = e.clientX; py = e.clientY;
+    if (mode === 1) { camSph.theta -= dx * 0.007; camSph.phi = clamp(camSph.phi - dy * 0.007, 0.05, Math.PI * 0.49); }
+    else {
+      const k = camSph.radius * 0.0014;
+      const right = new THREE.Vector3(Math.cos(camSph.theta), 0, -Math.sin(camSph.theta));
+      const fwd = new THREE.Vector3(-Math.sin(camSph.theta), 0, -Math.cos(camSph.theta));
+      camSph.target.addScaledVector(right, -dx * k); camSph.target.addScaledVector(fwd, dy * k);
+    }
+    updateCamera3D();
+  });
+  const stop = () => { mode = 0; dom.style.cursor = 'grab'; };
+  dom.addEventListener('pointerup', stop); dom.addEventListener('pointercancel', stop);
+  dom.addEventListener('wheel', e => { e.preventDefault(); camSph.radius = clamp(camSph.radius * Math.exp(e.deltaY * 0.0012), 15, 5000); updateCamera3D(); }, { passive: false });
+}
+function resize3D() {
+  if (!renderer3D || !camera3D) return;
+  const cw = wrap3D.clientWidth || 700, ch = wrap3D.clientHeight || 560;
+  camera3D.aspect = cw / ch; camera3D.updateProjectionMatrix(); renderer3D.setSize(cw, ch);
+}
+function disposeGroup(g) {
+  g.traverse(o => {
+    if (o.geometry) o.geometry.dispose();
+    if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.dispose());
+  });
+  while (g.children.length) g.remove(g.children[0]);
+}
+const cncTo3D = (x, y, z) => new THREE.Vector3(x, z, -y);
+
+// Статическая часть: стол, заготовка, рельеф
+function rebuild3DScene() {
+  if (!worldGroup) return;
+  if (staticGroup) { disposeGroup(staticGroup); worldGroup.remove(staticGroup); }
+  staticGroup = new THREE.Group(); worldGroup.add(staticGroup);
+  const W = num('stock-w', 300), H = num('stock-h', 200), T = num('stock-t', 20);
+  const o = getOrigin(), ox = o.fx * W, oy = o.fy * H;
+  const grid = new THREE.GridHelper(Math.max(W, H) * 1.6, 20, 0x333333, 0x161616);
+  grid.position.set(W / 2 - ox, -T, -(H / 2 - oy)); staticGroup.add(grid);
+  const sGeo = new THREE.BoxGeometry(W, T, H);
+  const sMesh = new THREE.Mesh(sGeo, new THREE.MeshStandardMaterial({ color: 0x5c4227, roughness: 0.85, metalness: 0.05, transparent: true, opacity: field ? 0.28 : 0.75 }));
+  sMesh.position.set(W / 2 - ox, -T / 2, -(H / 2 - oy)); staticGroup.add(sMesh);
+  const edge = new THREE.LineSegments(new THREE.EdgesGeometry(sGeo), new THREE.LineBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0.45 }));
+  edge.position.copy(sMesh.position); staticGroup.add(edge);
+  staticGroup.add(new THREE.AxesHelper(Math.max(24, Math.min(W, H) * 0.18)));
+
+  if (field && $('chk-mesh').checked) {
+    const f = field, segX = Math.min(260, f.cols - 1), segY = Math.min(260, f.rows - 1);
+    const geo = new THREE.PlaneGeometry(W, H, segX, segY);
+    geo.rotateX(-Math.PI / 2);
+    const pos = geo.attributes.position, colors = new Float32Array(pos.count * 3);
+    const maxD = Math.max(0.01, f.maxD), mode = $('sel-shading').value;
+    for (let i = 0; i < pos.count; i++) {
+      const lx = pos.getX(i) + W / 2, lz = pos.getZ(i) + H / 2;
+      const ci = clamp(Math.round(lx / W * (f.cols - 1)), 0, f.cols - 1);
+      const cj = clamp(Math.round(lz / H * (f.rows - 1)), 0, f.rows - 1);
+      const zv = f.zGrid[cj * f.cols + ci];
+      pos.setY(i, zv);
+      const t = clamp(1 + zv / maxD, 0, 1);
+      if (mode === 'heatmap') {
+        colors[i * 3] = clamp(1.5 - Math.abs(4 * t - 3), 0, 1);
+        colors[i * 3 + 1] = clamp(1.5 - Math.abs(4 * t - 2), 0, 1);
+        colors[i * 3 + 2] = clamp(1.5 - Math.abs(4 * t - 1), 0, 1);
+      } else if (mode === 'gold') {
+        colors[i * 3] = 0.35 + 0.62 * t; colors[i * 3 + 1] = 0.24 + 0.52 * t; colors[i * 3 + 2] = 0.06 + 0.14 * t;
+      } else {
+        colors[i * 3] = 0.22 + 0.64 * t; colors[i * 3 + 1] = 0.14 + 0.46 * t; colors[i * 3 + 2] = 0.07 + 0.24 * t;
       }
-
-      canvas3dInfo.textContent = `3D Заготовка: ${W}×${H}×${T} мм | Фреза Ø${paramTool.value} | Сегментов: ${simSegs.length}`;
     }
+    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    geo.computeVertexNormals();
+    const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: mode === 'gold' ? 0.35 : 0.62, metalness: mode === 'gold' ? 0.45 : 0.06, wireframe: mode === 'wire', side: THREE.DoubleSide });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(W / 2 - ox, 0.02, -(H / 2 - oy));
+    staticGroup.add(mesh);
+  }
+  $('info-3d').textContent = `Заготовка ${W}×${H}×${T} мм · Фреза Ø${num('tool-d', 3)} · Кадров: ${simSegs.length}`;
+  updateOverlay();
+}
 
-    function set3DViewPreset(preset) {
-      const W = parseFloat(paramWidth.value) || 300;
-      const H = parseFloat(paramHeight.value) || 200;
-      const o = getOrigin();
-      camSph.target.set(W / 2 - o.fx * W, 0, -(H / 2 - o.fy * H));
-      const dist = Math.max(W, H) * 1.35;
-      if (preset === 'top') { camSph.theta = 0; camSph.phi = 0.05; camSph.radius = dist; }
-      else if (preset === 'front') { camSph.theta = 0; camSph.phi = Math.PI * 0.46; camSph.radius = dist; }
-      else { camSph.theta = -0.65; camSph.phi = 0.92; camSph.radius = dist; }
-      updateCamera3D();
+// Оверлей: траектория и фреза
+function updateOverlay() {
+  if (!worldGroup) return;
+  if (overlayGroup) { disposeGroup(overlayGroup); worldGroup.remove(overlayGroup); overlayGroup = null; }
+  if (simSegs.length && $('chk-paths').checked) {
+    overlayGroup = new THREE.Group();
+    const rapid = [], cut = [], rough = [];
+    const limit = Math.min(simIdx, simSegs.length);
+    for (let i = 0; i < limit; i++) {
+      const s = simSegs[i], p0 = cncTo3D(s.x0, s.y0, s.z0), p1 = cncTo3D(s.x1, s.y1, s.z1);
+      if (s.gm === 0) rapid.push(p0, p1); else if (s.kind === 'in') rough.push(p0, p1); else cut.push(p0, p1);
     }
-    $('btn-3d-iso').addEventListener('click', () => set3DViewPreset('iso'));
-    $('btn-3d-top').addEventListener('click', () => set3DViewPreset('top'));
-    $('btn-3d-front').addEventListener('click', () => set3DViewPreset('front'));
-    $('chk-3d-mesh').addEventListener('change', rebuild3DScene);
-    $('chk-3d-paths').addEventListener('change', rebuild3DScene);
-    $('sel-3d-shading').addEventListener('change', rebuild3DScene);
-
-    function animate3D() {
-      requestAnimationFrame(animate3D);
-      if (renderer3D && scene3D && camera3D && !$('view-3d').classList.contains('hidden')) {
-        renderer3D.render(scene3D, camera3D);
-      }
+    const addLines = (pts, color, op) => {
+      if (!pts.length) return;
+      const mat = new THREE.LineBasicMaterial({ color, transparent: !!op, opacity: op || 1 });
+      overlayGroup.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), mat));
+    };
+    addLines(rapid, 0x525252, 0.4); addLines(rough, 0x38bdf8); addLines(cut, 0xfbbf24);
+    worldGroup.add(overlayGroup);
+    const cur = simSegs[Math.max(0, limit - 1)];
+    if (cur) {
+      const D = num('tool-d', 3);
+      toolMesh.scale.set(D / 3, 1, D / 3);
+      toolMesh.position.set(cur.x1, cur.z1, -cur.y1);
+      toolMesh.visible = true;
     }
+  } else {
+    toolMesh.visible = false;
+  }
+}
+function animate3D() {
+  requestAnimationFrame(animate3D);
+  if (renderer3D && scene3D && camera3D && $('view-3d').style.display !== 'none') renderer3D.render(scene3D, camera3D);
+}
+function set3DView(p) {
+  if (!camera3D) return;
+  const W = num('stock-w', 300), H = num('stock-h', 200), o = getOrigin();
+  camSph.target.set(W / 2 - o.fx * W, 0, -(H / 2 - o.fy * H));
+  const dist = Math.max(W, H) * 1.35;
+  if (p === 'top') { camSph.theta = 0; camSph.phi = 0.05; }
+  else if (p === 'front') { camSph.theta = 0; camSph.phi = Math.PI * 0.46; }
+  else { camSph.theta = -0.65; camSph.phi = 0.92; }
+  camSph.radius = dist; updateCamera3D();
+}
+$('btn-iso').addEventListener('click', () => set3DView('iso'));
+$('btn-top').addEventListener('click', () => set3DView('top'));
+$('btn-front').addEventListener('click', () => set3DView('front'));
+$('chk-mesh').addEventListener('change', rebuild3DScene);
+$('chk-paths').addEventListener('change', rebuild3DScene);
+$('sel-shading').addEventListener('change', rebuild3DScene);
 
-    // ===================== ПОКАДРОВАЯ 3D СИМУЛЯЦИЯ =====================
-    function stopSim(resetToEnd) {
-      simPlaying = false;
-      if (simRaf) cancelAnimationFrame(simRaf);
-      const btn = $('btn-sim-play');
-      if (btn) btn.textContent = '▶ Симуляция';
-      if (resetToEnd) {
-        simIdx = simSegs.length;
-        const sl = $('sim-slider'); if (sl) sl.value = simIdx;
-        const ro = $('sim-readout'); if (ro) ro.textContent = 'Кадр: ' + simIdx + '/' + simSegs.length;
-      }
-      rebuild3DScene();
-    }
+/* ===================== ВКЛАДКИ, ФАЙЛЫ, ЭКСПОРТ ===================== */
+function showTab(which) {
+  const on = 'px-3 py-1.5 rounded-lg text-xs font-bold border border-amber-400/50 bg-amber-400/10 text-amber-400';
+  const off = 'px-3 py-1.5 rounded-lg text-xs font-bold border border-transparent text-neutral-400 hover:text-white';
+  $('tab-3d').className = which === '3d' ? on : off;
+  $('tab-code').className = which === 'code' ? on : off;
+  $('view-3d').style.display = which === '3d' ? 'flex' : 'none';
+  $('view-code').classList.toggle('hidden', which !== 'code');
+  $('view-code').style.display = which === 'code' ? 'flex' : 'none';
+  if (which === '3d') { resize3D(); rebuild3DScene(); }
+}
+$('tab-3d').addEventListener('click', () => showTab('3d'));
+$('tab-code').addEventListener('click', () => showTab('code'));
 
-    function tickSim() {
-      if (!simPlaying) return;
-      const spd = parseInt($('sim-speed').value) || 25;
-      simIdx = Math.min(simSegs.length, simIdx + spd);
-      $('sim-slider').value = simIdx;
-      const cur = simSegs[Math.max(0, simIdx - 1)];
-      $('sim-readout').textContent = cur
-        ? `Кадр ${cur.lineNo}/${simSegs.length} · X${cur.x1.toFixed(1)} Y${cur.y1.toFixed(1)} Z${cur.z1.toFixed(2)}`
-        : `Кадр ${simIdx}/${simSegs.length}`;
-      rebuild3DScene();
-      if (simIdx >= simSegs.length) stopSim(false);
-      else simRaf = requestAnimationFrame(tickSim);
-    }
-    $('btn-sim-play').addEventListener('click', () => {
-      if (!simSegs.length) return;
-      if (simPlaying) stopSim(false);
-      else {
-        if (simIdx >= simSegs.length) simIdx = 0;
-        simPlaying = true;
-        $('btn-sim-play').textContent = '⏸ Пауза';
-        simRaf = requestAnimationFrame(tickSim);
-      }
-    });
-    $('btn-sim-stop').addEventListener('click', () => stopSim(true));
-    $('sim-slider').addEventListener('input', (e) => {
-      simPlaying = false;
-      $('btn-sim-play').textContent = '▶ Симуляция';
-      simIdx = parseInt(e.target.value) || 0;
-      const cur = simSegs[Math.max(0, simIdx - 1)];
-      $('sim-readout').textContent = cur
-        ? `Кадр ${cur.lineNo}/${simSegs.length} · X${cur.x1.toFixed(1)} Y${cur.y1.toFixed(1)} Z${cur.z1.toFixed(2)}`
-        : `Кадр ${simIdx}/${simSegs.length}`;
-      rebuild3DScene();
-    });
-
-    // ===================== ВКЛАДКИ ПРАВОЙ ПАНЕЛИ (3D / КОД) =====================
-    const tab3d = $('tab-btn-3d'), tabCode = $('tab-btn-code');
-    const view3d = $('view-3d'), viewCode = $('view-code');
-    tab3d.addEventListener('click', () => {
-      tab3d.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition border border-amber-400/50 bg-amber-400/10 text-amber-400 flex items-center gap-1.5';
-      tabCode.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition border border-transparent text-neutral-400 hover:text-white flex items-center gap-1.5';
-      view3d.classList.remove('hidden'); view3d.classList.add('flex');
-      viewCode.classList.add('hidden'); viewCode.classList.remove('flex');
-      resize3D(); rebuild3DScene();
-    });
-    tabCode.addEventListener('click', () => {
-      tabCode.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition border border-amber-400/50 bg-amber-400/10 text-amber-400 flex items-center gap-1.5';
-      tab3d.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition border border-transparent text-neutral-400 hover:text-white flex items-center gap-1.5';
-      viewCode.classList.remove('hidden'); viewCode.classList.add('flex');
-      view3d.classList.add('hidden'); view3d.classList.remove('flex');
-    });
-
-    // ===================== ГЕНЕРАЦИЯ, ЭКСПОРТ И СОХРАНЕНИЕ =====================
-    $('btn-process-main').addEventListener('click', () => { if (has3DSource()) generate3DTap(); else generateTapFromText(); });
-    $('btn-top-generate').addEventListener('click', () => { if (has3DSource()) generate3DTap(); else generateTapFromText(); });
-
-    function downloadFile(fromVoice) {
-      const text = outputArea.value;
-      if (!text) { voiceSay('Нет кода для скачивания'); if (fromVoice !== true) alert('Нет сгенерированного кода для скачивания!'); return; }
-      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = (sourceBase ? sourceBase + '_3D_talas' : 'Talas_profi_3D_' + Date.now()) + exportExt.value;
-      link.click();
-      URL.revokeObjectURL(link.href);
-      voiceSay('3D файл скачан');
-    }
-    $('btn-top-download').addEventListener('click', downloadFile);
-    $('btn-bottom-download').addEventListener('click', downloadFile);
-    $('btn-copy-code').addEventListener('click', () => { if (!outputArea.value) return; navigator.clipboard.writeText(outputArea.value); alert('3D код скопирован!'); });
-    $('btn-clear-in').addEventListener('click', () => {
-      inputArea.value = ''; outputArea.value = ''; loadedImage = null; loadedStlMesh = null; loadedRawText = null; lastHeightField = null; sourceBase = ''; fileInput.value = '';
-      camLog.className = 'hidden'; simSegs = []; simIdx = 0; renderHeightPreview(); rebuild3DScene();
-    });
-
-    $('btn-frame-tap').addEventListener('click', () => {
-      if (!lastBounds) { alert('Сначала сгенерируйте 3D траекторию!'); return; }
-      const sep = chkTabs.checked ? '\t' : ' ', safeZ = parseFloat(paramSafeZ.value) || 6.0, feed = parseFloat(paramFeed.value) || 1800, f3 = q => q.toFixed(3), b = lastBounds;
-      const frameLines = ['G90', 'G0' + sep + 'Z' + f3(safeZ), 'G0' + sep + 'X' + f3(b.minX) + sep + 'Y' + f3(b.minY), 'G1' + sep + 'X' + f3(b.maxX) + sep + 'Y' + f3(b.minY) + sep + 'F' + feed, 'G1' + sep + 'X' + f3(b.maxX) + sep + 'Y' + f3(b.maxY), 'G1' + sep + 'X' + f3(b.minX) + sep + 'Y' + f3(b.maxY), 'G1' + sep + 'X' + f3(b.minX) + sep + 'Y' + f3(b.minY), 'G0' + sep + 'X0.000' + sep + 'Y0.000', 'M30'];
-      const blob = new Blob([frameLines.join('\r\n')], { type: 'text/plain;charset=utf-8' });
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = (sourceBase ? sourceBase + '_3D_FRAME' : 'Talas_profi_3D_FRAME') + exportExt.value; a.click(); URL.revokeObjectURL(a.href);
-    });
-
-    const LS_SETTINGS_KEY = 'talas_profi_v7_pure3d_settings';
-    const LS_PRESETS_KEY = 'talas_profi_v7_pure3d_presets';
-    const PERSIST_IDS = ['param-width', 'param-height', 'param-thickness', 'param-feed', 'param-plunge', 'param-safez', 'param-spindle', 'param-step', 'param-rapid', 'param-tool', 'param-tool-type', 'param-vangle', 'param-allowance', 'param-res-x', 'param-mode', 'param-cutz', 'param-passes', 'export-ext', 'relief-blur', 'relief-gamma', 'relief-vignette', 'sel-3d-shading'];
-    const PERSIST_CHKS = ['chk-trim-bounds', 'chk-skip-top', 'chk-boundary-pass', 'chk-opt-lines', 'chk-tabs', 'chk-m30', 'chk-m5', 'chk-header', 'chk-return-zero', 'preview-invert'];
-
-    function saveSettingsToLS() {
+const fileIn = $('file-input');
+function loadFile(file) {
+  if (!file) return;
+  srcBase = file.name.replace(/\.[^.]+$/, '').replace(/[^\w\-а-яА-ЯёЁ ]+/g, '_').trim() || 'model';
+  const isStl = /\.stl$/i.test(file.name);
+  const isImg = file.type.startsWith('image/') || /\.(png|jpe?g|webp|gif|bmp)$/i.test(file.name);
+  if (isStl) {
+    const r = new FileReader();
+    r.onload = (ev) => {
       try {
-        const data = { vals: {}, chks: {} };
-        PERSIST_IDS.forEach(id => { const el = $(id); if (el) data.vals[id] = el.value; });
-        PERSIST_CHKS.forEach(id => { const el = $(id); if (el) data.chks[id] = el.checked; });
-        const org = document.querySelector('input[name="origin"]:checked');
-        if (org) data.origin = org.value;
-        localStorage.setItem(LS_SETTINGS_KEY, JSON.stringify(data));
-      } catch (e) {}
-    }
-    function loadSettingsFromLS() {
-      try {
-        const raw = localStorage.getItem(LS_SETTINGS_KEY);
-        if (!raw) return;
-        const data = JSON.parse(raw);
-        if (data.vals) Object.entries(data.vals).forEach(([id, v]) => { const el = $(id); if (el && v !== undefined) el.value = v; });
-        if (data.chks) Object.entries(data.chks).forEach(([id, v]) => { const el = $(id); if (el) el.checked = !!v; });
-        if (data.origin) { const r = document.querySelector('input[name="origin"][value="' + data.origin + '"]'); if (r) r.checked = true; }
-        $('relief-blur').dispatchEvent(new Event('input'));
-        $('relief-gamma').dispatchEvent(new Event('input'));
-        $('relief-vignette').dispatchEvent(new Event('input'));
-      } catch (e) {}
-    }
-    function renderCustomPresets() {
-      const wrap = $('custom-presets-wrap'); if (!wrap) return; wrap.innerHTML = '';
-      let list = []; try { list = JSON.parse(localStorage.getItem(LS_PRESETS_KEY) || '[]'); } catch (e) {}
-      list.forEach((pr, idx) => {
-        const grp = document.createElement('div');
-        grp.className = 'inline-flex items-center rounded bg-neutral-900 border border-neutral-700 overflow-hidden shrink-0';
-        const btn = document.createElement('button');
-        btn.type = 'button'; btn.className = 'px-2 py-1 hover:bg-amber-400 hover:text-black text-amber-300 text-[10px] font-medium transition'; btn.textContent = pr.name;
-        btn.addEventListener('click', () => {
-          paramCutZ.value = pr.cutz; paramPasses.value = pr.passes; paramFeed.value = pr.feed;
-          $('param-plunge').value = pr.plunge; paramTool.value = pr.tool; $('param-spindle').value = pr.spindle;
-          if (pr.mode) paramMode.value = pr.mode;
-          if (pr.step) paramStep.value = pr.step;
-          depthTouched = false; distributeDepth(); renderDepthFields(); saveSettingsToLS();
-          if (has3DSource()) generate3DTap();
-        });
-        const del = document.createElement('button');
-        del.type = 'button'; del.className = 'px-1 py-1 text-neutral-500 hover:text-red-400 text-[10px]'; del.textContent = '×';
-        del.addEventListener('click', () => { list.splice(idx, 1); localStorage.setItem(LS_PRESETS_KEY, JSON.stringify(list)); renderCustomPresets(); });
-        grp.appendChild(btn); grp.appendChild(del); wrap.appendChild(grp);
-      });
-    }
-    $('btn-save-preset').addEventListener('click', () => {
-      const name = prompt('Название нового 3D-пресета:'); if (!name || !name.trim()) return;
-      let list = []; try { list = JSON.parse(localStorage.getItem(LS_PRESETS_KEY) || '[]'); } catch (e) {}
-      list.push({ name: name.trim(), mode: paramMode.value, cutz: parseFloat(paramCutZ.value) || -8, passes: parseInt(paramPasses.value) || 3, feed: parseFloat(paramFeed.value) || 2400, plunge: parseFloat($('param-plunge').value) || 600, tool: parseFloat(paramTool.value) || 3, step: parseFloat(paramStep.value) || 0.4, spindle: parseFloat($('param-spindle').value) || 16000 });
-      localStorage.setItem(LS_PRESETS_KEY, JSON.stringify(list)); renderCustomPresets();
-    });
-    $('btn-reset-settings').addEventListener('click', () => { if (confirm('Сбросить все настройки?')) { localStorage.removeItem(LS_SETTINGS_KEY); location.reload(); } });
+        stl = parseSTLBuffer(ev.target.result); img = null; field = null;
+        renderPlacement(); generate();
+      } catch (err) { failGen([err.message]); }
+    };
+    r.readAsArrayBuffer(file);
+  } else if (isImg) {
+    const r = new FileReader();
+    r.onload = (ev) => {
+      const im = new Image();
+      im.onload = () => { img = im; stl = null; field = null; renderPlacement(); generate(); };
+      im.onerror = () => failGen(['Не удалось открыть изображение.']);
+      im.src = ev.target.result;
+    };
+    r.readAsDataURL(file);
+  } else {
+    failGen(['Формат не поддерживается. Используйте STL или изображение.']);
+  }
+}
+fileIn.addEventListener('change', (e) => { loadFile(e.target.files[0]); fileIn.value = ''; });
+const dz = $('drop-zone');
+dz.addEventListener('click', () => fileIn.click());
+dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('border-amber-400'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('border-amber-400'));
+dz.addEventListener('drop', (e) => { e.preventDefault(); dz.classList.remove('border-amber-400'); loadFile(e.dataTransfer.files[0]); });
 
-    [...PERSIST_IDS, ...PERSIST_CHKS].forEach(id => { const el = $(id); if (el) { el.addEventListener('change', saveSettingsToLS); el.addEventListener('input', saveSettingsToLS); } });
-    document.querySelectorAll('input[name="origin"]').forEach(r => r.addEventListener('change', saveSettingsToLS));
+function downloadProgram() {
+  const text = $('code-output').value;
+  if (!text) { alert('Сначала рассчитайте траекторию.'); return; }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
+  a.download = (srcBase || 'talas_3d') + '_3d' + $('export-ext').value;
+  a.click(); URL.revokeObjectURL(a.href);
+}
+$('btn-download').addEventListener('click', downloadProgram);
+$('btn-download-top').addEventListener('click', downloadProgram);
+$('btn-copy').addEventListener('click', () => { const t = $('code-output').value; if (t) navigator.clipboard.writeText(t); });
+$('btn-frame').addEventListener('click', () => {
+  if (!lastBounds) { alert('Сначала рассчитайте траекторию.'); return; }
+  const b = lastBounds, sep = ' ', f3 = q => q.toFixed(3), safe = num('safe-z', 6), feed = num('feed', 2400);
+  const out = ['G90', 'G0' + sep + 'Z' + f3(safe), 'G0' + sep + 'X' + f3(b.minX) + sep + 'Y' + f3(b.minY),
+    'G1' + sep + 'X' + f3(b.maxX) + sep + 'Y' + f3(b.minY) + sep + 'F' + feed, 'G1' + sep + 'X' + f3(b.maxX) + sep + 'Y' + f3(b.maxY),
+    'G1' + sep + 'X' + f3(b.minX) + sep + 'Y' + f3(b.maxY), 'G1' + sep + 'X' + f3(b.minX) + sep + 'Y' + f3(b.minY),
+    'G0' + sep + 'X0.000' + sep + 'Y0.000', 'M30'];
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([out.join('\r\n')], { type: 'text/plain' }));
+  a.download = (srcBase || 'talas_3d') + '_frame' + $('export-ext').value; a.click(); URL.revokeObjectURL(a.href);
+});
 
-    dropZone.addEventListener('click', () => fileInput.click());
-    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-amber-400'); });
-    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('border-amber-400'));
-    dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('border-amber-400'); if (e.dataTransfer.files.length) { fileInput.files = e.dataTransfer.files; fileInput.dispatchEvent(new Event('change')); } });
+$('btn-generate').addEventListener('click', generate);
+$('btn-generate-top').addEventListener('click', generate);
+$('btn-analyze').addEventListener('click', analyze);
+$('btn-distribute').addEventListener('click', () => { depthTouched = false; renderDepth(true); });
+$('passes').addEventListener('change', () => renderDepth(!depthTouched));
+$('cut-z').addEventListener('input', () => { if (!depthTouched) renderDepth(true); else showDepthStatus(); });
+$('stock-w').addEventListener('input', () => { renderPlacement(); updateOriginCaption(); rebuild3DScene(); });
+$('stock-h').addEventListener('input', () => { renderPlacement(); updateOriginCaption(); rebuild3DScene(); });
+['obj-w', 'obj-h', 'obj-scale', 'obj-rot', 'obj-x', 'obj-y', 'chk-trim'].forEach(id => $(id).addEventListener('input', renderPlacement));
+$('chk-invert').addEventListener('change', () => { field = null; renderPlacement(); });
+document.querySelectorAll('input[name="origin"]').forEach(r => r.addEventListener('change', () => { updateOriginCaption(); rebuild3DScene(); }));
+window.addEventListener('resize', () => { renderPlacement(); resize3D(); });
 
-    // ===================== ГОЛОСОВОЙ ПОМОЩНИК =====================
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const voiceBtn = $('btn-voice'), voiceDot = $('voice-dot'), voiceState = $('voice-state'), voiceText = $('voice-text');
-    let voiceOn = false, recog = null, speakBusy = 0, voiceTimer = null, ruVoice = null;
-    const VSTATES = { off: ['#ef4444', 'Выкл'], listen: ['#FBBF24', 'Слушаю'], ok: ['#22c55e', 'Принято'] };
-    function setVoiceState(st) { voiceDot.style.setProperty('--c', VSTATES[st][0]); voiceState.textContent = VSTATES[st][1]; voiceBtn.classList.toggle('border-amber-400/60', st !== 'off'); }
-    function pickRu() { ruVoice = ('speechSynthesis' in window ? speechSynthesis.getVoices() : []).find(v => /^ru/i.test(v.lang)) || null; }
-    if ('speechSynthesis' in window) { pickRu(); speechSynthesis.onvoiceschanged = pickRu; }
-    function voiceSay(text) {
-      if (!voiceOn || !('speechSynthesis' in window)) return;
-      const u = new SpeechSynthesisUtterance(text); u.lang = 'ru-RU'; u.rate = 1.02; if (ruVoice) u.voice = ruVoice;
-      speakBusy++; try { recog && recog.stop(); } catch (e) {}
-      const done = () => { speakBusy = Math.max(0, speakBusy - 1); if (voiceOn && !speakBusy) startRecog(); };
-      u.onend = done; u.onerror = done; speechSynthesis.speak(u);
-    }
-    function startRecog() { if (!recog || !voiceOn || speakBusy) return; try { recog.start(); } catch (e) {} setVoiceState('listen'); }
-    if (SR) {
-      recog = new SR(); recog.lang = 'ru-RU'; recog.continuous = true; recog.interimResults = false;
-      recog.onresult = (e) => { for (let i = e.resultIndex; i < e.results.length; i++) if (e.results[i].isFinal) handleVoice(e.results[i][0].transcript); };
-      recog.onend = () => { if (voiceOn && !speakBusy) setTimeout(startRecog, 300); };
-    }
-    voiceBtn.addEventListener('click', () => {
-      if (voiceOn) { voiceOn = false; speakBusy = 0; try { recog && recog.abort(); } catch (e) {} setVoiceState('off'); voiceText.textContent = ''; }
-      else if (SR) { voiceOn = true; startRecog(); voiceSay('Голос включён'); }
-    });
-    setVoiceState('off');
-    function handleVoice(raw) {
-      const tx = raw.toLowerCase().replace(/ё/g, 'е').trim(); if (!tx) return;
-      setVoiceState('ok'); voiceText.textContent = '🎙 «' + tx + '»';
-      clearTimeout(voiceTimer); voiceTimer = setTimeout(() => { if (voiceOn) setVoiceState('listen'); }, 1400);
-      if (/скача|сохран/.test(tx)) return downloadFile(true);
-      if (/сброс|центр/.test(tx)) { set3DViewPreset('iso'); return voiceSay('Вид сброшен'); }
-      if (/сгенер|старт|рассчит/.test(tx)) { if (has3DSource()) generate3DTap(); else generateTapFromText(); }
-    }
-
-    // Старт
-    loadSettingsFromLS();
-    renderCustomPresets();
-    renderHeightPreview();
-    distributeDepth();
-    renderDepthFields();
-    updateOriginCaption();
-    init3D();
-  </script>
+/* ===================== СТАРТ ===================== */
+updateOriginCaption();
+renderDepth(true);
+renderPlacement();
+init3D();
+showTab('3d');
+</script>
 </body>
 </html>
